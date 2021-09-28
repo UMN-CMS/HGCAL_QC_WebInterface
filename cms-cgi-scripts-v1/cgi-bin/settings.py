@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 def getAttachmentBasePath():
     return "/home/jmmans/tmp/ePortage"
 #    return "/home/daq/ePortageArchive/uHTR"

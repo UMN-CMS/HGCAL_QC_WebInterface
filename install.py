@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 
 import os
 import sys
@@ -40,36 +40,36 @@ def grant_access( db ) :
 
        print 'DB Inserter Password : '
        inpw = getpass.getpass()
-       cmd_gt  = "CREATE USER 'Inserter'@'localhost' IDENTIFIED BY '%s'" % (inpw)
+       cmd_gt  = "CREATE USER 'WagonInserter'@'localhost' IDENTIFIED BY '%s'" % (inpw)
 
        cur.execute(cmd_gt) 
        db.commit()
-       cur.execute("GRANT INSERT ON ePortage.* TO 'Inserter'@'localhost'")
+       cur.execute("GRANT INSERT ON WagonDB.* TO 'WagonInserter'@'localhost'")
        db.commit()
-       cur.execute("GRANT SELECT ON ePortage.* TO 'Inserter'@'localhost'")
+       cur.execute("GRANT SELECT ON WagonDB.* TO 'WagonInserter'@'localhost'")
        db.commit()
 
        print 'DB Reader Password : '
        rdpw = getpass.getpass()
-       cmd_gt  = "CREATE USER 'ReadUser'@'localhost' IDENTIFIED BY '%s'" % (rdpw)
+       cmd_gt  = "CREATE USER 'WagonReadUser'@'localhost' IDENTIFIED BY '%s'" % (rdpw)
        cur.execute(cmd_gt) 
        db.commit()
-       cur.execute("GRANT SELECT ON ePortage.* TO 'ReadUser'@'localhost'")
+       cur.execute("GRANT SELECT ON WagonDB.* TO 'WagonReadUser'@'localhost'")
        db.commit()
 
        text_file = open("connect.py", "w")
        text_file.write("import mysql.connector \n")
        text_file.write("def connect( num ):\n")
        text_file.write("    if(num==1):\n")
-       text_file.write("       cnx = mysql.connector.connect(user='Inserter', password='%s', database='ePortage')\n" % inpw )
+       text_file.write("       cnx = mysql.connector.connect(user='WagonInserter', password='%s', database='WagonDB')\n" % inpw )
        text_file.write("    if(num==0):\n")
-       text_file.write("       cnx = mysql.connector.connect(user='ReadUser', password='%s', database='ePortage')\n'" % rdpw )
+       text_file.write("       cnx = mysql.connector.connect(user='WagonReadUser', password='%s', database='WagonDB')\n" % rdpw )
 
        text_file.write("    return cnx\n") 
-
        text_file.close()
 
     except mysql.connector.Error as err:
+       print(err.errno)
        print("<h3>lost DB connection!</h3>")
 
 
@@ -81,28 +81,28 @@ os.chdir( os.getenv("HOME") )
 #os.chdir("public_html")
 dbhome = os.getcwd() 
 print dbhome 
-os.system("git clone https://github.com/UMN-CMS/ePortage.git")
-thePath = '%s%s' % (dbhome.rstrip() , "/ePortage/cms-cgi-scripts-v1/cgi-bin")
+#os.system("git clone https://github.com/UMN-CMS/ePortage.git")
+thePath = '%s%s' % (dbhome.rstrip() , "/WagonDB/cms-cgi-scripts-v1/cgi-bin")
 print thePath
 os.chdir(thePath) 
 os.system("chmod a+x *.py")
 os.chdir("../..") 
 
-#
 os.chdir("sql/") 
 print 'MySQL Root password '
 pw = getpass.getpass()
 db = mysql.connector.connect(user='root', password= pw , database='')
 
 cur = db.cursor()
-cur.execute("create database ePortage")
+cur.execute("create database WagonDB;")
 db.commit()
-cur.execute("use ePortage")
+cur.execute("use WagonDB;")
 db.commit()
 
-source_cmd = "mysql -u root --password=" + pw + " ePortage < schema.sql " 
-#print source_cmd 
+source_cmd = "mysql -u root --password=" + pw + " WagonDB < schema_new.sql " 
+#print(source_cmd)
 os.system( source_cmd )
+
 
 while True:
   add_tester( db ) 
@@ -110,6 +110,7 @@ while True:
   if ( more_tester.lower() == 'no' or more_tester.lower() == 'n' ):
      break 
 
+print("test4")
 nu = 0 
 while True:
   nu += 1 

@@ -1,11 +1,13 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import cgi
 import base
 import add_test_functions
+import os
 
+print("Location: http://cmslab1.spa.umn.edu/~cros0400/cgi-bin/summary.py\n\n")
 #cgi header
-print "Content-type: text/html\n"
+print("Content-type: text/html\n")
 
 form = cgi.FieldStorage()
 person_id = base.cleanCGInumber(form.getvalue("person_id"))
@@ -33,6 +35,4 @@ for itest in (1,2,3):
             acomment = cgi.escape(acomment)
         add_test_functions.add_test_attachment(test_id,afile,adesc,acomment)
     
-
 base.bottom()
-

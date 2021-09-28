@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import cgi
 import base
@@ -7,7 +7,7 @@ import add_test_functions
 
 
 #cgi header
-print "Content-type: text/html\n"
+print("Content-type: text/html\n")
 
 form = cgi.FieldStorage()
 #card_id = form.getvalue('card_id')
