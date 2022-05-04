@@ -11,19 +11,24 @@ print("Content-type: text/html\n")
 
 
 form = cgi.FieldStorage()
-card_id = base.cleanCGInumber(form.getvalue('card_id'))
+board_id = base.cleanCGInumber(form.getvalue('board_id'))
 serial_num = base.cleanCGInumber(form.getvalue('serial_num'))
 base.header(title='Wagon DB')
 base.top()
-#print 'card_id = ', card_id
+#print('card_id = ', card_id)
 #print  'serial_num = ', serial_num
 
-module_functions.add_test_tab(serial_num, card_id)
-
-revokes=module_functions.Portage_fetch_revokes(serial_num)
+module_functions.add_test_tab(serial_num, board_id)
 
 db = connect(0)
 cur = db.cursor()
+
+revokes=module_functions.Portage_fetch_revokes(board_id)
+
+cur.execute("SELECT location, daq_chip_id, trigger_chip_1_id, trigger_chip_2_id, info FROM Board_Info WHERE board_id = %s" % board_id)
+info = cur.fetchall()
+
+module_functions.board_info(info)
 
 cur.execute("select test_type, name from Test_Type where required = 1 order by relative_order ASC")
 for test_type in cur:

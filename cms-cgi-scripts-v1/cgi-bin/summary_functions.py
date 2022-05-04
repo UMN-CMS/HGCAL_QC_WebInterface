@@ -8,7 +8,7 @@ def get():
     db = connect(0)
     cur = db.cursor()
     
-    cur.execute("SELECT sn, Board_id, full_id FROM Board ORDER by sn ASC")
+    cur.execute("SELECT sn, board_id, full_id FROM Board ORDER by sn ASC")
     rows = cur.fetchall()
  
     

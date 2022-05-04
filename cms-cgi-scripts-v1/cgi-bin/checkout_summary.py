@@ -56,7 +56,7 @@ for row in List_of_rows:
     print('<td><ul>')
     if len(sys.argv) == 1:
         for tests in row[4][0:][::2]:
-            print('<li> <a href="add_test.py?serial_num=%(serial_num)s&board_id=%(board_id)d&suggested=%(test_type_id)d">%(name)s</a>' %{'board_id':row[0], 'serial_num':row[2], 'test_type_id':tests[1], 'name':tests[0]})
+            print('<li> <a href="add_test.py?serial_num=%d&suggested=%d">%s</a>' %(row[0],tests[1],tests[0]))
 
     else:
         for tests in row[4][0:][::2]:

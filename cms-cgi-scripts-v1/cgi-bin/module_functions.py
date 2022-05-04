@@ -3,6 +3,7 @@ from connect import connect
 import sys
 import mysql.connector
 from get_attach import save
+import home_page_list
 
 def Portage_fetch(test_type_id, board_sn):
     db = connect(0)
@@ -29,13 +30,30 @@ def Portage_fetch_attach(test_id):
 def add_test_tab(sn, board_id):
 
     print('<div class="row">')
-    print('<div class="col-md-7 pt-5 ps-5 mx-2 my-2">')
+    print('<div class="col-md-5 pt-4 ps-5 mx-2 my-2">')
     print('<h2>Wagon Test Info for %d</h2>' %sn)
     print('</div>')
-    print('<div class="col-md-1"></div>')
-    print('<div class="col-md-3 ps-5 pt-5 mx-2 my-2">')
+    print('</div>')
+    
+    print('<div class="row">')
+    print('<div class="col-md-2 ps-5 pt-2 mx-2 my-2">')
     print('<a href="add_test.py?board_id=%(id)d&serial_num=%(serial)d">' %{'serial':sn, 'id':board_id})
     print('<button class="btn btn-dark"> Add a New Test </button>')
+    print('</a>')
+    print('</div>')
+    print('<div class="col-md-2 ps-5 pt-2 mx-2 my-2">')
+    print('<a href="add_board_info.py?board_id=%(id)d&serial_num=%(serial)d">' %{'serial':sn, 'id':board_id})
+    print('<button class="btn btn-dark"> Add Board Info </button>')
+    print('</a>')
+    print('</div>')
+    print('<div class="col-md-2 ps-5 pt-2 mx-2 my-2">')
+    print('<a href="board_checkout.py?serial_num=%(serial)d">' %{'serial':sn})
+    print('<button class="btn btn-dark"> Checkout Board </button>')
+    print('</a>')
+    print('</div>')
+    print('<div class="col-md-2 ps-5 pt-2 mx-2 my-2">')
+    print('<a href="board_checkin.py?board_id=%(board_id)d">' %{'board_id':board_id})
+    print('<button class="btn btn-dark"> Checkin Board </button>')
     print('</a>')
     print('</div>')
     print('</div>')
@@ -71,8 +89,8 @@ def ePortageTest(test_type_id, board_sn, test_name, revokes):
                 print('<td><b>Revoked</b>: %(comment)s </td>' %{ "comment":revokes[attempt[5]] })
             else:
                 print('<td align=left> Yes </td>')
-        if len(sys.argv) == 1:
-            print("<td align=right style='{ background-color: yellow; }' ><a href='revoke_success.py?test_id=%(id)s'>Revoke</a></td>" %{ "id":attempt[5]})
+                if len(sys.argv) == 1:
+                    print("<td align=right style='{ background-color: yellow; }' ><a href='revoke_success.py?test_id=%(id)s'>Revoke</a></td>" %{ "id":attempt[5]})
 
         else:
             print('<td colspan=2>No</td>')
@@ -98,6 +116,77 @@ def ePortageTest(test_type_id, board_sn, test_name, revokes):
                     
     print('</div>')
     print('</div>')
+
+def board_info(info):
+    if info and len(info[0]) == 5:
+        location = info[0][0]
+        daq_chip_id = info[0][1]
+        trigger_chip_1_id = info[0][2]
+        trigger_chip_2_id = info[0][3]
+        info_com = info[0][4]
+    
+    else:
+       location, daq_chip_id, trigger_chip_1_id, trigger_chip_2_id, info_com = "None", "None", "None", "None", "None"
+ 
+    print('<div class="col-md-11 pt-2 px-4 mx-2 my-2">')
+    print('<table class="table table-bordered table-hover table-active">')
+    print('<tbody>')
+    print('<tr>')
+    print('<th colspan=3>Location</th>')
+    print('<th>DAQ Chip ID</th>')
+    print('<th>Trigger Chip 1 ID</th>')
+    print('<th>Trigger Chip 2 ID</th>')
+    print('</tr>')
+    print('<tr>')
+    print('<td colspan=3>%s</td>' % location)
+    if daq_chip_id != "0" and trigger_chip_1_id != "0" and trigger_chip_2_id != "0":
+        print('<td>%s</td>' % daq_chip_id)
+        print('<td>%s</td>' % trigger_chip_1_id)
+        print('<td>%s</td>' % trigger_chip_2_id)
+    else:
+        print('<td>None</td>')
+        print('<td>None</td>') 
+        print('<td>None</td>')
+        
+    print('</tr>')
+    print('<tr>')
+    print('<th colspan=10>Comments</th>')
+    print('</tr>')
+    print('<td colspan=10>%s</td>' % info_com)
+    print('</tr>')
+    print('</tbody>')
+    print('</table>')
+    print('</div>')
+
+def add_board_info(board_id, sn, location, daqid, trig1id, trig2id, info):
+    db = connect(1)
+    cur = db.cursor()
+
+    if not board_id:
+        try:
+            cur.execute('SELECT board_id FROM Board WHERE full_id = %s;' % sn)
+            rows = cur.fetchall()
+
+            if not rows:
+                home_page_list.add_module(sn)
+                cur.execute('SELECT board_id FROM Board WHERE full_id = %s;' % sn)
+                board_id = cur.fetchall()[0][0]
+            else:
+                board_id = rows[0][0]
+
+        except mysql.connector.Error as err:
+            print("CONNECTION ERROR")
+            print(err)
+
+    try:
+        cur.execute('INSERT INTO Board_Info (board_id, info_type, info, daq_chip_id, trigger_chip_1_id, trigger_chip_2_id, location) VALUES (%i, %i, "%s", "%s", "%s", "%s", "%s");' % (board_id, 0, info, daqid, trig1id, trig2id, location))
+
+        db.commit()
+        db.close()
+
+    except mysql.connector.Error as err:
+        print("CONNECTION ERROR")
+        print(err)
 
 def add_revoke(test_id):
     db = connect(0)
@@ -142,3 +231,20 @@ def revoke_success(test_id, comments):
     except mysql.connector.Error as err:
         print("CONNECTION ERROR")
         print(err)
+
+def get_test_types():
+    db = connect(0)
+    cur = db.cursor()
+
+    try:
+        cur.execute('SELECT name, test_type FROM Test_Type')
+
+        rows = cur.fetchall()
+        tests = [[r[0],r[1]] for r in rows]
+
+        return tests
+
+    except mysql.connector.Error as err:
+        print("CONNECTION ERROR")
+        print(err)
+

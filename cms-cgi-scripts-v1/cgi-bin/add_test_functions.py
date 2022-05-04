@@ -1,10 +1,24 @@
 #!/usr/bin/python3
-from connect import connect
+from connect import connect, connect_admin
 import mysql.connector
 import base
 import cgi, os
 import cgitb; cgitb.enable()
 import settings
+
+def verify_person(name):
+    db = connect(0)
+    cur = db.cursor()
+
+    cur.execute("SELECT person_id FROM People WHERE person_name = '%s'"%name)
+    people = cur.fetchone()
+
+    if not people:
+        print("Could not find tester")
+    
+    else:
+        print(people[0])
+        return people[0]
 
 def add_test(person_id, test_type, serial_num, success, comments):
     if success:
@@ -14,6 +28,9 @@ def add_test(person_id, test_type, serial_num, success, comments):
 
     db = connect(1)
     cur = db.cursor()
+
+    if type(person_id) == type(""):
+        person_id = verify_person(person_id)
 
     if serial_num:
         cur.execute("SELECT board_id FROM Board WHERE full_id = %(n)d" %{"n":serial_num})
@@ -26,24 +43,112 @@ def add_test(person_id, test_type, serial_num, success, comments):
         cur.execute(sql,items)
         test_id = cur.lastrowid
 
+        print(test_id)
+
         db.commit()
 
-        return test_id        
     else:
         print('<div class ="row">')
-    print('<div class = "col-md-3 pt-4 ps-4 mx-2 my-2">')
-    print('<h3> Attempt Failed. Please Specify Serial Number </h3>')
-    print('</div>')
-    print('</div>')
+        print('<div class = "col-md-3 pt-4 ps-4 mx-2 my-2">')
+        print('<h3> Attempt Failed. Please Specify Testers Name </h3>')
+        print('</div>')
+        print('</div>')
 
     add_test_template(serial_num)
 
+def add_tester(person_name, passwd):
+    try:
+        db = connect_admin(passwd)
+    except Exception as e:
+        print(e)
+        print("Administrative access denied")
+        return
+    cur = db.cursor()
+
+    if person_name:
+        sql="INSERT INTO People (person_name) VALUES ('%s')"%person_name
+        print(sql)
+        # This is safer because Python takes care of escaping any illegal/invalid text
+        items=(person_name)
+        cur.execute(sql)
+
+        print("%s"%(person_name))
+
+        db.commit()
+
+    else:
+        print('<div class ="row">')
+        print('<div class = "col-md-3 pt-4 ps-4 mx-2 my-2">')
+        print('<h3> Attempt Failed. Please Specify Serial Number </h3>')
+        print('</div>')
+        print('</div>')
+
+def add_new_test(test_name, required, test_desc_short, test_desc_long, passwd):
+    try:
+        db = connect_admin(passwd)
+    except Exception:
+        print("Administrative access denied")
+    cur = db.cursor()
+
+    if test_name and required and test_desc_short and test_desc_long:
+        sql="INSERT INTO Test_Type (name, required, desc_short, desc_long) VALUES ('%s', '%s', '%s', '%s')"%(test_name, required, test_desc_short, test_desc_long)
+        print(sql)
+        # This is safer because Python takes care of escaping any illegal/invalid text
+        cur.execute(sql)
+
+        db.commit()
+
+    else:
+        print('<div class ="row">')
+        print('<div class = "col-md-3 pt-4 ps-4 mx-2 my-2">')
+        print('<h3> Attempt Failed. Please Specify Serial Number </h3>')
+        print('</div>')
+        print('</div>')
+
+def add_init_tests(serial_num, tester, test_results, comments):
+    db = connect(1)
+    cur = db.cursor()
+
+    if serial_num and tester:
+        cur.execute("SELECT board_id FROM Board WHERE full_id = %(n)d" %{"n":serial_num})
+        row = cur.fetchone()
+        card_id = row[0]
+
+        cur.execute("SELECT person_id FROM People WHERE person_name = '%s'" % (tester))
+        
+        row = cur.fetchone()
+        person_id = row[0]
+        
+        test_ids = []
+
+        for x in test_results.items():
+            cur.execute("SELECT test_type FROM Test_Type WHERE name = '%s'" % (x[0]))
+            row = cur.fetchone()
+            test_type_id = row[0]
+
+            sql="INSERT INTO Test (person_id, test_type_id, board_id, successful, comments, day) VALUES (%s,%s,%s,%s,%s,NOW())"
+            items=(person_id,test_type_id,card_id,x[1],comments)
+            cur.execute(sql,items)
+            test_ids.append(cur.lastrowid)
+
+            db.commit()
+
+        return test_ids       
+    else:
+        print('<div class ="row">')
+        print('<div class = "col-md-3 pt-4 ps-4 mx-2 my-2">')
+        print('<h3> Attempt Failed. Please Specify Serial Number and Tester </h3>')
+        print('</div>')
+        print('</div>')
+
+    #add_test_template(serial_num)
 
 def add_test_attachment(test_id, afile, desc, comments):
+    print("Adding attachment...")
     if afile.filename:
         db = connect(1)
         cur = db.cursor()
-        originalname = os.path.basename(afile.filename)
+        originalname = os.path.basename(afile.name)
 
         f = afile.file.read().decode('utf-8')
 
@@ -58,9 +163,7 @@ def add_test_attachment(test_id, afile, desc, comments):
         #open(ofn,'wb').write(afile.file.read())
         print('<div> The file %s was uploaded successfully. </div>' % (originalname))
     
-def add_test_template(serial_number,suggested_test):
-    if not suggested_test:
-        suggested_test=0
+def add_test_template(serial_number, suggested_test):
     db = connect(0)
     cur = db.cursor()
 
@@ -90,10 +193,17 @@ def add_test_template(serial_number,suggested_test):
     print('<div class="col-md-3 pt-2 ps-5 mx-2 my-2">')
     print('<label>Test Type')
     print('<select class="form-control" name="test_type">')
-    for test_type in cur:
-        if test_type[0] == suggested_test:
-            print('<option value="%s" selected>%s</option>' % (test_type[0], test_type[1]))
-        else:
+    if suggested_test:
+        for test_type in cur:
+            if test_type[0] == suggested_test:
+                print('<option value="%s">%s</option>' % (test_type[0], test_type[1]))
+                break
+        for test_type in cur:
+            if test_type[0] == suggested_test:
+                continue
+            print('<option value="%s">%s</option>' % (test_type[0], test_type[1]))
+    else:
+        for test_type in cur:
             print('<option value="%s">%s</option>' % (test_type[0], test_type[1]))
     print('</select>')
     print('</label>')
@@ -156,5 +266,83 @@ def add_test_template(serial_number,suggested_test):
     print('</div>')
 
     #print('<br><br><br><br>')
+
+    print('</form>')
+
+def add_new_test_template():
+    print('<form action="add_new_test_template2.py" method="post" enctype="multipart/form-data">')
+    print('<div class="row">')
+    print('<div class="col-md-12 pt-4 ps-5 mx-2 my-2">')
+    print('<h2>Add New Test Template</h2>')
+    print('</div>')
+    print('</div>')
+
+    print('<div class="row">')
+    print('<div class="col-md-6 pt-4 ps-5 mx-2 my-2">')
+    print('<label>Test Name</label><p>')
+    print('<INPUT type="text" class="form-control" name="test_name">')
+    print('</div>')
+
+    print('<div class="col-md-3 pt-4 ps-5 mx-2 my-2">')
+    print('<label>Required</label>')
+    print('<INPUT type="checkbox" class="form-check-input" name="required" value="1">')
+    print('</div>')
+    print('</div>')
+
+    print('<div class="row">')
+    print('<div class="col-md-11 pt-2 ps-5 mx-2 my-2">')
+    print('<label>Short Test Description</label><p>')
+    print('<textarea rows = "2" cols="25" class="form-control" name="test_desc_short"></textarea>')
+    print('</div>')
+    print('</div>')
+    
+    print('<div class="row">')
+    print('<div class="col-md-11 pt-2 ps-5 mx-2 my-2">')
+    print('<label>Long Test Description</label><p>')
+    print('<textarea rows = "5" cols="50" class="form-control" name="test_desc_long"></textarea>')
+    print('</div>')
+    print('</div>')
+ 
+    print("<div class='row'>")
+    print('<div class = "col-md-3 pt-2 ps-5 mx-2 my-2">')
+    print("<label for='password'>Admin Password</label>")
+    print("<input type='password' name='password'>")
+    print("</div>")
+    print("</div>")
+
+    print('<div class="row">')
+    print('<div class="col-md-6 pt-2 ps-5 mx-2 my-2">')
+    print('<input type="submit" class="btn btn-dark" value="Submit">')
+    print('</div>')
+    print('</div>')
+
+    print('</form>')
+
+def add_tester_template():
+    print('<form action="add_tester2.py" method="post" enctype="multipart/form-data">')
+    print('<div class="row">')
+    print('<div class="col-md-12 pt-4 ps-5 mx-2 my-2">')
+    print('<h2>Add New Tester</h2>')
+    print('</div>')
+    print('</div>')
+
+    print('<div class="row">')
+    print('<div class="col-md-6 pt-4 ps-5 mx-2 my-2">')
+    print('<label>Tester Name</label><p>')
+    print('<INPUT type="text" class="form-control" name="person_name">')
+    print('</div>')
+
+    print("<div class='row'>")
+    print('<div class = "col-md-3 pt-2 ps-5 mx-2 my-2">')
+    print("<label for='password'>Admin Password</label>")
+    print("<input type='password' name='password'>")
+    print("</div>")
+    print("</div>")
+    
+    print("<div class='row'>")
+    print('<div class="col-md-6 pt-2 ps-5 mx-2 my-2">')
+    print('<input type="submit" class="btn btn-dark" value="Submit">')
+    print('</div>')
+    print('</div>')
 
     print('</form>')

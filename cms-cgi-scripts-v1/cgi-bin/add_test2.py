@@ -4,8 +4,11 @@ import cgi
 import base
 import add_test_functions
 import os
+import connect
 
-print("Location: http://cmslab1.spa.umn.edu/~cros0400/cgi-bin/summary.py\n\n")
+base_url = connect.get_base_url()
+
+print("Location: %s/summary.py\n\n" % base_url)
 #cgi header
 print("Content-type: text/html\n")
 
@@ -24,9 +27,9 @@ base.top()
 
 test_id=add_test_functions.add_test(person_id, test_type, serial_num, success, comments)
 
-for itest in (1,2,3):
+for itest in [1]:
     afile = form['attach%d'%(itest)]
-    if (afile.filename):
+    if (afile.name):
         adesc= form.getvalue("attachdesc%d"%(itest))
         if adesc:
             adesc = cgi.escape(adesc)
@@ -34,5 +37,13 @@ for itest in (1,2,3):
         if acomment:
             acomment = cgi.escape(acomment)
         add_test_functions.add_test_attachment(test_id,afile,adesc,acomment)
+    elif (afile.filename):
+        adesc= form.getvalue("attachdesc%d"%(itest))
+        if adesc:
+            adesc = cgi.escape(adesc)
+        acomment= form.getvalue("attachcomment%d"%(itest))
+        if acomment:
+            acomment = cgi.escape(acomment)
+        add_test_functions.add_test_attachment_gui(test_id,afile,adesc,acomment)
     
 base.bottom()

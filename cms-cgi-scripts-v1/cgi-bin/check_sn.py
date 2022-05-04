@@ -1,14 +1,16 @@
 #!/usr/bin/python3
 
-import cgi
-import base
-import home_page_list
-import connect
-import os
+from connect import connect
+import sys
+import mysql.connector
 
 base_url = connect.get_base_url()
 
-print("Location: %s/summary.py\n\n" % base_url)
+print("Location: %s/summary.py\n\n"%(base_url))
+
+import os
+
+print(os.environ.get("QUERY_STRING", "No Query String in url"))
 
 #cgi header
 print("Content-type: text/html\n")
@@ -21,6 +23,7 @@ form = cgi.FieldStorage()
 if form.getvalue('serial_number'):
     sn = cgi.escape(form.getvalue('serial_number'))
 
+    #print '<div> Serial Number = %(s)s , )s </div>' %{'s': sn} 
     home_page_list.add_module(sn)
     
     print('<div class="row">')

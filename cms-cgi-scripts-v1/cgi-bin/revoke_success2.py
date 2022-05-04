@@ -4,10 +4,13 @@ import cgi
 import cgitb
 import base
 import module_functions
+import connect
 
 cgitb.enable()
 
-print("Location: http://cmslab1.spa.umn.edu/~cros0400/cgi-bin/summary.py\n\n")
+base_url = connect.get_base_url()
+
+print("Location: %s/summary.py\n\n"%(base_url))
 #cgi header
 print("Content-type: text/html\n")
 

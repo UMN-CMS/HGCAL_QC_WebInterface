@@ -2,6 +2,8 @@
 
 import re
 import sys
+import connect
+
 def header(title=''):
     print('<!doctype html>')
     print('<html lang="en">')
@@ -27,7 +29,7 @@ def top():
         ''')
     if len(sys.argv) == 1:
         print('''           <a href="home_page.py" class="d-flex text-decoration-none ">
-            <h1 class="text-dark">HGCAL Wagon Test</h1>
+            <h1 class="text-dark">HGCAL Board Test</h1>
         </a>
         ''')
         print('''        <hr style="margin-top:-0.5em">
@@ -42,7 +44,7 @@ def top():
     ''')
     else:
         print('''           <a href="index.html" class="d-flex text-decoration-none ">
-            <h1 class="text-dark">HGCAL Wagon Test</h1>
+            <h1 class="text-dark">HGCAL Board Test</h1>
         </a>
         ''')
         
@@ -59,7 +61,7 @@ def top():
     if len(sys.argv) == 1:
         print('''<nav id="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
   <div class="container-fluid">
-    <a class="navbar-brand" href="home_page.py">Wagon Test</a>
+    <a class="navbar-brand" href="home_page.py">%s</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -72,24 +74,42 @@ def top():
           <a class="nav-link" href="testers.py">Testers</a>
         </li>
         <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Board Check
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <li><a class="dropdown-item" href="board_checkout.py">Board Checkout</a></li>
+            <li><a class="dropdown-item" href="board_checkin.py">Board Checkin</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             Summary
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <li><a class="dropdown-item" href="summary.py">Wagon West</a></li>
-            <li><a class="dropdown-item" href="summary.py">Wagon East</a></li>
+            <li><a class="dropdown-item" href="summary.py">Summary</a></li>
+            <li><a class="dropdown-item" href="summary.py">Summary</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Admin
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <li><a class="dropdown-item" href="add_tester.py">Add New Tester</a></li>
+            <li><a class="dropdown-item" href="add_new_test_template.py">Add New Test Template</a></li>
           </ul>
         </li>
       </ul>
     </div>
   </div>
 </nav>
-''')
+'''%connect.get_db_name())
 
     else:
         print('''<nav id="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
   <div class="container-fluid">
-    <a class="navbar-brand" href="index.html">Wagon Test</a>
+    <a class="navbar-brand" href="index.html">%s</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -106,15 +126,24 @@ def top():
             Summary
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-            <li><a class="dropdown-item" href="summary.html">Wagon West</a></li>
-            <li><a class="dropdown-item" href="summary.html">Wagon East</a></li>
+            <li><a class="dropdown-item" href="summary.html">Summary</a></li>
+            <li><a class="dropdown-item" href="summary.html">Summary</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Admin
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <li><a class="dropdown-item" href="add_tester.html">Add New Tester</a></li>
+            <li><a class="dropdown-item" href="add_new_test_template.html">Add New Test Template</a></li>
           </ul>
         </li>
       </ul>
     </div>
   </div>
 </nav>
-''')
+'''%connect.get_db_name())
 
 def bottom():
 
@@ -127,12 +156,10 @@ def bottom():
     <div class="row">
       <!--Grid column-->
       <div class="col-lg-6 col-md-12 mb-4 mb-md-0">
-        <h5 class="text-uppercase">Footer Content</h5>
+        <h5 class="text-uppercase">HGCAL Board Test</h5>
 
         <p>
-          Lorem ipsum dolor sit amet consectetur, adipisicing elit. Iste atque ea quis
-          molestias. Fugiat pariatur maxime quis culpa corporis vitae repudiandae aliquam
-          voluptatem veniam, est atque cumque eum delectus sint!
+            Maintained by the UMN CMS Group. For inquiries or to report a bug, contact Bryan Crossman at cros0400@umn.edu
         </p>
       </div>
 
@@ -153,10 +180,10 @@ def bottom():
             <span class="text-light">Summary</a>
             <ul class="list">
                 <li>
-                    <a href="summary_east.py" class="text-light text-decoration-none">\tWagon East</a>
+                    <a href="summary_east.py" class="text-light text-decoration-none">\tSummary</a>
                 </li>
                 <li>
-                    <a href="summary_west.py" class="text-light text-decoration-none">\tWagon West</a>
+                    <a href="summary_west.py" class="text-light text-decoration-none">\tSummary</a>
                 </li>
             </ul>
           </li>
@@ -177,12 +204,10 @@ def bottom():
     <div class="row">
       <!--Grid column-->
       <div class="col-lg-6 col-md-12 mb-4 mb-md-0">
-        <h5 class="text-uppercase">Footer Content</h5>
+        <h5 class="text-uppercase">HGCAL Board Test</h5>
 
         <p>
-          Lorem ipsum dolor sit amet consectetur, adipisicing elit. Iste atque ea quis
-          molestias. Fugiat pariatur maxime quis culpa corporis vitae repudiandae aliquam
-          voluptatem veniam, est atque cumque eum delectus sint!
+            Maintained by the UMN CMS Group. For inquiries or to report a bug, contact Bryan Crossman at cros0400@umn.edu
         </p>
       </div>
 
@@ -203,10 +228,10 @@ def bottom():
             <span class="text-light">Summary</a>
             <ul class="list">
                 <li>
-                    <a href="summary_east.html" class="text-light text-decoration-none">\tWagon East</a>
+                    <a href="summary_east.html" class="text-light text-decoration-none">\tSummary</a>
                 </li>
                 <li>
-                    <a href="summary_west.html" class="text-light text-decoration-none">\tWagon West</a>
+                    <a href="summary_west.html" class="text-light text-decoration-none">\tSummary</a>
                 </li>
             </ul>
           </li>

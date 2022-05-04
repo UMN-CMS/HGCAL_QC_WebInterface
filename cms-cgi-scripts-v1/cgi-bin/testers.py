@@ -24,7 +24,13 @@ base.top()
 people = get_testers()
 
 print('<div class="row">')
-print('<div class="col-md-5 ps-4 pt-4 mx-2 my-2"><h2>Tester Summary</h2></div>')
+print('<div class="col-md-8 ps-4 pt-4 mx-2 my-2"><h2>Tester Summary</h2></div>')
+print('<div class="col-md-3 pt-2 ps-2">')
+print('<br>')
+print('<a href="password_entry.py?url=add_tester.py">')
+print('<button type="button" class="btn btn-dark text-light">Add New Tester</button>')
+print('</a>')
+print('</div>')
 print('</div>')
 
 for tester in people:

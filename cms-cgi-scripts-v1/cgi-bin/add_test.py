@@ -17,6 +17,6 @@ suggested_test = base.cleanCGInumber(form.getvalue('suggested'))
 base.header(title='Add Test')
 base.top()
 
-add_test_functions.add_test_template(serial_num,suggested_test)
+add_test_functions.add_test_template(serial_num, suggested_test)
 
 base.bottom()
