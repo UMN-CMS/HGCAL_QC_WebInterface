@@ -1,0 +1,125 @@
+#!/usr/bin/python3
+
+#import makePlots as mp
+
+def plotheader():
+    print('''
+    <div style="padding-top:5px; padding-left:15px; padding-bottom:5px" class="bg-secondary">       
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="SelectTest" data-bs-toggle="dropdown" aria-expanded="false">
+            Select Test
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="SelectTest">
+            <a class="dropdown-item" href="./testdata.py"><li>Total Tests</li></a>
+            <a class="dropdown-item" href="./ResistanceMeasurementData.py"><li>Resistance Measurement</li></a>
+            <a class="dropdown-item" href="./IDResistorData.py"><li>ID Resistor</li></a>
+            <a class="dropdown-item" href="./I2CData.py"><li>I2C Read/Write</li></a>
+            <a class="dropdown-item" href="./BitErrorRateData.py"><li>Bit Error Rate</li></a>
+            <a class="dropdown-item" href="./CompareTesters.py"><li>Compare Testers</li></a>
+        </ul>
+
+        <button class="dropdown-toggle btn btn-secondary" type="button" id="SelectBoards" data-bs-toggle="dropdown" aria-expanded="false">
+            Select Board
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="SelectBoards">
+            <li><a class="dropdown-item" href="#"><div class="form-check">
+                <input class="form-check-input" type="checkbox" value="">WW20A1</input>
+            </div></a></li>
+            <li><a class="dropdown-item" href="#"><div class="form-check">
+                <input class="form-check-input" type="checkbox" value="">WW10A1</input>
+            </div></a></li>
+            <li><a class="dropdown-item" href="#"><div class="form-check">
+                <input class="form-check-input" type="checkbox" value="">WE20B1</input>
+            </div></a></li>
+            <li><a class="dropdown-item" href="#"><div class="form-check">
+                <input class="form-check-input" type="checkbox" value="">WE20A1</input>
+            </div></a></li>
+            <li><a class="dropdown-item" href="#"><div class="form-check">
+                <input class="form-check-input" type="checkbox" value="">WE10A1</input>
+            </div></a></li>
+            <li><a class="dropdown-item" href="#"><div class="form-check">
+                <input class="form-check-input" type="checkbox" value="">WW30A3</input>
+            </div></a></li>
+            <li><a class="dropdown-item" href="#"><div class="form-check">
+                <input class="form-check-input" type="checkbox" value="">599999</input>
+            </div></a></li>
+        </ul>
+        <button class="dropdown-toggle btn btn-secondary" type="button" id="SelectTesters" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+            Select Tester
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="SelectTesters">
+            <li><a class="dropdown-item" href="#"><div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="Rand">
+                <label for="Rand">Rand</label>
+            </div></a></li>
+            <li><a class="dropdown-item" href="#"><div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="Garrett">
+                <label for="Garrett">Garrett</label>
+            </div></a></li>
+            <li><a class="dropdown-item" href="#"><div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="Bryan">
+                <label for="Bryan">Bryan</label>
+            </div></a></li>
+            <li><a class="dropdown-item" href="#"><div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="Jocelyn">
+                <label for="Jocelyn">Jocelyn</label>
+            </div></a></li>
+        </ul>
+        <button class="dropdown-toggle btn btn-secondary" type="button" id="SearchSN" data-bs-toggle="dropdown" aria-expanded="false">
+            Select SN
+        </button>
+        <div class="dropdown-menu" aria-labelledby="SearchSN">
+            <input type="text" class="form-control" list="datalistOptions" placeholder="Search Serial Number" onchange="GetSN(this)">
+            <datalist id="datalistOptions">
+                <option value="">
+                <option value="Two">
+                <option value="Three">
+                <option value="Four">
+            </datalist>
+        </div>
+    </div>
+    ''')
+
+def plotscript():
+    print('''<head>
+    <script>
+        var Test = None;
+        
+        var Data = None;
+        function Data(choice)
+        {
+            Data = choice;
+        }
+
+        var Board = None;
+        function Board(choice)
+        {
+            Board=choice;
+        }
+
+        var BitError = None;
+        function BitError(choice)
+        {
+            BitError = choice; 
+        }
+
+        var Tester = None;
+        function Tester(choice)
+        {
+            Tester = choice;
+        }
+
+        var SN = None;
+        function GetSN(choice)
+        {
+            SN = choice;
+            window.location.reload()
+        }
+        
+        function makePlot()
+        {
+            mp.makePlot(Test, Data, Board, SN, BitError, Tester)
+        }
+
+    </script>
+    </head>
+    ''')
