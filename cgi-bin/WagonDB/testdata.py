@@ -5,7 +5,8 @@ import cgitb
 import base
 import module_functions
 import sys
-import makePlots as mp
+import plotheader
+#import makePlots as mp
 #makePlot arugments:(Test, Data, Board, SN, BitError, Tester)
 
 cgitb.enable()
@@ -19,45 +20,33 @@ else:
 
 base.header(title='Total Tests Over Time')
 base.top()
+plotheader.plotscript()
 
 print('<div class="row">')
-print('''
-<div>       
-    <button class="btn btn-secondary dropdown-toggle" type="button" id="SelectTest" data-bs-toggle="dropdown" aria-expanded="false">
-        Test
-    </button>
-    <ul class="dropdown-menu" aria-labelledby="SelectTest">
-        <li><a class="dropdown-item" href="./ResistanceMeasurementData.py"><button>Resistance Measurement</button></a></li>
-        <li><a class="dropdown-item" href="#">ID Resistor</a></li>
-        <li><a class="dropdown-item" href="#">I2C Read/Write</a></li>
-        <li><a class="dropdown-item" href="#">Bit Error Rate</a></li>
-    </ul>
-
-    <button class="multiselect dropdown-toggle btn btn-secondary" type="button" id="SelectBoards" data-bs-toggle="dropdown" aria-expanded="false">
-        <span class="multiselect-selected-text">
-            Select Board
-        </span>
-    </button>
-    <ul class="dropdown-menu" aria-labelledby="SelectBoards">
-        <li><a class="dropdown-item" href="#">WW20A1</a></li>
-        <li><a class="dropdown-item" href="#">WW10A1</a></li>
-        <li><a class="dropdown-item" href="#">WE10A1</a></li>
-        <li><a class="dropdown-item" href="#">WE20B1</a></li>
-    </ul>
-    <button class="btn btn-secondary dropdown-toggle" type="button" id="SelectTest" data-bs-toggle="dropdown" aria-expanded="false">
-        Tester
-    </button>
-    <ul class="dropdown-menu" aria-labelledby="SelectTester">
-        <li><a class="dropdown-item" href="#">Rand</a></li>
-        <li><a class="dropdown-item" href="#">Bryan</a></li>
-    </ul>
-</div>
-''')
+plotheader.plotheader()
 print('''
 <div>
-    <img src="../../static/files/TestsOverTime.png">
+<div style="float:left; padding-right:5px;">
+    <img src="../../static/files/TestsOverTime.png?ver=1.3">
 </div>
-
+<div style="float:leftt">
+<table>
+    <th style="float:leftt; padding-top:5px"> Select Outcome </th>
+    <tr><td style="padding-bottom:3px">
+        <input class="form-check-input" type="checkbox" value="" checked="True">
+        <label class="form-check-label">
+            Successful
+        </label>
+    </td></tr>
+    <tr><td style="padding-bottom:3px">
+        <input class="form-check-input" type="checkbox" value="" checked="True">
+        <label class="form-check-label">
+            Unsuccessful
+        </label>
+    </td></tr>
+</table>
+</div>
+</div>
 
 ''')
 print('</div>')

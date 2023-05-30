@@ -18,7 +18,7 @@ else:
     #cgi header
     print("Content-type: text/html\n")
 
-base.header(title='I2C Read/Write Data')
+base.header(title='Compare Testers')
 base.top()
 plotheader.plotscript()
 
@@ -26,31 +26,12 @@ print('<div class="row">')
 plotheader.plotheader()
 print('''
 <div>
-<div style="float:left; padding-right:10px;">
-    <img src="../../static/files/I2C_ReadWrite.png">
+<div style="float:left; padding-right:5px">
+    <img src="../../static/files/CompareTesters.png?ver=1.3">
 </div>
-<div>
-<div style="float:leftt; padding-top:5px;">
+<div style="float:leftt">
 <table>
-    <th> Select Module </th>
-    <tr><td style="padding-bottom:3px">
-        <input class="form-check-input" type="checkbox" value="" checked=True>
-        <label class="form-check-label">
-            Module 1
-        </label>
-    </td></tr>
-    <tr><td style="padding-bottom:3px">
-        <input class="form-check-input" type="checkbox" value="" checked=True>
-        <label class="form-check-label">
-            Module 2
-        </label>
-    </td></tr>
-</table>
-</div>
-</div>
-<div>
-<table>
-    <th> Select Outcome </th>
+    <th style="float:leftt; padding-top:5px"> Select Outcome </th>
     <tr><td style="padding-bottom:3px">
         <input class="form-check-input" type="checkbox" value="" checked=True>
         <label class="form-check-label">
@@ -65,6 +46,8 @@ print('''
     </td></tr>
 </table>
 </div>
+</div>
+
 ''')
 print('</div>')
 

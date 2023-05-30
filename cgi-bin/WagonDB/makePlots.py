@@ -11,20 +11,18 @@ from matplotlib.axis import Axis
 
 cgitb.enable()
 
-def makePlot(Test, Data, Board, SN, BitError, Tester):
+def makePlot(Test, Data, Board, SN, BitError, Tester, Outcome):
     TestData = pd.read_csv('./static/files/Test.csv', parse_dates=['Time'])
     BoardData = pd.read_csv('./static/files/Board.csv')
     PeopleData = pd.read_csv('./static/files/People.csv')
     name = None
 
     if SN is not None:
-        board_temp = BoardData.query('`Full ID` == @SN')['Board ID']
-        Board_ID = board_temp.values.tolist()
+        Board_ID = BoardData.query('`Full ID` == @SN')['Board ID'].values.tolist()
         if Tester is not None:
-            person_temp = PeopleData.query('`Person Name` == @Tester')['Person ID']
-            person_id = person_temp.values.tolist()
-            tests_temp = TestData.query('`Board ID` == @Board_ID & `Person ID` == @person_id')['Test ID']
-            for i in Tester:  
+            person_id = PeopleData.query('`Person Name` == @Tester')['Person ID'].values.tolist()
+            tests_temp = TestData.query('`Board ID` == @Board_ID & `Person ID` == @person_id')
+            for i in Tester:
                 if i is Tester[0]:
                     name = ' for ' + i
                 else:
@@ -32,7 +30,7 @@ def makePlot(Test, Data, Board, SN, BitError, Tester):
                 if i is not Tester[-1]:
                     name += ', '
         else:
-            tests_temp = TestData.query('`Board ID` == @Board_ID')['Test ID']
+            tests_temp = TestData.query('`Board ID` == @Board_ID')
         for i in SN:
             if name is not None:
                 if i is SN[0]:
@@ -49,12 +47,10 @@ def makePlot(Test, Data, Board, SN, BitError, Tester):
                 if i is not SN[-1]:
                     name += ', '
     elif Board is not None:
-        board_temp = BoardData.query('`Type ID` == @Board')['Board ID']
-        board_ids = board_temp.values.tolist()
+        board_ids = BoardData.query('`Type ID` == @Board')['Board ID'].values.tolist()
         if Tester is not None:
-            person_temp = PeopleData.query('`Person Name` == @Tester')['Person ID']
-            person_id = person_temp.values.tolist()
-            tests_temp = TestData.query('`Board ID` == @board_ids & `Person ID` == @person_id')['Test ID']
+            person_id = PeopleData.query('`Person Name` == @Tester')['Person ID'].values.tolist()
+            tests_temp = TestData.query('`Board ID` == @board_ids & `Person ID` == @person_id')
             for i in Tester:  
                 if i is Tester[0]:
                     name = ' for ' + i
@@ -63,7 +59,7 @@ def makePlot(Test, Data, Board, SN, BitError, Tester):
                 if i is not Tester[-1]:
                     name += ', '
         else:
-            tests_temp = TestData.query('`Board ID` == @board_ids')['Test ID']
+            tests_temp = TestData.query('`Board ID` == @board_ids')
 
         for i in Board:
             if name is not None:
@@ -81,12 +77,11 @@ def makePlot(Test, Data, Board, SN, BitError, Tester):
                 if i is not Board[-1]:
                     name += ', '
     else:
-        tests_temp = TestData.iloc[:, 0]
+        tests_temp = TestData
         
     if Board is None and SN is None and Tester is not None:
-        person_temp = PeopleData.query('`Person Name` == @Tester')['Person ID']
-        person_id = person_temp.values.tolist()
-        tests_temp = TestData.query('`Person ID` == @person_id')['Test ID']
+        person_id = PeopleData.query('`Person Name` == @Tester')['Person ID'].values.tolist()
+        tests_temp = TestData.query('`Person ID` == @person_id')
         for i in Tester:
             if i is Tester[0]:
                 name = ' for ' + i
@@ -95,7 +90,9 @@ def makePlot(Test, Data, Board, SN, BitError, Tester):
             if i is not Tester[-1]:
                 name += ', '
 
-    tests = tests_temp.values.tolist()
+    total_tests = tests_temp.iloc[:,0].values.tolist()
+    successful_tests = tests_temp.query('Successful == 1')['Test ID'].values.tolist()
+    unsuccessful_tests = tests_temp.query('Successful == 0')['Test ID'].values.tolist()
 
     if name is not None and Test is not None:
         title = Test + name
@@ -103,39 +100,59 @@ def makePlot(Test, Data, Board, SN, BitError, Tester):
         title = Test
 
     if Test is None:
-        dates = TestData.query('`Test ID` == @tests')['Time']
-        successful_dates = TestData.query('`Test ID` == @tests & Successful == 1')['Time']
-        time_series_data = []
-        time_series_data_successful = []
-        first = datetime.datetime(2023, 3, 1, 0, 0, 0)
+        fig, ax = plt.subplots()
+        if Outcome[0] == True:
+            first = datetime.datetime(2023, 2, 28, 23, 59, 59)
+            dates = TestData.query('`Test ID` == @total_tests')['Time']
+            time_series_data = []
+            while (first <= datetime.datetime.now()+datetime.timedelta(days=1)):
+                i = 0
+                for d in dates:
+                    if d > first:
+                        break
+                    else:
+                        i += 1
+                time_series_data.append([first,i])
+                first += datetime.timedelta(days=1)
+            x1,y1 = zip(*time_series_data)
+            plt.plot(x1, y1, label = 'Total')
+        if Outcome[1] == True:
+            first = datetime.datetime(2023, 2, 28, 23, 59, 59)
+            successful_dates = TestData.query('`Test ID` == @successful_tests')['Time']
+            time_series_data_successful = []
+            while (first <= datetime.datetime.now()+datetime.timedelta(days=1)):
+                j = 0
+                for d in successful_dates:
+                    if d > first:
+                        break
+                    else:
+                        j += 1
+                time_series_data_successful.append([first,j])
+                first += datetime.timedelta(days=1)
+            x2,y2 = zip(*time_series_data_successful)
+            plt.plot(x2, y2, label = 'Successful')
+        if Outcome[2] == True:
+            first = datetime.datetime(2023, 2, 28, 23, 59, 59)
+            unsuccessful_dates = TestData.query('`Test ID` == @unsuccessful_tests')['Time']  
+            time_series_data_unsuccessful = []
+            while (first <= datetime.datetime.now()+datetime.timedelta(days=1)):
+                k = 0
+                for d in unsuccessful_dates:
+                    if d > first:
+                        break
+                    else:
+                        k += 1
+                time_series_data_unsuccessful.append([first,k])
+                first += datetime.timedelta(days=1)
+            x3,y3 = zip(*time_series_data_unsuccessful)
+            plt.plot(x3, y3, label = 'Unsuccessful')
 
-        while (first <= datetime.datetime.now()):
-            i = 0
-            j = 0
-            for d in dates:
-                if d > first:
-                    break
-                else:
-                    i += 1
-            for d in successful_dates:
-                if d > first:
-                    break
-                else:
-                    j += 1
-            time_series_data.append([first,i])
-            time_series_data_successful.append([first,j])
-            first += datetime.timedelta(days=1)
-        x1,y1 = zip(*time_series_data)
-        x2,y2 = zip(*time_series_data_successful)
         
         if name is not None:
             title = 'Total Tests Over Time' + name
         else:
             title = 'Total Tests Over Time'
 
-        fig, ax = plt.subplots()
-        plt.plot(x1, y1, label = 'Total')
-        plt.plot(x2, y2, label = 'Successful')
         plt.title(title)
         plt.xlabel('Date')
         plt.ylabel('Number of Tests')
@@ -143,14 +160,32 @@ def makePlot(Test, Data, Board, SN, BitError, Tester):
         Axis.set_major_locator(ax.xaxis,mdates.MonthLocator(interval=1))
         plt.gcf().autofmt_xdate()
         plt.savefig('../../static/files/TestsOverTime.png')
-        plt.clf()
 
+    if Test == 'Compare Testers':
+        for i in Tester:
+            person_id = PeopleData.query('`Person Name` == @i')['Person ID'].values.tolist()
+            plot_data = TestData.query('`Person ID` == @person_id')['Test ID'].values.tolist()
+            plt.bar(i, len(plot_data))
+        plt.title(title)
+        plt.xlabel('Tester Name')
+        plt.ylabel('Number of Tests Performed')
+        plt.savefig('../../static/files/CompareTesters.png')
 
     if Test == 'Resistance Measurement':
         df = pd.read_csv('./static/files/Resistance_Measurement.csv')
         w = 0.25
         temp_max = 0
-        useData = df.query('`Test ID` == @tests')
+
+        if Outcome[1] == True:
+            if Outcome[2] == True:
+                useData = df.query('`Test ID` == @total_tests')
+            else: 
+                useData = df.query('`Test ID` == @successful_tests')
+        else:
+            if Outcome[2] == True:
+                useData = df.query('`Test ID` == @unsuccessful_tests')
+            else:
+                useData = df.query('`Test ID` == @total_tests')
 
         for i in range(len(Data)):
             if Data[i] == True:
@@ -161,13 +196,23 @@ def makePlot(Test, Data, Board, SN, BitError, Tester):
         plt.title(title)
         plt.legend(fontsize='xx-small')
         plt.xlabel('Resistance')
-        plt.xlim([0, temp_max*1.5])
+        plt.xlim([0, temp_max*1.8])
         plt.ylabel('Number of Boards')
         plt.savefig('../../static/files/Resistance_Measurement.png')
 
     if Test == 'ID Resistor':
         df = pd.read_csv('./static/files/ID_Resistor_Test_Data.csv')
-        useData = df.query('`Test ID` == @tests')
+
+        if Outcome[1] == True:
+            if Outcome[2] == True:
+                useData = df.query('`Test ID` == @total_tests')
+            else: 
+                useData = df.query('`Test ID` == @successful_tests')
+        else:
+            if Outcome[2] == True:
+                useData = df.query('`Test ID` == @unsuccessful_tests')
+            else:
+                useData = df.query('`Test ID` == @total_tests')
 
         plt.hist(useData.iloc[:,1])
         plt.title(title)
@@ -178,7 +223,17 @@ def makePlot(Test, Data, Board, SN, BitError, Tester):
     if Test == 'I2C Read/Write':
         df = pd.read_csv('./static/files/I2C_ReadWrite_Test_Data.csv')
         w = 1000
-        useData = df.query('`Test ID` == @tests')
+
+        if Outcome[1] == True:
+            if Outcome[2] == True:
+                useData = df.query('`Test ID` == @total_tests')
+            else: 
+                useData = df.query('`Test ID` == @successful_tests')
+        else:
+            if Outcome[2] == True:
+                useData = df.query('`Test ID` == @unsuccessful_tests')
+            else:
+                useData = df.query('`Test ID` == @total_tests')
 
         for i in range(len(Data)):
             if Data[i] == True:
@@ -193,7 +248,17 @@ def makePlot(Test, Data, Board, SN, BitError, Tester):
 
     if Test == 'Bit Error Rate':
         notData = pd.read_csv('./static/files/Bit_Error_Rate_Test_Data.csv')
-        df = notData.query('`Test ID` == @tests')
+
+        if Outcome[1] == True:
+            if Outcome[2] == True:
+                df = notData.query('`Test ID` == @total_tests')
+            else: 
+                df = notData.query('`Test ID` == @successful_tests')
+        else:
+            if Outcome[2] == True:
+                df = notData.query('`Test ID` == @unsuccessful_tests')
+            else:
+                df = notData.query('`Test ID` == @total_tests')
 
         if Data[0] == True:
             w = 5
@@ -318,4 +383,4 @@ def makePlot(Test, Data, Board, SN, BitError, Tester):
             plt.savefig('../../static/files/Bit_Error_Rate_EyeOpening')
             
 
-makePlot('Bit Error Rate', [True,True,True], None, None, [True,True,False,False,False,True,False,False,False,False,False], ['Bryan'])
+makePlot('Compare Testers', [True,True,True], None, None, [True,True,False,False,False,True,False,False,False,False,False], ['Bryan', 'Jocelyn'], [True, True, True])

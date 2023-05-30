@@ -100,6 +100,18 @@ def top():
             <li><a class="dropdown-item" href="add_new_test_template.py">Add New Test Template</a></li>
           </ul>
         </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Plots
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <li><a class="dropdown-item" href="testdata.py">Total Tests</a></li>
+            <li><a class="dropdown-item" href="ResistanceMeasurementData.py">Resistance Measurement</a></li>
+            <li><a class="dropdown-item" href="IDResistorData.py">ID Resistor</a></li>
+            <li><a class="dropdown-item" href="I2CData.py">I2C Read/Write</a></li>
+            <li><a class="dropdown-item" href="BitErrorRateData.py">Bit Error Rate</a></li>
+          </ul>
+        </li>
       </ul>
     </div>
   </div>
