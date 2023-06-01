@@ -50,27 +50,6 @@ def plotheader():
             <label for="599999">599999</label>
         </div></a></li>
     </ul>
-    <button class="dropdown-toggle btn btn-secondary" type="button" id="SelectTesters" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
-        Select Tester
-    </button>
-    <ul class="dropdown-menu" aria-labelledby="SelectTesters">
-        <li><a class="dropdown-item" href="#"><div class="form-check">
-            <input class="form-check-input" type="checkbox" value="" id="Rand">
-            <label for="Rand">Rand</label>
-        </div></a></li>
-        <li><a class="dropdown-item" href="#"><div class="form-check">
-            <input class="form-check-input" type="checkbox" value="" id="Garrett">
-            <label for="Garrett">Garrett</label>
-        </div></a></li>
-        <li><a class="dropdown-item" href="#"><div class="form-check">
-            <input class="form-check-input" type="checkbox" value="" id="Bryan">
-            <label for="Bryan">Bryan</label>
-        </div></a></li>
-        <li><a class="dropdown-item" href="#"><div class="form-check">
-            <input class="form-check-input" type="checkbox" value="" id="Jocelyn">
-            <label for="Jocelyn">Jocelyn</label>
-        </div></a></li>
-    </ul>
     <button class="dropdown-toggle btn btn-secondary" type="button" id="SearchSN" data-bs-toggle="dropdown" aria-expanded="false">
         Select SN
     </button>
@@ -109,6 +88,43 @@ def plotheader():
             <option value="320WW10A1000010">
             <option value="320WW20A1000006">
         </datalist>
+    </div>
+    <button class="dropdown-toggle btn btn-secondary" type="button" id="SelectTesters" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+        Select Tester
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="SelectTesters">
+        <li><a class="dropdown-item" href="#"><div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" id="Rand">
+            <label for="Rand">Rand</label>
+        </div></a></li>
+        <li><a class="dropdown-item" href="#"><div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" id="Garrett">
+            <label for="Garrett">Garrett</label>
+        </div></a></li>
+        <li><a class="dropdown-item" href="#"><div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" id="Bryan">
+            <label for="Bryan">Bryan</label>
+        </div></a></li>
+        <li><a class="dropdown-item" href="#"><div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" id="Jocelyn">
+            <label for="Jocelyn">Jocelyn</label>
+        </div></a></li>
+    </ul>
+    <button class="dropdown-toggle btn btn-secondary" type="button" id="SelectDate" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside" style="padding-right:15px">
+        Date Range
+    </button>
+    <div class="dropdown-menu">
+        <table>
+            <tr><td> Start Date </td><td> End Date </td></tr>
+            <tr>
+            <td>
+                <input type="date" id="StartDate">
+            </td>
+            <td>
+                <input type="date" id="EndDate">
+            </td>
+            </tr>
+        </table>
     </div>
     <button class="btn btn-success" onClick="window.location.reload();"> Update Plot </button>
 </div>

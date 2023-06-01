@@ -1,22 +1,35 @@
 #!/usr/bin/python3
 
+import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 import csv
 import cgitb
 import numpy as np
+from datetime import datetime as dt
 import datetime
 import matplotlib.dates as mdates
 from matplotlib.axis import Axis
 
 cgitb.enable()
 
-def makePlot(Test, Data, Board, SN, BitError, Tester, Outcome):
-    TestData = pd.read_csv('./static/files/Test.csv', parse_dates=['Time'])
+def makePlot(Test, Data, Board, SN, BitError, Tester, Outcome, StartDate, EndDate):
+    TestDataTemp = pd.read_csv('./static/files/Test.csv', parse_dates=['Time'])
     BoardData = pd.read_csv('./static/files/Board.csv')
     PeopleData = pd.read_csv('./static/files/People.csv')
     name = None
 
+    if StartDate is None:
+        StartDate = dt.strptime('03/14/23 00:00:00', '%m/%d/%y %H:%M:%S')
+    else:
+        StartDate = dt.strptime(StartDate, '%m/%d/%y %H:%M:%S')
+    if EndDate is None:
+        EndDate = dt.combine(datetime.date.today(), datetime.time(23,59,59))
+    else:
+        EndDate = dt.strptime(EndDate, '%m/%d/%y %H:%M:%S')
+
+    TestData = TestDataTemp.query('Time >= @StartDate and Time <= @EndDate')
+                    
     if SN is not None:
         Board_ID = BoardData.query('`Full ID` == @SN')['Board ID'].values.tolist()
         if Tester is not None:
@@ -99,48 +112,42 @@ def makePlot(Test, Data, Board, SN, BitError, Tester, Outcome):
     else:
         title = Test
 
-    if Test is None:
+    if Test is 'Total':
         fig, ax = plt.subplots()
         if Outcome[0] == True:
-            first = datetime.datetime(2023, 2, 28, 23, 59, 59)
+            first = StartDate
             dates = TestData.query('`Test ID` == @total_tests')['Time']
             time_series_data = []
-            while (first <= datetime.datetime.now()+datetime.timedelta(days=1)):
-                i = 0
+            i = 0
+            while (first <= EndDate):
                 for d in dates:
-                    if d > first:
-                        break
-                    else:
+                    if d > first and d < first+datetime.timedelta(days=1):
                         i += 1
                 time_series_data.append([first,i])
                 first += datetime.timedelta(days=1)
             x1,y1 = zip(*time_series_data)
             plt.plot(x1, y1, label = 'Total')
         if Outcome[1] == True:
-            first = datetime.datetime(2023, 2, 28, 23, 59, 59)
+            first = StartDate
             successful_dates = TestData.query('`Test ID` == @successful_tests')['Time']
             time_series_data_successful = []
-            while (first <= datetime.datetime.now()+datetime.timedelta(days=1)):
-                j = 0
+            j = 0
+            while (first <= EndDate):
                 for d in successful_dates:
-                    if d > first:
-                        break
-                    else:
+                    if d > first and d < first+datetime.timedelta(days=1):
                         j += 1
                 time_series_data_successful.append([first,j])
                 first += datetime.timedelta(days=1)
             x2,y2 = zip(*time_series_data_successful)
             plt.plot(x2, y2, label = 'Successful')
         if Outcome[2] == True:
-            first = datetime.datetime(2023, 2, 28, 23, 59, 59)
+            first = StartDate
             unsuccessful_dates = TestData.query('`Test ID` == @unsuccessful_tests')['Time']  
             time_series_data_unsuccessful = []
-            while (first <= datetime.datetime.now()+datetime.timedelta(days=1)):
-                k = 0
+            k = 0
+            while (first <= EndDate):
                 for d in unsuccessful_dates:
-                    if d > first:
-                        break
-                    else:
+                    if d > first and d < first+datetime.timedelta(days=1):
                         k += 1
                 time_series_data_unsuccessful.append([first,k])
                 first += datetime.timedelta(days=1)
@@ -157,7 +164,7 @@ def makePlot(Test, Data, Board, SN, BitError, Tester, Outcome):
         plt.xlabel('Date')
         plt.ylabel('Number of Tests')
         plt.legend()
-        Axis.set_major_locator(ax.xaxis,mdates.MonthLocator(interval=1))
+        #Axis.set_major_locator(ax.xaxis,mdates.MonthLocator(interval=1))
         plt.gcf().autofmt_xdate()
         plt.savefig('../../static/files/TestsOverTime.png')
 
@@ -375,12 +382,11 @@ def makePlot(Test, Data, Board, SN, BitError, Tester, Outcome):
             total_data = CLK0+CLK1+CLK2+TRIG0+TRIG1+TRIG2+TRIG3+TRIG4+TRIG5+TRIG6+TRIG7
             std = np.std(total_data)
             plt.title(title + ': Eye Opening')
-            plt.xlabel('DAQ Delay')
+            plt.xlabel('Eye Opening Width')
             plt.ylabel('Number of Boards')
             plt.legend()
             ax = plt.gca()
             plt.text(0.02, 0.95, r'$\sigma=%.2f$' % (std, ), transform = ax.transAxes)
             plt.savefig('../../static/files/Bit_Error_Rate_EyeOpening')
             
-
-makePlot('Compare Testers', [True,True,True], None, None, [True,True,False,False,False,True,False,False,False,False,False], ['Bryan', 'Jocelyn'], [True, True, True])
+makePlot('Compare Testers', [True,True,True], None, None, [True,True,False,True,False,False,False,False,False,False,False], ['Bryan', 'Jocelyn'], [True, True, True], '6/1/23 00:00:00', None)
