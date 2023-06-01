@@ -27,7 +27,7 @@ plotheader.plotheader()
 print('''
 <div>
 <div style="float:left; padding-right:10px;">
-    <img src="../../static/files/I2C_ReadWrite.png">
+    <img src="../../static/files/I2C_ReadWrite.png?ver=1.0">
 </div>
 <div>
 <div style="float:leftt; padding-top:5px;">

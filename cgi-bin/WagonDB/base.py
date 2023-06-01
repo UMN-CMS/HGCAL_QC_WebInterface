@@ -22,24 +22,26 @@ def header(title=''):
     print('</head>')
 
 def top():
-    print('<body style="background-color:#e6e6e6">')
-    print('''<div class="container py-4">
+    print('<body style="background-color:#e6e6e6; overflow-x:hidden">')
+    print('''<div class="container py-4" style="width:100%">
     <div class="row">
-        <div class="col-5">
+        <div class="col-4">
         ''')
     if len(sys.argv) == 1:
-        print('''           <a href="home_page.py" class="d-flex text-decoration-none ">
-            <h1 class="text-dark">HGCAL Board Test</h1>
-        </a>
+        print('''
+            <a href="home_page.py" class="d-flex text-decoration-none ">
+                <h1 class="text-dark">HGCAL Board Test</h1>
+            </a>
         ''')
-        print('''        <hr style="margin-top:-0.5em">
-                <h6 class="text-dark">Maintained by the University of Minnesota CMS Group</h6>
-            </div>
-            <div class="col-6"></div>
-            <div class="col-1">
-                <img src="../../static/files/goldy2.png" style="float-right">
-            </div>
+        print('''
+            <hr style="margin-top:-0.5em">
+            <h6 class="text-dark">Maintained by the University of Minnesota CMS Group</h6>
         </div>
+        <div class="col-6"></div>
+        <div class="col-1">
+            <img src="../../static/files/goldy2.png" style="float:leftt">
+        </div>
+    </div>
     </div>
     ''')
     else:

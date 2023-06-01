@@ -25,14 +25,12 @@ plotheader.plotscript()
 print('<div class="row">')
 plotheader.plotheader()
 print('''
-<div>
+<div style="padding-right:20px">
 <table>
 <tr>
 <td>
-    <img src="../../static/files/Bit_Error_Rate_Midpoint.png">
-</td>
-<td>
-    <img src="../../static/files/Bit_Error_Rate_EyeOpening.png"> 
+    <img src="../../static/files/Bit_Error_Rate_Midpoint.png?ver=1.1">
+    <img src="../../static/files/Bit_Error_Rate_EyeOpening.png?ver=1.0"> 
 </td>
 <td>
 <div style="padding-left:5px">

@@ -27,7 +27,7 @@ plotheader.plotheader()
 print('''
 <div>
 <div style="float:left; padding-right:10px">
-    <img src="../../static/files/ID_Resistor.png">
+    <img src="../../static/files/ID_Resistor.png?ver=1.0">
 </div>
 <div style="float:leftt">
 <table>
