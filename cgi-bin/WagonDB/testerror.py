@@ -4,8 +4,8 @@ import cgi
 import cgitb
 import base
 import sys
-import tempfile
-import os
+import makePlots as mp
+import plotheader
 
 cgitb.enable()
 
@@ -18,9 +18,15 @@ else:
 
 base.header(title='Total Tests Over Time')
 base.top()
-try:
-    import matplotlib
-except Exception as e2:
-    print(e2)
+
+plotheader.plotheader()
+
+print('''
+<script>
+data = {};
+Bokeh.embed.embed_item(data, 'exfilter');
+</script>
+<div id='exfilter' class='bk-root'></div>
+'''.format(mp.ResistanceFilter()))
 
 base.bottom()

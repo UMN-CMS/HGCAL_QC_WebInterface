@@ -117,15 +117,15 @@ def render_list_module():
             n += 1   
     print('<div class="d-flex flex-row justify-content-around py-4 my-2">')
     print('<div class="col-md-3">')
-    print('<ul class="list-group">')
+    print('<div class="list-group">')
     print(col1)
-    print('</ul></div><div class="col-md-3">')
+    print('</div></div><div class="col-md-3">')
     print('<div class="list-group">')
     print(col2)
     print('</div></div><div class="col-md-3">')
     print('<div class="list-group">')
     print(col3)
-    print('</ul></div></div>')
+    print('</div></div></div>')
     print('</div>')
 
 def add_module_form():

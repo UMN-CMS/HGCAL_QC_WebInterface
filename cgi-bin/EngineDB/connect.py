@@ -38,7 +38,7 @@ def connect_admin(passwd):
     return connection
 
 def get_base_url():
-    base = "http://cmslab3.umncmslab/~cros0400/cgi-bin/EngineDB/"
+    base = "http://cmslab3.spa.umn.edu/~cros0400/cgi-bin/EngineDB/"
     return base
 
 def get_db_name():

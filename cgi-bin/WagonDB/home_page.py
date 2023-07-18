@@ -3,6 +3,7 @@
 import cgi
 import base
 import home_page_list
+import home_page_allboards
 import sys
 
 if(len(sys.argv) != 1):
@@ -49,7 +50,8 @@ print('</div>')
 print('<br><br>')
 
 
-home_page_list.render_list_module()
+#home_page_list.render_list_module()
+home_page_allboards.renderlist()
 
 base.bottom()
 

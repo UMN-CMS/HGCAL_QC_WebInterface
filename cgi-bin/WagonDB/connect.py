@@ -27,18 +27,22 @@ def connect( num ):
         
 def connect_admin(passwd):
 
-    connection = mysql.connector.connect(
-        host = 'localhost',
-        user='WagonDBAdmin',
-        password=passwd,
-        database=get_db_name(),
-        #cursorclass=mysql.connector.cursors.DictCursor
-    )
+    try:
+        connection = mysql.connector.connect(
+            host = 'localhost',
+            user='WagonDBAdmin',
+            password=passwd,
+            database=get_db_name(),
+            #cursorclass=mysql.connector.cursors.DictCursor
+        )
 
-    return connection
+        return connection
+    except Exception as e:
+        print("Failed to make DB connection. Wrong admin password")
+        return None
 
 def get_base_url():
-    base = "http://cmslab3.umncmslab/~cros0400/cgi-bin/WagonDB"
+    base = "http://cmslab3.spa.umn.edu/~cros0400/cgi-bin/WagonDB"
     return base
 
 def get_db_name():

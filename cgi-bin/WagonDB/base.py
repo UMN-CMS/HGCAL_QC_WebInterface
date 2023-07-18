@@ -19,6 +19,19 @@ def header(title=''):
         #print('<link  rel="stylesheet" href="bootstrap.min.css">')
         #print('<link  rel="stylesheet" href="style.css">')
     print('<title> %s </title>' %title)
+    print('''
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.3.3.min.js"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.3.3.min.js"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.3.3.min.js"
+        crossorigin="anonymous"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+    ''')
+    #print('''
+#<script src="https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-2.3.3.min.js"
+        #crossorigin="anonymous"></script>
+    #''')
     print('</head>')
 
 def top():
@@ -108,6 +121,7 @@ def top():
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
             <li><a class="dropdown-item" href="testdata.py">Total Tests</a></li>
+            <li><a class="dropdown-item" href="CompareTesters.py">Compare Testers</a></li>
             <li><a class="dropdown-item" href="ResistanceMeasurementData.py">Resistance Measurement</a></li>
             <li><a class="dropdown-item" href="IDResistorData.py">ID Resistor</a></li>
             <li><a class="dropdown-item" href="I2CData.py">I2C Read/Write</a></li>
