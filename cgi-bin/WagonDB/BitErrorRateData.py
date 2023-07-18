@@ -6,8 +6,7 @@ import base
 import module_functions
 import sys
 import plotheader
-#import makePlots as mp
-#makePlot arugments:(Test, Data, Board, SN, BitError, Tester)
+import makePlots as mp
 
 cgitb.enable()
 
@@ -20,114 +19,13 @@ else:
 
 base.header(title='Bit Error Rate Data')
 base.top()
-plotheader.plotscript()
-
-print('<div class="row">')
-plotheader.plotheader()
 print('''
-<div style="padding-right:20px">
-<table>
-<tr>
-<td>
-    <img src="../../static/files/Bit_Error_Rate_Midpoint.png?ver=1.1">
-    <img src="../../static/files/Bit_Error_Rate_EyeOpening.png?ver=1.0"> 
-</td>
-<td>
-<div style="padding-left:5px">
-    <table>
-        <th> Select Components </th>
-        <tr><td style="padding-bottom:3px">
-            <input class="form-check-input" type="checkbox" value="">
-            <label class="form-check-label">
-                Clock 0
-            </label>
-        </td></tr>
-        <tr><td style="padding-bottom:3px">
-            <input class="form-check-input" type="checkbox" value="">
-            <label class="form-check-label">
-                Clock 1
-            </label>
-        </td></tr>
-        <tr><td style="padding-bottom:3px">
-            <input class="form-check-input" type="checkbox" value="">
-            <label class="form-check-label">
-                Clock 2
-            </label>
-        </td></tr>
-        <tr><td style="padding-bottom:3px">
-            <input class="form-check-input" type="checkbox" value="">
-            <label class="form-check-label">
-                Trigger 0
-            </label>
-        </td></tr>
-        <tr><td style="padding-bottom:3px">
-            <input class="form-check-input" type="checkbox" value="">
-            <label class="form-check-label">
-                Trigger 1
-            </label>
-        </td></tr>
-        <tr><td style="padding-bottom:3px">
-            <input class="form-check-input" type="checkbox" value="">
-            <label class="form-check-label">
-                Trigger 2
-            </label>
-        </td></tr>
-        <tr><td style="padding-bottom:3px">
-            <input class="form-check-input" type="checkbox" value="">
-            <label class="form-check-label">
-                Trigger 3
-            </label>
-        </td></tr>
-        <tr><td style="padding-bottom:3px">
-            <input class="form-check-input" type="checkbox" value="">
-            <label class="form-check-label">
-                Trigger 4
-            </label>
-        </td></tr>
-        <tr><td style="padding-bottom:3px">
-            <input class="form-check-input" type="checkbox" value="">
-            <label class="form-check-label">
-                Trigger 5
-            </label>
-        </td></tr>
-        <tr><td style="padding-bottom:3px">
-            <input class="form-check-input" type="checkbox" value="">
-            <label class="form-check-label">
-                Trigger 6
-            </label>
-        </td></tr>
-        <tr><td style="padding-bottom:3px">
-            <input class="form-check-input" type="checkbox" value="">
-            <label class="form-check-label">
-                Trigger 7
-            </label>
-        </td></tr>
-    </table>
-</div>
-</td>
-<td>
-<div style="padding-left:5px">
-    <table>
-        <th> Select Outcome </th>
-        <tr><td style="padding-bottom:3px">
-            <input class="form-check-input" type="checkbox" value="" checked=True>
-            <label class="form-check-label">
-                Successful
-            </label>
-        </td></tr>    
-        <tr><td style="padding-bottom:3px">
-            <input class="form-check-input" type="checkbox" value="" checked=True>
-            <label class="form-check-label">
-                Unsuccessful
-            </label>
-        </td></tr>    
-    </table>
-</div> 
-</tr>
-</table>
-</div>
-''')
-print('</div>')
+<script>
+data = {};
+Bokeh.embed.embed_item(data, 'exfilter');
+</script>
+<div id='exfilter' class='bk-root'></div>
+'''.format(mp.BitErrorFilter()))
 
 base.bottom()
 

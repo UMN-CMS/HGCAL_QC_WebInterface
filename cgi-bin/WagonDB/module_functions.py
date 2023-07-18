@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 from connect import connect
 import sys
-#import mysql.connector
+import mysql.connector
+import mysql
+import os
 from get_attach import save
 import home_page_list
 
@@ -247,4 +249,39 @@ def get_test_types():
     except mysql.connector.Error as err:
         print("CONNECTION ERROR")
         print(err)
+
+def add_board_image(sn, img_file):
+
+    db = connect(1)
+    cur = db.cursor() 
+
+    try: 
+        cur.execute("SELECT board_id FROM Board WHERE full_id = '%s';" % sn)
+        rows = cur.fetchall()
+
+        if not rows:
+            print("Board sn does not exist! Make sure this board has been entered into the database.")
+
+        else:
+            board_id = rows[0][0]
+
+        img_path = sn[3:9]
+        img_name = os.path.basename(img_file.filename)
+
+        path = "./static/board_images/{}/{}".format(img_path, img_name)
+
+        cur.execute('INSERT INTO Board_images (board_id, image_path, image_name) VALUES (%s, %s)' % (img_path, img_name))
+
+        open(path, "wb").write(img_file.file.read())
+
+        print("File recieved successfully!")
+
+    except mysql.connector.Error as err:
+        print("CONNECTION ERROR")
+        print(err)
+
+
+
+
+
 

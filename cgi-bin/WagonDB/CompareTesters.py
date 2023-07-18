@@ -6,8 +6,7 @@ import base
 import module_functions
 import sys
 import plotheader
-#import makePlots as mp
-#makePlot arugments:(Test, Data, Board, SN, BitError, Tester)
+import makePlots as mp
 
 cgitb.enable()
 
@@ -20,36 +19,13 @@ else:
 
 base.header(title='Compare Testers')
 base.top()
-plotheader.plotscript()
-
-print('<div class="row">')
-plotheader.plotheader()
 print('''
-<div>
-<div style="float:left; padding-right:5px">
-    <img src="../../static/files/CompareTesters.png?ver=1.0">
-</div>
-<div style="float:leftt">
-<table>
-    <th style="float:leftt; padding-top:5px"> Select Outcome </th>
-    <tr><td style="padding-bottom:3px">
-        <input class="form-check-input" type="checkbox" value="" checked=True>
-        <label class="form-check-label">
-            Successful
-        </label>
-    </td></tr>
-    <tr><td style="padding-bottom:3px">
-        <input class="form-check-input" type="checkbox" value="" checked=True>
-        <label class="form-check-label">
-            Unsuccessful
-        </label>
-    </td></tr>
-</table>
-</div>
-</div>
-
-''')
-print('</div>')
+<script>
+data = {};
+Bokeh.embed.embed_item(data, 'exfilter');
+</script>
+<div id='exfilter' class='bk-root'></div>
+'''.format(mp.CompareFilter()))
 
 base.bottom()
 
