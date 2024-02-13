@@ -1,53 +1,82 @@
-#!/usr/bin/python3
+#!/usr/bin/python3 -B
 from connect import connect
 import sys
-#import mysql.connector
+import mysql.connector
+import mysql
+import os
 from get_attach import save
 import home_page_list
+import pandas as pd
+import numpy as np
+import datetime
+from datetime import datetime as dt
+import uuid
+
+db = connect(0)
+cur = db.cursor()
+
 
 def Portage_fetch(test_type_id, board_sn):
-    db = connect(0)
-    cur = db.cursor()
-    cur.execute("SELECT People.person_name, Test.day, Test.successful, Test.comments, Test_Type.name, Test.test_id FROM Test, Test_Type, People, Board  WHERE Test_Type.test_type = %(test_id)s AND Board.full_id = %(sn)s AND People.person_id = Test.person_id AND Test_Type.test_type=Test.test_type_id AND Test.board_id = Board.board_id ORDER BY Test.day ASC" %{'test_id':test_type_id, 'sn':board_sn})
-    return cur.fetchall()
+    cur.execute('select board_id from Board where full_id="%s"' % board_sn)
+    board_id = cur.fetchall()[0][0]
+    cur.execute('select person_id from Test where board_id=%(b)s and test_type_id=%(t)s' %{'b':board_id, 't':test_type_id})
+    person_id = cur.fetchall()
+    person_name = []
+    for p in person_id:
+        cur.execute('select person_name from People where person_id="%s"' % p[0])
+        person_name.append(cur.fetchall()[0][0])
+    cur.execute('select day from Test where test_type_id=%(t)s and board_id=%(b)s' %{'b':board_id, 't':test_type_id})
+    date = cur.fetchall()
+    cur.execute('select successful from Test where test_type_id=%(t)s and board_id=%(b)s' %{'b':board_id, 't':test_type_id})
+    successful = cur.fetchall()
+    cur.execute('select comments from Test where test_type_id=%(t)s and board_id=%(b)s' %{'b':board_id, 't':test_type_id})
+    comments = cur.fetchall()
+    cur.execute('select test_id from Test where test_type_id=%(t)s and board_id=%(b)s' %{'b':board_id, 't':test_type_id})
+    test_id = []
+    for t in cur.fetchall():
+        test_id.append(t[0])
+    return person_name, date, successful, comments, test_id
 
-def Portage_fetch_revokes(board_sn):
-    db=connect(0)
-    cur = db.cursor()
-    cur.execute("SELECT TestRevoke.test_id, TestRevoke.comment FROM TestRevoke,Test,Board WHERE Board.sn = %(sn)s AND Board.board_id = Test.board_id AND Test.test_id = TestRevoke.test_id" %{'sn':board_sn})
-    # build a dictionary
+def Portage_fetch_revokes(sn):
+    cur.execute('select board_id from Board where full_id="%s"' % sn)
+    board_id = cur.fetchall()[0][0]
+    cur.execute('select test_id from Test where board_id=%s' % board_id)
+    test_ids = cur.fetchall()
+    cur.execute('select test_id from TestRevoke')
+    revoked_ids = cur.fetchall()
     revoked={}
-    for fromdb in cur.fetchall():
-        revoked[fromdb[0]]=fromdb[1]
+    for t in test_ids:
+        if t[0] in revoked_ids:
+            cur.execute('select comment from TestRevoke where test_id=%s' % t[0])
+            revoked[t[0]] =  cur.fetchall()[0][0]
     return revoked
 
+
 def Portage_fetch_attach(test_id):
-    db = connect(0)
-    cur = db.cursor()
-    cur.execute('SELECT attach_id, attachmime, attachdesc, originalname FROM Attachments WHERE test_id=%(tid)s ORDER BY attach_id' % {'tid':test_id})
+    cur.execute('select attach_id, attachmime, attachdesc, originalname from Attachments where test_id=%s order by attach_id' % test_id)
     return cur.fetchall()
 
 def add_test_tab(sn, board_id):
 
     print('<div class="row">')
     print('<div class="col-md-5 pt-4 ps-5 mx-2 my-2">')
-    print('<h2>Wagon Test Info for %d</h2>' %sn)
+    print('<h2>Wagon Test Info for %s</h2>' %sn)
     print('</div>')
     print('</div>')
     
     print('<div class="row">')
     print('<div class="col-md-2 ps-5 pt-2 mx-2 my-2">')
-    print('<a href="add_test.py?board_id=%(id)d&serial_num=%(serial)d">' %{'serial':sn, 'id':board_id})
+    print('<a href="add_test.py?board_id=%(id)d&serial_num=%(serial)s">' %{'serial':sn, 'id':board_id})
     print('<button class="btn btn-dark"> Add a New Test </button>')
     print('</a>')
     print('</div>')
     print('<div class="col-md-2 ps-5 pt-2 mx-2 my-2">')
-    print('<a href="add_board_info.py?board_id=%(id)d&serial_num=%(serial)d">' %{'serial':sn, 'id':board_id})
+    print('<a href="add_board_info.py?board_id=%(id)d&serial_num=%(serial)s">' %{'serial':sn, 'id':board_id})
     print('<button class="btn btn-dark"> Add Board Info </button>')
     print('</a>')
     print('</div>')
     print('<div class="col-md-2 ps-5 pt-2 mx-2 my-2">')
-    print('<a href="board_checkout.py?serial_num=%(serial)d">' %{'serial':sn})
+    print('<a href="board_checkout.py?serial_num=%(serial)s">' %{'serial':sn})
     print('<button class="btn btn-dark"> Checkout Board </button>')
     print('</a>')
     print('</div>')
@@ -56,21 +85,25 @@ def add_test_tab(sn, board_id):
     print('<button class="btn btn-dark"> Checkin Board </button>')
     print('</a>')
     print('</div>')
+    print('<div class="col-md-2 ps-5 pt-2 mx-2 my-2">')
+    print('<a href="add_board_image.py?board_id=%(id)d&serial_num=%(serial)s">' %{'serial':sn, 'id':board_id})
+    print('<button class="btn btn-dark"> Add Board Image </button>')
+    print('</a>')
+    print('</div>')
     print('</div>')
 
 
 
 def ePortageTest(test_type_id, board_sn, test_name, revokes):
-    attempts =  Portage_fetch(test_type_id, board_sn) 
+    person_name, date, successful, comments, test_id = Portage_fetch(test_type_id, board_sn) 
     print('<hr>')
     print('<div class="row">')
     print('<div class="col-md-12 px-5 pt-2 mx-2 my-2">')
     print('<h3> %(name)s </h3>' %{ "name":test_name})
     print('<br>')
 
-    n = 0
-    for attempt in attempts:
-        n += 1
+    for i in range(len(test_id)):
+        n = i+1
 
         print('<h4>Attempt: %d</h4>'%n)
         print('<table class="table table-bordered table-hover table-active">')
@@ -82,24 +115,24 @@ def ePortageTest(test_type_id, board_sn, test_name, revokes):
 #        print                          '<th>Comments</th>'
         print('</tr>')
         print('<tr>')
-        print('<td> %(pname)s </td>' %{ "pname":attempt[0]})
-        print('<td> %(when)s </td>' %{ "when":attempt[1]})
-        if attempt[2] == 1:
-            if attempt[5] in revokes:
-                print('<td><b>Revoked</b>: %(comment)s </td>' %{ "comment":revokes[attempt[5]] })
+        print('<td> %(pname)s </td>' %{ "pname":person_name[i]})
+        print('<td> %(when)s </td>' %{ "when":date[i][0].strftime('%c')})
+        if successful[i][0] == 1:
+            if test_id[i] in revokes:
+                print('<td><b>Revoked</b>: %(comment)s </td>' %{ "comment":revokes[test_id[i]] })
             else:
                 print('<td align=left> Yes </td>')
                 if len(sys.argv) == 1:
-                    print("<td align=right style='{ background-color: yellow; }' ><a href='revoke_success.py?test_id=%(id)s'>Revoke</a></td>" %{ "id":attempt[5]})
+                    print("<td align=right style='{ background-color: yellow; }' ><a href='revoke_success.py?test_id=%(id)s'>Revoke</a></td>" %{ "id":test_id[i]})
 
         else:
             print('<td colspan=2>No</td>')
         print('</tr>')
         print('<tr>')
         print('<td><b>Comments:</b></td>' )
-        print('<td colspan=3> %(comm)s </td>' %{ "comm":attempt[3]})
+        print('<td colspan=3> %(comm)s </td>' %{ "comm":comments[i][0]})
         print('</tr>')
-        attachments=Portage_fetch_attach(attempt[5])
+        attachments=Portage_fetch_attach(test_id[i])
         for afile in attachments:
             if len(sys.argv) == 1:
                 print('<tr><td>Attachment: <a href="get_attach.py?attach_id=%s">%s</a><td colspan=2><i>%s</i></tr>' % (afile[0],afile[3],afile[2]))
@@ -117,16 +150,15 @@ def ePortageTest(test_type_id, board_sn, test_name, revokes):
     print('</div>')
     print('</div>')
 
-def board_info(info):
+def board_info(info, sn):
     if info and len(info[0]) == 5:
         location = info[0][0]
         daq_chip_id = info[0][1]
         trigger_chip_1_id = info[0][2]
         trigger_chip_2_id = info[0][3]
         info_com = info[0][4]
-    
     else:
-       location, daq_chip_id, trigger_chip_1_id, trigger_chip_2_id, info_com = "None", "None", "None", "None", "None"
+        location, daq_chip_id, trigger_chip_1_id, trigger_chip_2_id, info_com = 'None', 'None', 'None', 'None', 'None'
  
     print('<div class="col-md-11 pt-2 px-4 mx-2 my-2">')
     print('<table class="table table-bordered table-hover table-active">')
@@ -156,7 +188,23 @@ def board_info(info):
     print('</tr>')
     print('</tbody>')
     print('</table>')
+    try:
+        cur.execute('select board_id from Board where full_id="%s"' % sn)
+        board_id = cur.fetchall()[0][0]
+        cur.execute('select image_name,date from Board_images where board_id=%s and view="Top" order by date desc' % board_id)
+        img_name_top = cur.fetchall()[0][0]
+        cur.execute('select image_name,date from Board_images where board_id=%s and view="Bottom" order by date desc' % board_id)
+        img_name_bottom = cur.fetchall()[0][0]
+        print('<h5>Top View:</h5>') 
+        print('<a href="../../static/files/wagondb/%(img)s"><img src="../../static/files/wagondb/%(img)s" width=900 height=auto></a>' % {'img':img_name_top})
+        print('<h5>Bottom View:</h5>')
+        print('<a href="../../static/files/wagondb/%(img)s"><img src="../../static/files/wagondb/%(img)s" width=900 height=auto></a>' % {'img':img_name_bottom})
+    except Exception as e:
+        print('<h6>This board has no image.</h6>')
+        print(e)
+    
     print('</div>')
+
 
 def add_board_info(board_id, sn, location, daqid, trig1id, trig2id, info):
     db = connect(1)
@@ -164,12 +212,12 @@ def add_board_info(board_id, sn, location, daqid, trig1id, trig2id, info):
 
     if not board_id:
         try:
-            cur.execute('SELECT board_id FROM Board WHERE full_id = %s;' % sn)
+            cur.execute("SELECT board_id FROM Board WHERE full_id = '%s';" % sn)
             rows = cur.fetchall()
 
             if not rows:
                 home_page_list.add_module(sn)
-                cur.execute('SELECT board_id FROM Board WHERE full_id = %s;' % sn)
+                cur.execute("SELECT board_id FROM Board WHERE full_id = '%s';" % sn)
                 board_id = cur.fetchall()[0][0]
             else:
                 board_id = rows[0][0]
@@ -247,4 +295,48 @@ def get_test_types():
     except mysql.connector.Error as err:
         print("CONNECTION ERROR")
         print(err)
+
+def add_board_image(sn, img_file, view):
+
+    db = connect(1)
+    cur = db.cursor() 
+
+    print("Adding board image")
+
+    try: 
+        cur.execute("SELECT board_id FROM Board WHERE full_id = '%s';" % sn)
+        rows = cur.fetchall()
+
+        if not rows:
+            print("Board sn does not exist! Make sure this board has been entered into the database.")
+
+        else:
+            board_id = rows[0][0]
+
+        img_path = "/home/ePortage/wagondb"
+        img_name = str(uuid.uuid4())
+
+        path = "{}/{}".format(img_path, img_name)
+
+        cur.execute('INSERT INTO Board_images (board_id, image_name, view, date) VALUES (%s, "%s", "%s", NOW())' % (board_id, img_name, view))
+
+        db.commit()
+        db.close()
+
+        print("Attempting to write file...")
+
+        with open(path, "wb") as f:
+            print("File opened!")
+            f.write(img_file)
+            print("File wrote:)")
+
+        print("File recieved successfully!")
+
+    except mysql.connector.Error as err:
+        print("CONNECTION ERROR")
+        print(err)
+
+
+
+
 

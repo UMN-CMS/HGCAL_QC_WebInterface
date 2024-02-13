@@ -4,14 +4,21 @@ import cgi
 import base
 import home_page_list
 import board_check_functions 
+import numpy
+from connect import connect
 
+db = connect(0)
+cur = db.cursor()
 
 #cgi header
 print("Content-type: text/html\n")
 
 form = cgi.FieldStorage()
 #url = form.getvalue("url")
-serial_num = cgi.escape(form.getvalue("serial_num"))
+try:
+    serial_num = cgi.escape(form.getvalue("serial_num"))
+except:
+    serial_num = None
 
 base.header(title='Board Checkout')
 base.top()

@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 
 import cgi
+import cgitb
+cgitb.enable()
 import base
 import add_test_functions
 import os
@@ -15,7 +17,7 @@ print("Content-type: text/html\n")
 form = cgi.FieldStorage()
 person_id = base.cleanCGInumber(form.getvalue("person_id"))
 test_type = base.cleanCGInumber(form.getvalue("test_type"))
-serial_num = base.cleanCGInumber(form.getvalue("serial_number"))
+serial_num = cgi.escape(form.getvalue("serial_number"))
 success = base.cleanCGInumber(form.getvalue("success"))
 comments = form.getvalue("comments")
 

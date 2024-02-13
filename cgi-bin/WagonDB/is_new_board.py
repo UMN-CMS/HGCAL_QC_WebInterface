@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-
 import cgi
 import base
 import add_test_functions
@@ -19,13 +18,14 @@ if form.getvalue('serial_number'):
     serial_number = cgi.escape(form.getvalue('serial_number'))
 
 
-    is_new_board_bool = add_test_functions.is_new_board(serial_number)
+    is_new_board_bool, check_id = add_test_functions.is_new_board(serial_number)
 
     print('Begin')
 
     print(is_new_board_bool)
 
     print('End')
+    print(check_id)
 
 
 else:

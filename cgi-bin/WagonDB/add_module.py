@@ -10,6 +10,7 @@ print("Content-type: text/html\n")
 base.header(title='Add a new module to HGCAL Wagon Test')
 base.top()
 
+# calls this function for the form
 home_page_list.add_module_form()
 
 print('<div class="row">')

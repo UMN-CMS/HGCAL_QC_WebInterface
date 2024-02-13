@@ -1,52 +1,79 @@
 #!/usr/bin/python3
+
 from connect import connect
 import module_functions
 import numpy as np
 import pandas as pd
-#import mysql.connector
+
+db = connect(0)
+cur = db.cursor()
 
 def get():
-    TestData = pd.read_csv('./static/files/Test.csv')
-    BoardData = pd.read_csv('./static/files/Board.csv')
-    df = TestData.merge(BoardData, on='Board ID', how='left')
-    TestTypes = pd.read_csv('./static/files/Test_Types.csv')
+    subtypes = []
+    cur.execute('select board_id from Board')
+    temp = cur.fetchall()
+    for t in temp:
+        cur.execute('select type_id from Board where board_id="%s"' % t[0])
+        new = cur.fetchall()
+        subtypes.append(new[0][0])
+    subtypes = np.unique(subtypes).tolist()
     
-    subtypes = np.unique(df['Type ID']).tolist()
     serial_numbers = {}
     for s in subtypes:
-        serial_numbers[s] = np.unique(df.query('`Type ID` ==  @s')['Full ID']).tolist()
+        cur.execute('select full_id from Board where type_id="%s"' % s)
+        li = []
+        for l in cur.fetchall():
+            li.append(l[0])
+        serial_numbers[s] = np.unique(li).tolist()
+    
         print('<tr><td colspan=5><a class="btn btn-dark" data-bs-toggle="collapse" href="#col%(id)s">%(id)s</a></td></tr>' %{'id':s})
 
         print('<tr><td class="hiddenRow" colspan=5>')
         print('<div class="collapse" id="col%s">' %s)
         print('<table>')
         for sn in serial_numbers[s]:
-            data = df.query('`Full ID` == @sn')[['Test Type ID','Successful']]
-            tt_ids = TestTypes['Test Type'].tolist()
-            names = TestTypes['Name'].tolist()
-            outcomes = []
-            for t in tt_ids:
-                if 1 in data.query('`Test Type ID` == @t')['Successful'].values.tolist():
-                    outcomes.append(True)
-                else:
-                    outcomes.append(False)
+            cur.execute('select board_id from Board where full_id="%s"' % sn)
+            board_id = cur.fetchall()[0][0]
+            cur.execute('select test_type_id, successful from Test where board_id=%s' % board_id)
+            temp = cur.fetchall()
+            outcomes = [False, False, False, False, False]
+            for t in temp:
+                if t[1] == 1:
+                    if t[0] == 1:
+                        outcomes[0] = True
+                    if t[0] == 2:
+                        outcomes[1] = True
+                    if t[0] == 3:
+                        outcomes[2] = True
+                    if t[0] == 4:
+                        outcomes[3] = True
+                    if t[0] == 5:
+                        outcomes[4] = True
+            tt_ids = [1, 2, 3, 4, 5]
+            cur.execute('select name from Test_Type')
+            temp = cur.fetchall()
+            names = []
+            for t in temp:
+                names.append(t[0])
             print('<tr>')
             print('<td> <a href=module.py?board_id=%(id)s&serial_num=%(serial)s> %(serial)s </a></td>' %{'serial':sn, 'id':s})
             print('<td><ul>')
             for idx,o in enumerate(outcomes[0:2]):
                 if o == True:
                     if idx == 0:
-                        print('<li>%s' %TestTypes.query('`Test Type` ==  1')['Name'].values.tolist()[0])
+                        print('<li>%s' %names[0])
                     if idx == 1:
-                        print('<li>%s' %TestTypes.query('`Test Type` ==  2')['Name'].values.tolist()[0])
+                        print('<li>%s' %names[1])
             print('</ul></td>') 
             print('<td><ul>')
-            for idx,o in enumerate(outcomes[2:4]):
+            for idx,o in enumerate(outcomes[2:5]):
                 if o == True:
                     if idx == 0:
-                        print('<li>%s' %TestTypes.query('`Test Type` ==  3')['Name'].values.tolist()[0])
+                        print('<li>%s' %names[2])
                     if idx == 1:
-                        print('<li>%s' %TestTypes.query('`Test Type` ==  4')['Name'].values.tolist()[0])
+                        print('<li>%s' %names[3])
+                    if idx == 2:
+                        print('<li>%s' %names[4])
             print('</ul></td>') 
 
             print('<td><ul>')
@@ -58,12 +85,14 @@ def get():
                         print('<li> <a href="add_test.py?serial_num=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':tt_ids[1], 'name':names[1]})
             print('</ul></td>') 
             print('<td><ul>')
-            for idx,o in enumerate(outcomes[2:4]):
+            for idx,o in enumerate(outcomes[2:5]):
                 if o == False:
                     if idx == 0:
                         print('<li> <a href="add_test.py?serial_num=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':tt_ids[2], 'name':names[2]})
                     if idx == 1:
-                        print('<li> <a href="add_test.py?serial_num=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':tt_ids[3], 'name':names[3]})
+                        print('<li> <a href="add_test.py?serial_num=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':tt_ids[2], 'name':names[3]})
+                    if idx == 2:
+                        print('<li> <a href="add_test.py?serial_num=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':tt_ids[3], 'name':names[4]})
             print('</ul></td>') 
             print('</tr>')
 

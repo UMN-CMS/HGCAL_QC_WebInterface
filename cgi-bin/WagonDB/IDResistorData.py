@@ -5,7 +5,6 @@ import cgitb
 import base
 import module_functions
 import sys
-import plotheader
 import makePlots as mp
 
 cgitb.enable()

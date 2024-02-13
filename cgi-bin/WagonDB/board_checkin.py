@@ -12,13 +12,17 @@ print("Content-type: text/html\n")
 
 form = cgi.FieldStorage()
 #url = form.getvalue("url")
+#try:
+sn = cgi.escape(form.getvalue("serial_num"))
 board_id = base.cleanCGInumber(form.getvalue("board_id"))
+#except:
+#    board_id = None
 
 base.header(title='Board Check In')
 base.top()
 
-if board_id:
-    board_check_functions.board_checkin_form_sn(board_id)
+if sn:
+    board_check_functions.board_checkin_form_sn(sn)
 else:
     board_check_functions.board_checkin_form_sn("")
 
