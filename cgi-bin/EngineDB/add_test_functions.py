@@ -84,14 +84,19 @@ def is_new_board(serial_number):
 
     is_new_board_bool = False
 
+    try:
+        cur.execute("SELECT board_id FROM Board WHERE full_id = '{}'".format(serial_number))
+        board_matching_sn = cur.fetchone()
+        cur.execute('select Checkin_id from Check_In where board_id=%s' % board_matching_sn)
+        check_in_id = cur.fetchone()
 
-    cur.execute("SELECT board_id FROM Board WHERE full_id = {}".format(serial_number))
-    board_matching_sn = cur.fetchone()
-
-    if not board_matching_sn:
+        if not check_in_id:
+            is_new_board_bool = True
+    except:
         is_new_board_bool = True
+        check_in_id = None
 
-    return is_new_board_bool
+    return is_new_board_bool, check_in_id
 
 
 
@@ -116,7 +121,7 @@ def get_test_completion_status(serial_num):
     cur = db.cursor()
 
     # TODO
-    cur.execute("SELECT board_id FROM Board WHERE full_id = %" %{"n":serial_num})
+    cur.execute("SELECT board_id FROM Board WHERE full_id = '%s'" % (serial_num))
     board_ID = cur.fetchone()
 
     if not board_ID:
@@ -129,21 +134,57 @@ def get_previous_test_results(serial_num):
 
     db = connect(0)
     cur = db.cursor()
-    # TODO
-    cur.execute("SELECT board_id FROM Board WHERE full_id = {}".format(serial_num))
+
+    cur.execute("SELECT board_id FROM Board WHERE full_id = '{}'".format(serial_num))
     board_id = cur.fetchone()[0]
-    cur.execute("SELECT test_type_id, successful FROM Test WHERE board_id = {}".format( board_id))
+    cur.execute("SELECT test_type_id, successful FROM Test WHERE board_id = {}".format(board_id))
     test_results_list = cur.fetchall()
+    tests_run = []
+    outcomes = []
+    try:
+        for i in test_results_list:
+            temp = [0,1]
+            cur.execute('select name from Test_Type where test_type = %s' % i[0])
+            temp[0] = cur.fetchall()[0][0]
+            if i[1] == 0:
+                temp[1] = 'Failed'
+            if i[1] == 1:
+                temp[1] = 'Passed'
+            tests_run.append(temp[0])
+            outcomes.append(temp[1])
+    except Exception as e:
+        print(e)
+        test_results = None
 
-    
-    if not test_results_list:
-        print("Uh oh... it looks like there is no previous test results")
+    cur.execute('select name from Test_Type')
+    tests = cur.fetchall()
 
-    # 2D results list is returned
-    # Test Type in COL 1 and Pass/Fail in COL 2
+    print('Begin1')
+    try:
+        for i in tests_run:
+            print(i)
+    except:
+        print('None')
 
-    return test_results_list
-    
+    print('End1')
+
+    print('Begin2')
+    try:
+        for i in outcomes:
+            print(i)
+    except:
+        print('None')
+
+    print('End2')
+
+    print('Begin3')
+    try:
+        for i in tests:
+            print(i[0])
+    except:
+        print('None')
+
+    print('End3')
 
 
 
@@ -159,13 +200,14 @@ def add_test(person_id, test_type, serial_num, success, comments):
     if type(person_id) == type(""):
         person_id = verify_person(person_id)
 
+    print(serial_num)
     if serial_num:
-        cur.execute("SELECT board_id FROM Board WHERE full_id = {}".format(serial_num))
+        cur.execute("SELECT board_id FROM Board WHERE full_id = '{}'".format(serial_num))
         row = cur.fetchone()
         print("The Card_ID=", row[0])
         card_id = row[0]
         
-        sql="INSERT INTO Test (person_id, test_type_id, board_id, successful, comments, day) VALUES (%s,%s,%s,%s,%s,NOW())"
+        sql="INSERT INTO Test (person_id, test_type_id, board_id, successful, comments, day) VALUES (%s,%s,'%s',%s,'%s',NOW())"
         # This is safer because Python takes care of escaping any illegal/invalid text
         items=(person_id,test_type,card_id,success,comments)
         cur.execute(sql,items)
@@ -215,44 +257,7 @@ def add_tester(person_name, passwd):
         print('</div>')
         print('</div>')
 
-def add_board_type(name, type_sn, required_tests, passwd):
-    
-    try:
-        db = connect_admin(passwd)
-    except Exception as e:
-        print(e)
-        print("Administrative access denied")
-        return
-    cur = db.cursor()
-
-    if name:
-        sql="INSERT INTO Board_type (name, type_sn) VALUES ('%s', '%s')"%(name, type_sn)
-        print(sql)
-        # This is safer because Python takes care of escaping any illegal/invalid text
-        cur.execute(sql)
-
-        db.commit()
-
-        # Query for test type and board type ID's to place in the stitch table
-        cur.execute("SELECT type_id FROM Board_type WHERE name = '%s'"%(name))
-        board_id = cur.fetchone()[0]
-
-        for req in required_tests:
-            
-            sql = "INSERT INTO Type_test_stitch (type_id, test_type_id) VALUES ({}, {})".format(board_id, req)
-            cur.execute(sql)
-
-            db.commit()
-
-    else:
-        print('<div class ="row">')
-        print('<div class = "col-md-3 pt-4 ps-4 mx-2 my-2">')
-        print('<h3> Attempt Failed. Please Specify Serial Number </h3>')
-        print('</div>')
-        print('</div>')
-
-
-def add_new_test(test_name, required, test_desc_short, test_desc_long, relative_order, passwd):
+def add_new_test(test_name, required, test_desc_short, test_desc_long, passwd):
     try:
         db = connect_admin(passwd)
     except Exception:
@@ -260,7 +265,7 @@ def add_new_test(test_name, required, test_desc_short, test_desc_long, relative_
     cur = db.cursor()
 
     if test_name and required and test_desc_short and test_desc_long:
-        sql="INSERT INTO Test_Type (name, required, desc_short, desc_long, relative_order) VALUES ('%s', '%s', '%s', '%s', '%s')"%(test_name, required, test_desc_short, test_desc_long, relative_order)
+        sql="INSERT INTO Test_Type (name, required, desc_short, desc_long) VALUES ('%s', '%s', '%s', '%s')"%(test_name, required, test_desc_short, test_desc_long)
         print(sql)
         # This is safer because Python takes care of escaping any illegal/invalid text
         cur.execute(sql)
@@ -279,7 +284,7 @@ def add_init_tests(serial_num, tester, test_results, comments):
     cur = db.cursor()
 
     if serial_num and tester:
-        cur.execute("SELECT board_id FROM Board WHERE full_id = %(n)d" %{"n":serial_num})
+        cur.execute("SELECT board_id FROM Board WHERE full_id = '%s'" %(serial_num))
         row = cur.fetchone()
         card_id = row[0]
 
@@ -337,10 +342,10 @@ def add_test_template(serial_number, suggested_test):
     cur = db.cursor()
 
     print('<form action="add_test2.py" method="post" enctype="multipart/form-data">')
-    print('<INPUT TYPE="hidden" name="serial_number" value="%d">' % (serial_number))
+    print('<INPUT TYPE="hidden" name="serial_number" value="%s">' % (serial_number))
     print('<div class="row">')
     print('<div class="col-md-12 pt-4 ps-5 mx-2 my-2">')
-    print('<h2>Add Test for Card %d</h2>' %serial_number)
+    print('<h2>Add Test for Board %s</h2>' %serial_number)
     print('</div>')
     print('</div>')
 

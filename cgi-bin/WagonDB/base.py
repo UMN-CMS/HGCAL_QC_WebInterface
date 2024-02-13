@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+# this file contains all the base code to make the header, footer, main menu, etc, for the webpages
+
 import re
 import sys
 import connect
@@ -93,8 +95,10 @@ def top():
             Board Check
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-            <li><a class="dropdown-item" href="board_checkout.py">Board Checkout</a></li>
             <li><a class="dropdown-item" href="board_checkin.py">Board Checkin</a></li>
+            <li><a class="dropdown-item" href="board_checkout.py">Board Checkout</a></li>
+            <li><a class="dropdown-item" href="checkin_summary.py">Checkin Summary</a></li>
+            <li><a class="dropdown-item" href="checkout_summary.py">Checkout Summary</a></li>
           </ul>
         </li>
         <li class="nav-item dropdown">
@@ -104,6 +108,7 @@ def top():
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
             <li><a class="dropdown-item" href="summary.py">Summary</a></li>
             <li><a class="dropdown-item" href="analytics.py">Analytics</a></li>
+            <li><a class="dropdown-item" href="board_images.py">Photo Repository</a></li>
           </ul>
         </li>
         <li class="nav-item dropdown">
@@ -216,7 +221,7 @@ def bottom():
             </ul>
           </li>
           <li>
-            <a href="#HGCAL ENGINE DB" class="text-light text-decoration-none">HGCAL Engine Test</a>
+            <a href="../EngineDB/home_page.py" class="text-light text-decoration-none">HGCAL Engine Test</a>
           </li>
         </ul>
       </div>
@@ -264,7 +269,7 @@ def bottom():
             </ul>
           </li>
           <li>
-            <a href="#HGCAL ENGINE DB" class="text-light text-decoration-none">HGCAL Engine Test</a>
+            <a href="../EngineDB/home_page.py" class="text-light text-decoration-none">HGCAL Engine Test</a>
           </li>
         </ul>
       </div>

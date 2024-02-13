@@ -12,7 +12,10 @@ print("Content-type: text/html\n")
 
 form = cgi.FieldStorage()
 #url = form.getvalue("url")
-board_id = base.cleanCGInumber(form.getvalue("board_id"))
+try:
+    board_id = base.cleanCGInumber(form.getvalue("board_id"))
+except:
+    board_id = None
 
 base.header(title='Board Check In')
 base.top()

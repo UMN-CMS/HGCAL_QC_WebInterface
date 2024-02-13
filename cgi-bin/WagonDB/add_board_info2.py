@@ -27,6 +27,7 @@ comments = cgi.escape(form.getvalue("comments"))
 base.header(title='Add Board Info')
 base.top()
 
+# sends board info here to be sent to DB
 module_functions.add_board_info(board_id, str(sn), location, daqid, trig1id, trig2id, comments)
 
 base.bottom()

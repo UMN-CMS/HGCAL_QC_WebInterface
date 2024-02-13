@@ -84,14 +84,19 @@ def is_new_board(serial_number):
 
     is_new_board_bool = False
 
+    try:
+        cur.execute("SELECT board_id FROM Board WHERE full_id = '{}'".format(serial_number))
+        board_matching_sn = cur.fetchone()
+        cur.execute('select Checkin_id from Check_In where board_id=%s' % board_matching_sn)
+        check_in_id = cur.fetchone()
 
-    cur.execute("SELECT board_id FROM Board WHERE full_id = '{}'".format(serial_number))
-    board_matching_sn = cur.fetchone()
-
-    if not board_matching_sn:
+        if not check_in_id:
+            is_new_board_bool = True
+    except:
         is_new_board_bool = True
+        check_in_id = None
 
-    return is_new_board_bool
+    return is_new_board_bool, check_in_id
 
 
 
@@ -129,21 +134,59 @@ def get_previous_test_results(serial_num):
 
     db = connect(0)
     cur = db.cursor()
-    # TODO
+
     cur.execute("SELECT board_id FROM Board WHERE full_id = '{}'".format(serial_num))
     board_id = cur.fetchone()[0]
-    cur.execute("SELECT test_type_id, successful FROM Test WHERE board_id = {}".format( board_id))
+    cur.execute("SELECT test_type_id, successful FROM Test WHERE board_id = {}".format(board_id))
     test_results_list = cur.fetchall()
+    tests_run = []
+    outcomes = []
+    #try:
+    for i in test_results_list:
+        temp = [0,1]
+        cur.execute('select name from Test_Type where test_type = %s' % i[0])
+        print(test_results_list)
+        print(i[0])
+        temp[0] = cur.fetchall()[0][0]
+        if i[1] == 0:
+            temp[1] = 'Failed'
+        if i[1] == 1:
+            temp[1] = 'Passed'
+        tests_run.append(temp[0])
+        outcomes.append(temp[1])
+    #except Exception as e:
+    #    print(e)
+    #    test_results = None
 
-    
-    if not test_results_list:
-        print("Uh oh... it looks like there is no previous test results")
+    cur.execute('select name from Test_Type')
+    tests = cur.fetchall()
 
-    # 2D results list is returned
-    # Test Type in COL 1 and Pass/Fail in COL 2
+    print('Begin1')
+    try:
+        for i in tests_run:
+            print(i)
+    except:
+        print('None')
 
-    return test_results_list
-    
+    print('End1')
+
+    print('Begin2')
+    try:
+        for i in outcomes:
+            print(i)
+    except:
+        print('None')
+
+    print('End2')
+
+    print('Begin3')
+    try:
+        for i in tests:
+            print(i[0])
+    except:
+        print('None')
+
+    print('End3')
 
 
 
@@ -303,7 +346,7 @@ def add_test_template(serial_number, suggested_test):
     print('<INPUT TYPE="hidden" name="serial_number" value="%s">' % (serial_number))
     print('<div class="row">')
     print('<div class="col-md-12 pt-4 ps-5 mx-2 my-2">')
-    print('<h2>Add Test for Card %s</h2>' %serial_number)
+    print('<h2>Add Test for Board %s</h2>' %serial_number)
     print('</div>')
     print('</div>')
 

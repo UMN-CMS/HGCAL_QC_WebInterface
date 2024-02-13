@@ -15,6 +15,7 @@ board_id = base.cleanCGInumber(form.getvalue('board_id'))
 base.header(title='Add extra information about board')
 base.top()
 
+# sends board info here
 home_page_list.add_board_info_form(serial_num, board_id)
 
 print('<div class="row">')

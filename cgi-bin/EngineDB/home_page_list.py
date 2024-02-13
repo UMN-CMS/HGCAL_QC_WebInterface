@@ -3,6 +3,7 @@
 from connect import connect
 import sys
 import cgitb
+import mysql
 
 cgitb.enable()
 
@@ -202,14 +203,14 @@ def add_module(serial_number):
         cur = db.cursor()
         
         sn = serial_number[10:15]
-        type_id = serial_number[4:10]
+        type_id = serial_number[3:10]
 
-        cur.execute("SELECT board_id FROM Board WHERE full_id = %s" % (serial_number))
+        cur.execute("SELECT board_id FROM Board WHERE full_id = '%s'" % (serial_number))
 
         rows = cur.fetchall()
 
         if not rows:
-            cur.execute("INSERT INTO Board (sn, full_id, type_id) VALUES (%s, %s, %s); " % (sn, serial_number, type_id)) 
+            cur.execute("INSERT INTO Board (sn, full_id, type_id) VALUES (%s, '%s', '%s'); " % (sn, serial_number, type_id)) 
             #print '<div> INSERT INTO Card set sn = %s; </div>' %(serial_number)
             db.commit()
             db.close()

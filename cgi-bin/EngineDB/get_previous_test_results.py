@@ -16,14 +16,7 @@ form = cgi.FieldStorage()
 if form.getvalue('serial_number'):
     serial_number = cgi.escape(form.getvalue('serial_number'))
 
-    tests = add_test_functions.get_previous_test_results(serial_number)
-
-    print('Begin')
-
-    for t in tests:
-        print(t)
-
-    print('End')
+    add_test_functions.get_previous_test_results(serial_number)
 
 else:
     print('No serial number sent.')

@@ -19,27 +19,42 @@ def header(title=''):
         #print('<link  rel="stylesheet" href="bootstrap.min.css">')
         #print('<link  rel="stylesheet" href="style.css">')
     print('<title> %s </title>' %title)
+    print('''
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.3.3.min.js"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.3.3.min.js"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.3.3.min.js"
+        crossorigin="anonymous"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+    ''')
+    #print('''
+#<script src="https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-2.3.3.min.js"
+        #crossorigin="anonymous"></script>
+    #''')
     print('</head>')
 
 def top():
-    print('<body style="background-color:#e6e6e6">')
-    print('''<div class="container py-4">
+    print('<body style="background-color:#e6e6e6; overflow-x:hidden">')
+    print('''<div class="container py-4" style="width:100%">
     <div class="row">
-        <div class="col-5">
+        <div class="col-4">
         ''')
     if len(sys.argv) == 1:
-        print('''           <a href="home_page.py" class="d-flex text-decoration-none ">
-            <h1 class="text-dark">HGCAL Board Test</h1>
-        </a>
+        print('''
+            <a href="home_page.py" class="d-flex text-decoration-none ">
+                <h1 class="text-dark">HGCAL Board Test</h1>
+            </a>
         ''')
-        print('''        <hr style="margin-top:-0.5em">
-                <h6 class="text-dark">Maintained by the University of Minnesota CMS Group</h6>
-            </div>
-            <div class="col-6"></div>
-            <div class="col-1">
-                <img src="../static/files/goldy2.png" style="float-right">
-            </div>
+        print('''
+            <hr style="margin-top:-0.5em">
+            <h6 class="text-dark">Maintained by the University of Minnesota CMS Group</h6>
         </div>
+        <div class="col-6"></div>
+        <div class="col-1">
+            <img src="../../static/files/goldy2.png" style="float:leftt">
+        </div>
+    </div>
     </div>
     ''')
     else:
@@ -78,8 +93,10 @@ def top():
             Board Check
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-            <li><a class="dropdown-item" href="board_checkout.py">Board Checkout</a></li>
             <li><a class="dropdown-item" href="board_checkin.py">Board Checkin</a></li>
+            <li><a class="dropdown-item" href="board_checkout.py">Board Checkout</a></li>
+            <li><a class="dropdown-item" href="checkin_summary.py">Checkin Summary</a></li>
+            <li><a class="dropdown-item" href="checkout_summary.py">Checkout Summary</a></li>
           </ul>
         </li>
         <li class="nav-item dropdown">
@@ -88,7 +105,8 @@ def top():
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
             <li><a class="dropdown-item" href="summary.py">Summary</a></li>
-            <li><a class="dropdown-item" href="summary.py">Summary</a></li>
+            <li><a class="dropdown-item" href="analytics.py">Analytics</a></li>
+            <li><a class="dropdown-item" href="board_images.py">Photo Repository</a></li>
           </ul>
         </li>
         <li class="nav-item dropdown">
@@ -98,6 +116,21 @@ def top():
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
             <li><a class="dropdown-item" href="add_tester.py">Add New Tester</a></li>
             <li><a class="dropdown-item" href="add_new_test_template.py">Add New Test Template</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Plots
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <li><a class="dropdown-item" href="testdata.py">Total Tests</a></li>
+            <li><a class="dropdown-item" href="CompareTesters.py">Compare Testers</a></li>
+            <li><a class="dropdown-item" href="Power-Ground_ResistanceData.py">Power-Ground Resistance</a></li>
+            <li><a class="dropdown-item" href="1.5InputData.py">1.5V Input Check</a></li>
+            <li><a class="dropdown-item" href="10InputData.py">10V Input Check</a></li>
+            <li><a class="dropdown-item" href="1.2OutputData.py">1.2V Output Check</a></li>
+            <li><a class="dropdown-item" href="RX2.5OutputData.py">RX 2.5V Output Check</a></li>
+            <li><a class="dropdown-item" href="TX2.5OutputData.py">TX 2.5V Output Check</a></li>
           </ul>
         </li>
       </ul>
@@ -188,7 +221,7 @@ def bottom():
             </ul>
           </li>
           <li>
-            <a href="#HGCAL ENGINE DB" class="text-light text-decoration-none">HGCAL Engine Test</a>
+            <a href="../WagonDB/home_page.py" class="text-light text-decoration-none">HGCAL Wagon Test</a>
           </li>
         </ul>
       </div>
@@ -236,7 +269,7 @@ def bottom():
             </ul>
           </li>
           <li>
-            <a href="#HGCAL ENGINE DB" class="text-light text-decoration-none">HGCAL Engine Test</a>
+            <a href="../WagonDB/home_page.py" class="text-light text-decoration-none">HGCAL Wagon Test</a>
           </li>
         </ul>
       </div>

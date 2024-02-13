@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+# framework for creating dynamic plots
 import sys
 import pandas as pd
 import csv
@@ -30,6 +31,7 @@ import json
 
 cgitb.enable()
 
+#import all data from csv files and set it up properly
 TestData = pd.read_csv('./static/files/Test.csv', parse_dates=['Time'])
 BoardData = pd.read_csv('./static/files/Board.csv')
 PeopleData = pd.read_csv('./static/files/People.csv')
@@ -69,24 +71,32 @@ temptext=('''
 
 ''')
 
+#create a color pallete to be used on graphs
 colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10][2], d3['Category10'][10][3], d3['Category10'][10][4], d3['Category10'][10][5], d3['Category10'][10][6], d3['Category10'][10][7], d3['Category10'][10][8], d3['Category10'][10][9], brewer['Accent'][8][0], brewer['Accent'][8][3], brewer['Dark2'][8][0], brewer['Dark2'][8][2], brewer['Dark2'][8][3], brewer['Dark2'][8][4], brewer['Dark2'][8][5], brewer['Dark2'][8][6]]
 
 
+#creates a matrix of filterable data to be used in the plot
 def ResistanceHistogram(columns, data, view, widgets, modules, slider):
+    # creates a dictionary for the histogram data to go in
     hist_data = {}
     for i in modules:
         hist_data[i] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
     
-    dt = ColumnDataSource(data={'Type ID':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'level_1':[], 'Resistance':[]})
-    new_modules = ColumnDataSource(data={'modules':[]})
-    x = CustomJS(args=dict(col=columns, hist=hist_data, data=data, view=view, modules=modules, slider=slider, new_modules_ds=new_modules, dt=dt),code='''
-const new_modules = [];
+    # creates a dictionary for the filtered data
+    dt = ColumnDataSource(data={'Type ID':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'Outcome':[], 'level_1':[], 'Resistance':[]})
+    std = ColumnDataSource(data={'pathway':[],'std':[], 'mean':[]})
+    # custom javascript to be run
+    x = CustomJS(args=dict(col=columns, hist=hist_data, data=data, view=view, modules=modules, slider=slider, dt=dt, std=std),code='''
 const type_ids=[];
 const full_ids=[];
 const people=[];
 const times=[];
+const outcomes=[];
 const pathways=[];
 const res=[];
+const means=[];
+const devs=[];
+const pathways_2=[];
 for (let i = 0; i < modules.length; i++) {
     const indices = view.filters[0].compute_indices(data);
     let mask = new Array(data.data[col].length).fill(false);
@@ -98,6 +108,7 @@ for (let i = 0; i < modules.length; i++) {
             full_ids.push(data.data['Full ID'][j])
             people.push(data.data['Person Name'][j])
             times.push(data.data['Time'][j])
+            outcomes.push(data.data['Outcome'][j])
             pathways.push(data.data['level_1'][j])
             res.push(data.data[col][j])
         } else {
@@ -119,30 +130,36 @@ for (let i = 0; i < modules.length; i++) {
     hist[modules[i]].data['bottom'] = bottom;
     hist[modules[i]].data['top'] = top;
     hist[modules[i]].change.emit()
-    if (right != -1) {
-        new_modules.push(modules[i]);
-    }
+    means.push(d3.mean(good_data))
+    devs.push(d3.deviation(good_data))
+    pathways_2.push(modules[i])
 }
 dt.data['Type ID'] = type_ids;
 dt.data['Full ID'] = full_ids;
 dt.data['Person Name'] = people;
 dt.data['Time'] = times;
+dt.data['Outcome'] = outcomes;
 dt.data['level_1'] = pathways;
 dt.data['Resistance'] = res;
 dt.change.emit()
-new_modules_ds.data['modules'] = new_modules;
-new_modules_ds.change.emit()
+std.data['mean'] = means;
+std.data['std'] = devs;
+std.data['pathway'] = pathways_2;
+std.change.emit()
     ''')
     for widget in widgets:
         widget.js_on_change('value', x)
     slider.js_on_change('value', x)
-    return hist_data, new_modules, dt
+    return hist_data, dt, std
 
-
+# creates the webpage and plots the data
 def ResistanceFilter():
+    # create a CDS with all the data to be used
     df_temp = AllData.merge(RM, on='Test ID', how='left')
     df_temp = df_temp.dropna()
     ds = ColumnDataSource(df_temp)
+
+    # create the widgets to be used
     mc_widgets = {}
     dr_widgets = {}
     multi_choice = (lambda x,y: MultiChoice(options=x, value=[], title=y), 'value')
@@ -155,10 +172,12 @@ def ResistanceFilter():
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
     modules = np.unique(ds.data['level_1']).tolist()
+    # widget titles and data for those widgets has to be manually entered, as well as the type
     columns = ['Type ID', 'Full ID', 'Person Name', 'Outcome', 'Start Date', 'End Date']
     data = [ds.data['Type ID'].tolist(), ds.data['Full ID'].tolist(), ds.data['Person Name'].tolist(), ds.data['Outcome'], date_range, date_range]
     t = [multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
-
+    
+    # creates the figure object
     p = figure(
         title='Resistance Measurement',
         x_axis_label='Resistance',
@@ -167,6 +186,7 @@ def ResistanceFilter():
         width = 925
         )
 
+    # constructs the widgets
     for i in range(len(columns)):
         widget_constructor, trigger = t[i]
         if t[i] == multi_choice:
@@ -188,6 +208,7 @@ def ResistanceFilter():
                 'possible_vals': possible_vals,
                 'widget': widget,}
 
+#custom data filter, has to be written in javascript to be integrated into the website
     custom_filter = CustomJSFilter(args=dict(mc_widgets=mc_widgets, dr_widgets=dr_widgets), code='''
 const is_selected_map = new Map([
     ["multi_choice", (wi, pos, el, idx) => wi.value.includes(el)],
@@ -259,11 +280,13 @@ for (let i = 0; i < source.get_length(); i++) {
 }
 return indices;
 ''')
+    #implements the filter
     view = CDSView(source=ds, filters=[custom_filter])
+    #sets up all the objects to be created
     slider = Slider(start=1, end=16, value=4, step=1, title='Granularity')
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
-    hds, new_modules, dt = ResistanceHistogram('Resistance', ds, view, widgets.values(), modules, slider)
+    hds, dt, std = ResistanceHistogram('Resistance', ds, view, widgets.values(), modules, slider)
     for i in range(len(modules)):
         p.quad(top='top', bottom='bottom', left='left', right='right', source=hds[modules[i]], legend_label=modules[i], color = colors[i])
 
@@ -272,15 +295,25 @@ return indices;
                     TableColumn(field='Full ID', title='Full ID'),
                     TableColumn(field='Person Name', title='Person Name'),
                     TableColumn(field='Time', title='Date', formatter=DateFormatter()),
+                    TableColumn(field='Outcome', title='Outcome'),
                     TableColumn(field='level_1', title='Pathway'),
                     TableColumn(field='Resistance', title='Resistance'),
                     ]
     data_table = DataTable(source=dt, columns=table_columns, width=925, autosize_mode='fit_columns')
+    table_columns_2 = [
+                    TableColumn(field='pathway', title='Pathway'),
+                    TableColumn(field='mean', title='Mean'),
+                    TableColumn(field='std', title='Standard Deviation'),
+                    ]
+    data_table_2 = DataTable(source=std, columns=table_columns_2, autosize_mode='fit_columns')
     p.legend.click_policy='hide'
     p.legend.label_text_font_size = '8pt'
     w = [*widgets.values()]
-    plot_json = json.dumps(json_item(column(row(w[0:3]), row(w[3:6]), slider, p, data_table)))
+    #converts the bokeh items to json and sends them to the webpage
+    plot_json = json.dumps(json_item(column(row(w[0:3]), row(w[3:6]), slider, p, data_table, data_table_2)))
     return plot_json
+
+#ResistanceFilter()
 
 ################################################################################################################
 
@@ -478,7 +511,7 @@ def BitErrorHistogram(mp_data, eo_data, view, widgets, modules, slider):
         hist_data_eo[i] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
 
     std = ColumnDataSource(data={'columns':[], 'std':[]})
-    dt = ColumnDataSource(data={'Type ID':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'E Link':[], 'Midpoint':[], 'Eye Opening':[]})
+    dt = ColumnDataSource(data={'Type ID':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'Outcome':[], 'E Link':[], 'Midpoint':[], 'Eye Opening':[]})
     x = CustomJS(args=dict(hist_mp=hist_data_mp, hist_eo=hist_data_eo, mp_data=mp_data, eo_data=eo_data, view=view, modules=modules, slider=slider, std=std, dt=dt),code='''
 const columns = [];
 const std_ar = [];
@@ -486,6 +519,7 @@ const type_ids = [];
 const full_ids = [];
 const names = [];
 const dates = [];
+const outcomes = [];
 const elinks = [];
 const midpoints = [];
 const eye_openings = [];
@@ -502,6 +536,7 @@ for (let i = 0; i < modules.length; i++) {
             full_ids.push(mp_data.data['Full ID'][j])
             names.push(mp_data.data['Person Name'][j])
             dates.push(mp_data.data['Time'][j])
+            outcomes.push(mp_data.data['Outcome'][j])
             elinks.push(mp_data.data['E Link'][j])
             midpoints.push(mp_data.data['Midpoint'][j])
             eye_openings.push(eo_data.data['Eye Opening'][j])
@@ -549,7 +584,7 @@ for (let i = 0; i < modules.length; i++) {
     hist_eo[modules[i]].data['top'] = eo_top;
     hist_eo[modules[i]].change.emit()
     columns.push(modules[i])
-    std_ar.push(d3.deviation(eo_good_data));
+    std_ar.push(d3.deviation(eo_good_data))
 }
 std.data['columns'] = columns;
 std.data['std'] = std_ar;
@@ -558,6 +593,7 @@ dt.data['Type ID'] = type_ids;
 dt.data['Full ID'] = full_ids;
 dt.data['Person Name'] = names;
 dt.data['Time'] = dates;
+dt.data['Outcome'] = outcomes;
 dt.data['E Link'] = elinks;
 dt.data['Midpoint'] = midpoints;
 dt.data['Eye Opening'] = eye_openings;
@@ -724,6 +760,7 @@ return indices;
                     TableColumn(field='Full ID', title='Full ID'),
                     TableColumn(field='Person Name', title='Person Name'),
                     TableColumn(field='Time', title='Date', formatter=DateFormatter()),
+                    TableColumn(field='Outcome', title='Outcome'), 
                     TableColumn(field='E Link', title='E Link'),
                     TableColumn(field='Midpoint', title='Midpoint'),
                     TableColumn(field='Eye Opening', title='Eye Opening'),
@@ -733,11 +770,12 @@ return indices;
     plot_json = json.dumps(json_item(column(row(w[0:3]), row(w[3:6]), slider, p, q, table, data_table)))
     return plot_json
 
-def TotalPlot(columns, data, view, widgets, date_range, modules):
+def TotalPlot(data, view, widgets, date_range, modules):
     time_series_data_total = ColumnDataSource(data={'dates':[], 'counts':[]})
     time_series_data_suc = ColumnDataSource(data={'dates':[], 'counts':[]})
     time_series_data_unc = ColumnDataSource(data={'dates':[], 'counts':[]})
-    x = CustomJS(args=dict(col=columns, tsd_total=time_series_data_total, tsd_suc=time_series_data_suc, tsd_unc=time_series_data_unc, data=data, view=view, date_range=date_range, modules=modules),code='''
+    dt = ColumnDataSource(data={'dates':[], 'total_counts':[], 'suc_counts':[], 'unc_counts':[]})
+    x = CustomJS(args=dict(tsd_total=time_series_data_total, tsd_suc=time_series_data_suc, tsd_unc=time_series_data_unc, data=data, view=view, date_range=date_range, modules=modules, dt=dt),code='''
 for (let t = 0; t < modules.length; t++) {
     if (modules[t] == 'Total') {
         const indices = view.filters[0].compute_indices(data);
@@ -784,7 +822,6 @@ for (let t = 0; t < modules.length; t++) {
                 mask[m] = false;
             }
         }
-        console.log(mask)
         let count = 0;
         const dates = [];
         const counts = [];
@@ -825,7 +862,6 @@ for (let t = 0; t < modules.length; t++) {
                 mask[m] = false;
             }
         }
-        console.log(mask)
         let count = 0;
         const dates = [];
         const counts = [];
@@ -857,13 +893,15 @@ for (let t = 0; t < modules.length; t++) {
         tsd_unc.change.emit()
     }
 }
-console.log(tsd_total.data['counts'])
-console.log(tsd_suc.data['counts'])
-console.log(tsd_unc.data['counts'])
+dt.data['dates'] = tsd_total.data['dates'];
+dt.data['total_counts'] = tsd_total.data['counts'];
+dt.data['suc_counts'] = tsd_suc.data['counts'];
+dt.data['unc_counts'] = tsd_unc.data['counts'];
+dt.change.emit()
     ''')
     for widget in widgets:
         widget.js_on_change('value', x)
-    return time_series_data_total, time_series_data_suc, time_series_data_unc
+    return time_series_data_total, time_series_data_suc, time_series_data_unc, dt
 
 
 def TotalFilter():
@@ -990,16 +1028,24 @@ return indices;
     view = CDSView(source=ds, filters=[custom_filter])
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
-    tsd_total, tsd_suc, tsd_unc = TotalPlot('Resistance', ds, view, widgets.values(), date_range, modules)
+    tsd_total, tsd_suc, tsd_unc, dt = TotalPlot(ds, view, widgets.values(), date_range, modules)
     p.line('dates', 'counts', source=tsd_total, legend_label=modules[0], color=colors[0], line_width=2, muted_alpha=0.2)
     p.line('dates', 'counts', source=tsd_suc, legend_label=modules[1], color=colors[2], line_width=2, muted_alpha=0.2)
     p.line('dates', 'counts', source=tsd_unc, legend_label=modules[2], color=colors[3], line_width=2, muted_alpha=0.2)
+    table_columns = [
+                    TableColumn(field='dates', title='Dates', formatter=DateFormatter()),
+                    TableColumn(field='total_counts', title='Total Tests Completed'),
+                    TableColumn(field='suc_counts', title='Successful Tests Completed'),
+                    TableColumn(field='unc_counts', title='Unsuccessful Tests Completed'),
+                    ]
+    data_table = DataTable(source=dt, columns=table_columns, autosize_mode='fit_columns')
     p.legend.click_policy='mute'
     p.legend.label_text_font_size = '8pt'
     p.legend.location = 'top_left'
     w = [*widgets.values()]
-    plot_json = json.dumps(json_item(column(row(w[0:3]), row(w[3:5]), p)))
+    plot_json = json.dumps(json_item(column(row(w[0:3]), row(w[3:5]), p, data_table)))
     return plot_json
+
 
 ############################################################################################################
 
@@ -1209,17 +1255,23 @@ return indices;
 def IDHistogram(columns, data, views, widgets, subtypes, serial_numbers, slider):
     hist = {}
     td = {}
+    std = {}
     for s in subtypes:
         hist[s] = {}
         for sn in serial_numbers[s]:
             hist[s][sn] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
 
-        td[s] = ColumnDataSource(data={'Full ID':[], 'Resistance':[]})
+        td[s] = ColumnDataSource(data={'Full ID':[], 'Resistance':[], 'Outcome':[]})
+        std[s] = ColumnDataSource(data={'Full ID':[], 'mean':[], 'std':[]})
 
-    x = CustomJS(args=dict(col=columns, hist=hist, data=data, views=views, subtypes=subtypes, serial_numbers=serial_numbers, slider=slider, td=td),code='''
+    x = CustomJS(args=dict(col=columns, hist=hist, data=data, views=views, subtypes=subtypes, serial_numbers=serial_numbers, slider=slider, td=td, std=std),code='''
 for (let s = 0; s < subtypes.length; s++) {
     const full_ids = [];
     const res = [];
+    const outcomes = [];
+    const serials = [];
+    const means = [];
+    const stds = [];
     for (let sn = 0; sn < serial_numbers[subtypes[s]].length; sn++) {
         const indices = views[subtypes[s]].filters[0].compute_indices(data[subtypes[s]]);
         let mask = new Array(data[subtypes[s]].data[col].length).fill(false);
@@ -1229,6 +1281,7 @@ for (let s = 0; s < subtypes.length; s++) {
                 mask[j] = true;
                 full_ids.push(serial_numbers[subtypes[s]][sn])
                 res.push(data[subtypes[s]].data[col][j])
+                outcomes.push(data[subtypes[s]].data['Outcome'][j])
             } else {
                 mask[j] = false;
             }
@@ -1249,16 +1302,24 @@ for (let s = 0; s < subtypes.length; s++) {
         hist[subtypes[s]][serial_numbers[subtypes[s]][sn]].data['bottom'] = bottom;
         hist[subtypes[s]][serial_numbers[subtypes[s]][sn]].data['top'] = top;
         hist[subtypes[s]][serial_numbers[subtypes[s]][sn]].change.emit()
+        serials.push(serial_numbers[subtypes[s]][sn])
+        means.push(d3.mean(good_data))
+        stds.push(d3.deviation(good_data))
     }
     td[subtypes[s]].data['Full ID'] = full_ids;
     td[subtypes[s]].data['Resistance'] = res;
+    td[subtypes[s]].data['Outcome'] = outcomes;
     td[subtypes[s]].change.emit()
+    std[subtypes[s]].data['Full ID'] = serials;
+    std[subtypes[s]].data['mean'] = means;
+    std[subtypes[s]].data['std'] = stds;
+    std[subtypes[s]].change.emit()
 }
     ''')
     for widget in widgets:
         widget.js_on_change('value', x)
     slider.js_on_change('value', x)
-    return hist, td
+    return hist, td, std
 
 def IDFilter():
     df_temp = AllData.merge(IDR, on='Test ID', how='left')
@@ -1393,9 +1454,10 @@ return indices;
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
 
-    hist,td = IDHistogram('Resistance', data_sources, views, widgets.values(), subtypes, serial_numbers, slider)
+    hist, td, std = IDHistogram('Resistance', data_sources, views, widgets.values(), subtypes, serial_numbers, slider)
     plots = {}
     tables = {}
+    tables_2 = {}
     for s in subtypes:
         p = figure(
             title='ID Resistance for ' + s,
@@ -1413,13 +1475,24 @@ return indices;
         table_columns = [
                         TableColumn(field='Full ID', title='Full ID'),
                         TableColumn(field='Resistance', title='Resistance'),
+                        TableColumn(field='Outcome', title='Outcome'),
                         ]
         data_table = DataTable(source=td[s], columns=table_columns, autosize_mode='fit_columns')
         data_table.visible = False
         tables[s] = data_table
+
+        table_columns_2 = [
+                        TableColumn(field='Full ID', title='Full ID'),
+                        TableColumn(field='mean', title='Mean'),
+                        TableColumn(field='std', title='Standard Deviation'),
+                        ]
+        data_table_2 = DataTable(source=std[s], columns=table_columns_2, autosize_mode='fit_columns')
+        data_table_2.visible = False
+        tables_2[s] = data_table_2
             
     w = [*widgets.values()]
-    display_plot = CustomJS(args=dict(plots=plots, tables=tables), code=('''
+    # creates a custom select widget that changes which plot to display
+    display_plot = CustomJS(args=dict(plots=plots, tables=tables, tables_2=tables_2), code=('''
 for (let [name,plot] of Object.entries(plots)){
     if (name == this.value){
         plot.visible = true
@@ -1434,12 +1507,19 @@ for (let [name,table] of Object.entries(tables)){
         table.visible = false
     }
 }
+for (let [name,table] of Object.entries(tables_2)){
+    if (name == this.value){
+        table.visible = true
+    } else {
+        table.visible = false
+    }
+}
 '''))
     
     select = Select(title='Type ID', options=subtypes)
     select.js_on_change('value', display_plot)
 
-    layout = column(row(w[0:2] + [select]), row(w[2:5]), slider, column(list(plots.values())),  column(list(tables.values())))
+    layout = column(row(w[0:2] + [select]), row(w[2:5]), slider, column(list(plots.values())),  column(list(tables.values())), column(list(tables_2.values())))
     plot_json = json.dumps(json_item(layout))
     return plot_json
 
