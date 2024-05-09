@@ -70,15 +70,15 @@ with open('./static/files/I2C_ReadWrite_Test_Data.csv', mode='w') as csv_file:
     mod0 = []
     mod1 = []
     mod2 = []
-    for i in Attach_Data:
-        mod9999.append(i['num_iic_checks_mod9999'])
-        mod0.append(i['num_iic_correct_mod0'])
+    for i in range(len(Attach_Data)):
+        mod9999.append(Attach_Data[i]['num_iic_checks_mod9999'])
+        mod0.append(Attach_Data[i]['num_iic_correct_mod0'])
         try:
-            mod1.append(i['num_iic_correct_mod1'])
+            mod1.append(Attach_Data[i]['num_iic_correct_mod1'])
         except KeyError as e:
             mod1.append(-1)
         try:
-            mod2.append(i['num_iic_correct_mod2'])
+            mod2.append(Attach_Data[i]['num_iic_correct_mod2'])
         except KeyError as e:
             mod2.append(-1)
 
@@ -230,7 +230,10 @@ with open('./static/files/Bit_Error_Rate_Test_Data.csv', mode='w') as csv_file:
     for n in range(len(Attach_Data)):
             keys = Attach_Data[n].keys()
             for j in keys:
-                writer.writerow({'Test ID':TestIDs[n][0], 'E Link':j, 'Midpoint':Attach_Data[n][j]['Midpoint'], 'Eye Opening':Attach_Data[n][j]['Eye Opening'], 'Passed':Attach_Data[n][j]['passed'], 'Midpoint Errors':Attach_Data[n][j]['Midpoint Errors']})
+                try:
+                    writer.writerow({'Test ID':TestIDs[n][0], 'E Link':j, 'Midpoint':Attach_Data[n][j]['Midpoint'], 'Eye Opening':Attach_Data[n][j]['Eye Opening'], 'Passed':Attach_Data[n][j]['passed'], 'Midpoint Errors':Attach_Data[n][j]['Midpoint Errors']})
+                except:
+                    pass
             
 with open('./static/files/Board.csv', mode='w') as csv_file:
     header = ['Full ID', 'Board ID', 'Type ID']
@@ -276,3 +279,7 @@ with open('./static/files/Attachments.csv', mode='w') as csv_file:
     cur.execute('select * from Attachments')
     Test_Data = cur.fetchall()
     writer.writerows(Test_Data)
+
+#with open('./static/files/ADC_Self_Test.csv', mode='w') as csv_file:
+#    header = ['Test ID', 'Device', 'Test', 'Result']
+

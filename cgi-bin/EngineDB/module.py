@@ -27,9 +27,7 @@ cur = db.cursor()
 
 revokes=module_functions.Portage_fetch_revokes(serial_num)
 
-cur.execute('select location, daq_chip_id, trigger_chip_1_id, trigger_chip_2_id, info from Board_Info where board_id=%s' % board_id)
-info = cur.fetchall()
-module_functions.board_info(info, serial_num)
+module_functions.board_info(serial_num)
 
 cur.execute('select test_type, name from Test_Type where required = 1 order by relative_order ASC')
 test_types = cur.fetchall()

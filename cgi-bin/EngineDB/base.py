@@ -105,7 +105,7 @@ def top():
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
             <li><a class="dropdown-item" href="summary.py">Summary</a></li>
-            <li><a class="dropdown-item" href="analytics.py">Analytics</a></li>
+            <li><a class="dropdown-item" href="tester_summary.py">Tester Summary</a></li>
             <li><a class="dropdown-item" href="board_images.py">Photo Repository</a></li>
           </ul>
         </li>
@@ -125,12 +125,13 @@ def top():
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
             <li><a class="dropdown-item" href="testdata.py">Total Tests</a></li>
             <li><a class="dropdown-item" href="CompareTesters.py">Compare Testers</a></li>
-            <li><a class="dropdown-item" href="Power-Ground_ResistanceData.py">Power-Ground Resistance</a></li>
-            <li><a class="dropdown-item" href="1.5InputData.py">1.5V Input Check</a></li>
-            <li><a class="dropdown-item" href="10InputData.py">10V Input Check</a></li>
-            <li><a class="dropdown-item" href="1.2OutputData.py">1.2V Output Check</a></li>
-            <li><a class="dropdown-item" href="RX2.5OutputData.py">RX 2.5V Output Check</a></li>
-            <li><a class="dropdown-item" href="TX2.5OutputData.py">TX 2.5V Output Check</a></li>
+            <li><a class="dropdown-item" href="ADC_functionality.py">ADC Functionality</a></li>
+            <li><a class="dropdown-item" href="EClockData.py">E Clock Rates</a></li>
+            <li><a class="dropdown-item" href="ELinkQualityData.py">E Link Quality</a></li>
+            <li><a class="dropdown-item" href="FastCommandQualityData.py">Fast Command Quality</a></li>
+            <li><a class="dropdown-item" href="UplinkQuality.py">Uplink Quality</a></li>
+            <li><a class="dropdown-item" href="X_PWRData.py">X PWR</a></li>
+            <li><a class="dropdown-item" href="I2CData.py">I2C</a></li>
           </ul>
         </li>
       </ul>

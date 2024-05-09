@@ -11,6 +11,10 @@ import numpy as np
 import datetime
 from datetime import datetime as dt
 import uuid
+import cgi
+import json
+
+#SERVER_NAME
 
 db = connect(0)
 cur = db.cursor()
@@ -155,38 +159,56 @@ def ePortageTest(test_type_id, board_sn, test_name, revokes):
     print('</div>')
     print('</div>')
 
-def board_info(info, sn):
-    if info and len(info[0]) == 4:
-        location = info[0][0]
-        daq_chip_id = info[0][1]
-        trigger_chip_1_id = info[0][2]
-        trigger_chip_2_id = info[0][3]
-        info_com = "None"
-    else:
-        location, daq_chip_id, trigger_chip_1_id, trigger_chip_2_id, info_com = 'None', 'None', 'None', 'None', 'None'
+def board_info(sn):
+    cur.execute('select board_id from Board where full_id="%s"' % sn)
+    board_id = cur.fetchall()[0][0]
+    cur.execute('select location from Board where board_id=%s' % board_id)
+    location = cur.fetchall()[0][0]
+    try:
+        cur.execute('select test_id,day from Test where test_type_id=2 and board_id=%s order by day desc' % board_id) 
+        test_id = cur.fetchall()[0][0]
+        cur.execute('select Attach from Attachments where test_id=%s' % test_id)
+        attach = cur.fetchall()[0][0]
+        attach = json.loads(attach)
+        id_resistance = attach['wagon type chip']['WAGON_TYPE -> GND']
+    except:
+        test_id = 'No tests run'
+        attach = 'none'
+        id_resistance = 'none'
+        
+
+    info_com = 'None'
+
+    cur.execute('select name from Test_Type')
+    names = cur.fetchall()
+    outcomes = []
+    for i in range(len(names)):
+        outcomes.append(False)
+
+    cur.execute('select test_type_id, successful from Test where board_id=%s' % board_id)
+    temp = cur.fetchall()
+    for t in temp:
+        if t[1] == 1:
+            outcomes[t[0]] = True
+    num = outcomes.count(True)
+    total = len(outcomes)
  
     print('<div class="col-md-11 pt-2 px-4 mx-2 my-2">')
     print('<table class="table table-bordered table-hover table-active">')
     print('<tbody>')
     print('<tr>')
-    print('<th colspan=3>Location</th>')
-    print('<th>DAQ Chip ID</th>')
-    print('<th>Trigger Chip 1 ID</th>')
-    print('<th colspan=2>Trigger Chip 2 ID</th>')
+    print('<th colspan=2>Location</th>')
+    print('<th colspan=1>Resistance ID</th>')
+    print('<th colspan=2>Testing Status</th>')
     print('</tr>')
     print('<tr>')
-    print('<td colspan=3>%s</td>' % location)
-    if daq_chip_id != "0" and trigger_chip_1_id != "0" and trigger_chip_2_id != "0":
-        print('<td>%s</td>' % daq_chip_id)
-        print('<td>%s</td>' % trigger_chip_1_id)
-        print('<td colspan=2>%s</td>' % trigger_chip_2_id)
+    print('<td colspan=2>%s</td>' % location)
+    print('<td colspan=1>%s</td>' % id_resistance)
+    if num == total:
+        print('<td colspan=2><span class="badge bg-success rounded-pill">Done</span></td>')
     else:
-        print('<td>None</td>')
-        print('<td>None</td>') 
-        print('<td colspan=2>None</td>')
+        print('<td colspan=2><span class="badge bg-primary rounded-pill">%(success)s/%(total)s</span></td>' %{'success': num, 'total': total})
         
-    cur.execute('select board_id from Board where full_id="%s"' % sn)
-    board_id = cur.fetchall()[0][0]
     cur.execute('select board_id from Check_Out')
     temp = cur.fetchall()
     ids = []
@@ -194,12 +216,12 @@ def board_info(info, sn):
         ids.append(t[0])
     print('</tr>')
     print('<tr>')
-    print('<th colspan=4>Comments</th>')
+    print('<th colspan=2>Comments</th>')
     print('<th colspan=1>Date Received</th>')
     print('<th colspan=2>Status</th>')
     print('</tr>')
     print('<tr>')
-    print('<td colspan=4>%s</td>' % info_com)
+    print('<td colspan=2>%s</td>' % info_com)
     cur.execute('select checkin_date from Check_In where board_id=%s' % board_id)
     try:
         r_date = cur.fetchall()[0][0]
@@ -222,15 +244,20 @@ def board_info(info, sn):
     print('</tbody>')
     print('</table>')
 
+    server_name = os.environ["SERVER_NAME"]
+
     try:
         cur.execute('select image_name,date from Board_images where board_id=%s and view="Top" order by date desc' % board_id)
         img_name_top = cur.fetchall()[0][0]
         cur.execute('select image_name,date from Board_images where board_id=%s and view="Bottom" order by date desc' % board_id)
         img_name_bottom = cur.fetchall()[0][0]
+
         print('<h5>Top View:</h5>') 
-        print('<a href="../../static/files/wagondb/%(img)s"><img src="../../static/files/wagondb/%(img)s" width=900 height=auto></a>' % {'img':img_name_top})
+        print('<a href="http://%(server_name)s/ePortage/wagondb/%(img)s"><img src="http://%(server_name)s/ePortage/wagondb/%(img)s" width=900 height=auto></a>' % {'server_name': server_name, 'img':img_name_top})
+        #print('<a href="/home/ePortage/wagondb/image_top"><img src="/home/ePortage/wagondb/image_top" width=900 height=auto></a>')
         print('<h5>Bottom View:</h5>')
-        print('<a href="../../static/files/wagondb/%(img)s"><img src="../../static/files/wagondb/%(img)s" width=900 height=auto></a>' % {'img':img_name_bottom})
+        print('<a href="http://%(server_name)s/ePortage/wagondb/%(img)s"><img src="http://%(server_name)s/ePortage/wagondb/%(img)s" width=900 height=auto></a>' % {'server_name': server_name, 'img':img_name_bottom})
+        #print('<a href="./static/image_bottom"><img src="./static/image_bottom" width=900 height=auto></a>')
     except Exception as e:
         print('<h6>This board has no image.</h6>')
     

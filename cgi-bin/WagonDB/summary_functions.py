@@ -36,7 +36,7 @@ def get():
             board_id = cur.fetchall()[0][0]
             cur.execute('select test_type_id, successful from Test where board_id=%s' % board_id)
             temp = cur.fetchall()
-            outcomes = [False, False, False, False, False]
+            outcomes = [False, False, False, False, False, False]
             for t in temp:
                 if t[1] == 1:
                     if t[0] == 1:
@@ -49,7 +49,9 @@ def get():
                         outcomes[3] = True
                     if t[0] == 5:
                         outcomes[4] = True
-            tt_ids = [1, 2, 3, 4, 5]
+                    if t[0] == 6:
+                        outcomes[5] = True
+            tt_ids = [1, 2, 3, 4, 5, 6]
             cur.execute('select name from Test_Type')
             temp = cur.fetchall()
             names = []
@@ -64,16 +66,18 @@ def get():
                         print('<li>%s' %names[0])
                     if idx == 1:
                         print('<li>%s' %names[1])
+                    if idx == 2:
+                        print('<li>%s' %names[2])
             print('</ul></td>') 
             print('<td><ul>')
             for idx,o in enumerate(outcomes[2:5]):
                 if o == True:
                     if idx == 0:
-                        print('<li>%s' %names[2])
-                    if idx == 1:
                         print('<li>%s' %names[3])
-                    if idx == 2:
+                    if idx == 1:
                         print('<li>%s' %names[4])
+                    if idx == 2:
+                        print('<li>%s' %names[5])
             print('</ul></td>') 
 
             print('<td><ul>')

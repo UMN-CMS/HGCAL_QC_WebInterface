@@ -107,7 +107,7 @@ def top():
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
             <li><a class="dropdown-item" href="summary.py">Summary</a></li>
-            <li><a class="dropdown-item" href="analytics.py">Analytics</a></li>
+            <li><a class="dropdown-item" href="tester_summary.py">Tester Summary</a></li>
             <li><a class="dropdown-item" href="board_images.py">Photo Repository</a></li>
           </ul>
         </li>

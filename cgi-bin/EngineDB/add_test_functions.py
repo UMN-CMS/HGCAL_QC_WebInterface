@@ -141,20 +141,22 @@ def get_previous_test_results(serial_num):
     test_results_list = cur.fetchall()
     tests_run = []
     outcomes = []
-    try:
-        for i in test_results_list:
-            temp = [0,1]
-            cur.execute('select name from Test_Type where test_type = %s' % i[0])
-            temp[0] = cur.fetchall()[0][0]
-            if i[1] == 0:
-                temp[1] = 'Failed'
-            if i[1] == 1:
-                temp[1] = 'Passed'
-            tests_run.append(temp[0])
-            outcomes.append(temp[1])
-    except Exception as e:
-        print(e)
-        test_results = None
+    #try:
+    for i in test_results_list:
+        temp = [0,1]
+        cur.execute('select name from Test_Type where test_type = %s' % i[0])
+        print(test_results_list)
+        print(i[0])
+        temp[0] = cur.fetchall()[0][0]
+        if i[1] == 0:
+            temp[1] = 'Failed'
+        if i[1] == 1:
+            temp[1] = 'Passed'
+        tests_run.append(temp[0])
+        outcomes.append(temp[1])
+    #except Exception as e:
+    #    print(e)
+    #    test_results = None
 
     cur.execute('select name from Test_Type')
     tests = cur.fetchall()
@@ -200,14 +202,13 @@ def add_test(person_id, test_type, serial_num, success, comments):
     if type(person_id) == type(""):
         person_id = verify_person(person_id)
 
-    print(serial_num)
     if serial_num:
         cur.execute("SELECT board_id FROM Board WHERE full_id = '{}'".format(serial_num))
         row = cur.fetchone()
         print("The Card_ID=", row[0])
         card_id = row[0]
         
-        sql="INSERT INTO Test (person_id, test_type_id, board_id, successful, comments, day) VALUES (%s,%s,'%s',%s,'%s',NOW())"
+        sql="INSERT INTO Test (person_id, test_type_id, board_id, successful, comments, day) VALUES (%s,%s,%s,%s,%s,NOW())"
         # This is safer because Python takes care of escaping any illegal/invalid text
         items=(person_id,test_type,card_id,success,comments)
         cur.execute(sql,items)

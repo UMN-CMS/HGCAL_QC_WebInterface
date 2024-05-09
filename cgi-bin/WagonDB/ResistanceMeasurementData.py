@@ -5,7 +5,7 @@ import cgitb
 import base
 import module_functions
 import sys
-import makePlots as mp
+import resistancePlots as mp
 
 cgitb.enable()
 

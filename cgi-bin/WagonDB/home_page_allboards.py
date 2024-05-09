@@ -31,27 +31,24 @@ def renderlist():
 
     columns={}
     for s in subtypes:
-        columns[s]=['<a class="d-inline-flex list-group-item list-group-item-action text-decorate-none justify-content-between"><b>%(id)s</b></a>' %{'id':s}]
+        columns[s] = ['<a class="d-inline-flex list-group-item list-group-item-action text-decorate-none justify-content-between"><b>%(id)s</b></a>' %{'id':s}]
         for sn in serial_numbers[s]:
+            cur.execute('select name from Test_Type')
+            temp = cur.fetchall()
+            names = []
+            outcomes = []
+            for t in temp:
+                names.append(t[0])
+                outcomes.append(False)
             cur.execute('select board_id from Board where full_id="%s"' % sn)
             board_id = cur.fetchall()[0][0]
             cur.execute('select test_type_id, successful from Test where board_id=%s' % board_id)
             temp = cur.fetchall()
-            outcomes = [False, False, False, False, False]
-            total = 5
             for t in temp:
                 if t[1] == 1:
-                    if t[0] == 0:
-                        outcomes[0] = True
-                    if t[0] == 1:
-                        outcomes[1] = True
-                    if t[0] == 2:
-                        outcomes[2] = True
-                    if t[0] == 3:
-                        outcomes[3] = True
-                    if t[0] == 4:
-                        outcomes[4] = True
+                    outcomes[t[0]] = True
             num = outcomes.count(True)
+            total = len(outcomes)
             
             if num == total:
                 temp_col = '<a class="d-inline-flex list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?board_id=%(id)s&serial_num=%(serial)s"> %(serial)s <span class="badge bg-success rounded-pill">Done</span></a>' %{'serial':sn, 'id':board_id}
@@ -60,7 +57,7 @@ def renderlist():
 
             columns[s].append(temp_col)
 
-    print('<div class="row overflow-scroll py-4 my-2 mx-4">')
+    print('<div class="row">')
     for s in subtypes:
         print('<div class="col mx-1">')
         print('<div class="list-group">')

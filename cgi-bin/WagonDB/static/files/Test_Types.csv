@@ -1,0 +1,7 @@
+Test Type,Name,Required,Short Desc.,Long Desc.,Relative Order
+0,Visual Inspection,1,Preliminary check of board,Check that all components are present on board and that there is no visible damage,0
+1,Resistance Measurement,1,Measure resistance of analog lines,Test must be completed before attempting to measure ID resistor,2
+2,ID Resistor Measurement,1,Measure resistance of ID resistor,Should be completed after the general resistance measurement,3
+3,I2C Read/Write,1,Check I2C read/write along wagon,Test must be completed before BERT for wagon wheel configuration,4
+4,Bit Error Rate Test,1,Determine quality of data transmission,Needs to be completed after IIC check in order to set up the wagon wheel,5
+6,ADC Self Test,1,Check ADC functionality,Make sure that the wagon is UNPLUGGED while running this test. Must be run before resistance measurement tests.,1

@@ -7,6 +7,7 @@ from connect import connect
 from summary_functions import get
 import module_functions
 import sys
+import numpy as np
 
 if len(sys.argv) != 1:
     sys.stdout = open('%(loc)s/summary.html' %{'loc':sys.argv[1]}, 'w')
@@ -18,7 +19,8 @@ else:
 base.header(title='Summary')
 base.top()
 
-#List_of_rows = get()
+db = connect(0)
+cur = db.cursor()
 
 print('<div class="row">')
 print('<div class="col-md-5 ps-4 pt-4 mx-2 my-2"><h2>Test Summary</h2></div>')
@@ -28,56 +30,30 @@ print('<div class="col-md-12">')
 print('<div class="col-md-11 ps-5 py-4my-2"><table class="table table-hover">')
 print('<thead class="table-dark">')
 print('<tr>')
-print('<th> S/N </th>')
-print('<th colspan=2> Tests Passed </th>')
-print('<th colspan=2> Tests Remaining </th>')
-#print                    '<th> Final Status </th>'
+print('<th> Select a Subtype </th>')
 print('</tr>')
 print('</thead>')
 print('<tbody>')
 
-get()
+subtypes = []
+cur.execute('select board_id from Board')
+temp = cur.fetchall()
+for t in temp:
+    cur.execute('select type_id from Board where board_id="%s"' % t[0])
+    new = cur.fetchall()
+    subtypes.append(new[0][0])
+subtypes = np.unique(subtypes).tolist()
 
-#for row in List_of_rows:
-    #print('<tr>')
-    #if len(sys.argv) == 1:
-        #print('<td> <a href=module.py?board_id=%(id)s&serial_num=%(serial)s> %(serial)s </a></td>' %{'serial':row[2], 'id':row[1]})
-        ##print '<td> %s </td>' %row[1]
-    #else:
-        #print('<td> <a href="card_%(serial)s.html"> %(serial)s </a></td>' %{'serial':row[2]})
-    #print('<td><ul>')
-    #for tests in row[3][0:][::2]:
-        #print('<li>%s' %tests)
-    #print('</ul></td>')
+for s in subtypes:
+    print('<tr><td>')
+    print('<a href="summary_board.py?type_id=%(id)s">%(id)s</a>' %{'id':s})
+    print('</td></tr>')
 
-    #print('<td><ul>')
-    #for tests in row[3][1:][::2]:
-        #print('<li>%s' %tests)
-    #print('</ul></td>')
-
-    #print('<td><ul>')
-    #if len(sys.argv) == 1:
-        #for tests in row[4][0:][::2]:
-            #print('<li> <a href="add_test.py?serial_num=%(serial_num)s&board_id=%(board_id)d&suggested=%(test_type_id)d">%(name)s</a>' %{'board_id':row[0], 'serial_num':row[2], 'test_type_id':tests[1], 'name':tests[0]})
-
-    #else:
-        #for tests in row[4][0:][::2]:
-            #print('<li>%s' %tests[0] )
-    #print('</ul></td>')
-
-    #print('<td><ul>')
-    #if len(sys.argv) == 1:
-        #for tests in row[4][1:][::2]:
-            #print('<li> <a href="add_test.py?serial_num=%d&suggested=%d">%s</a>' %(row[0],tests[1],tests[0]))
-    #else:
-        #for tests in row[4][1:][::2]:
-            #print('<li>%s' %tests[0])
-    #print('</ul></td>')
-    
-    #print('</tr>')
-
-print('</tbody></table></div></div>')
-
+print('</tbody>')
+print('</table>')
+print('</div>')
+print('</div>')
+print('</div>')
 
 base.bottom()
 
