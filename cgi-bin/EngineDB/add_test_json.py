@@ -8,27 +8,22 @@ import add_test_functions
 
 def parse_data(form):
     try:
-        serial = form.getvalue('serial_num')
+        serial = (form.getvalue('serial_num'))
         print("serial_num:", serial)
         
         # board_type is a str
-        board_type = str(serial)[4:10]
+        board_type = str(serial)[3:9]
         print("board_type:", board_type)
         tester = cgi.escape(form.getvalue('tester'))
         print("tester:", tester)
         
         # test_type is an integer
-        #test_type = int(cgi.escape(form.getvalue('test_type')))
-        test_type = cgi.escape(form.getvalue('name'))
+        test_type = int(cgi.escape(form.getvalue('test_type')))
         print("test_type:", test_type)
         successful = base.cleanCGInumber(form.getvalue('successful'))
         print("successful:", successful)
-        try:
-            comments = cgi.escape(form.getvalue('comments'))
-            print("comments:", comments)    
-        except:
-            print("No comments??!?")
-            comments = ""
+        comments = cgi.escape(form.getvalue('comments'))
+        print("comments:", comments)    
         
         try:
             data = form.getvalue('data')
@@ -70,12 +65,11 @@ def parse_data(form):
     valid_test = False
     for i in test_dict0:
         print("Current index value:", i, "                   ")
-        #if int(i[1]) == test_type:
-        if i[1] == test_type:
+        if int(i[0]) == test_type:
             test_name = str(i[1])
-            test_type = int(i[0])
             valid_test = True
 
+    
     # test_type_data = [(x,y) for x,y in cur if y.lower() == test.lower()]
 
     if not valid_test:
@@ -105,7 +99,7 @@ def parse_data(form):
 
     if comments == "":
         print("Please enter comments for this test")
-        #return None
+        return None
 
 
     #######################
@@ -114,7 +108,7 @@ def parse_data(form):
 
 
 
-    cur.execute('SELECT type_id, test_type_id FROM Type_test_stitch WHERE type_id = "%s" AND test_type_id = %i;' % (board_type, int(test_type)))
+    cur.execute("SELECT type_id, test_type_id FROM Type_test_stitch WHERE type_id = '%s' AND test_type_id = %s;" % (board_type, test_type))
 
     if not cur:
         print('Invalid test for this board type. Check the DB webpage for valid tests')
@@ -122,7 +116,7 @@ def parse_data(form):
 
 
 
-    # Creates output
+    # Creates outpur 
     test_dict = {'serial_num': serial, 'board_type': board_type, 'tester': tester, 'person_id': person_id, 'test': test_name, 'test_type': test_type, 'successful': successful, 'comments': comments}
 
 

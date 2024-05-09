@@ -5,7 +5,7 @@ import cgitb
 import base
 import module_functions
 import sys
-import makePlots as mp
+import total_tests as mp
 
 cgitb.enable()
 
