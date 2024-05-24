@@ -16,14 +16,13 @@ print(os.environ.get("QUERY_STRING", "No Query String in url"))
 print("Content-type: text/html\n")
 
 base.header(title='Adding a new module...')
-base.top()
+base.top(False)
 
 form = cgi.FieldStorage()
 
 if form.getvalue('serial_number'):
     sn = cgi.escape(form.getvalue('serial_number'))
 
-    #print '<div> Serial Number = %(s)s , )s </div>' %{'s': sn} 
     home_page_list.add_module(sn)
     
     print('<div class="row">')
@@ -43,7 +42,7 @@ if form.getvalue('serial_number'):
 
     home_page_list.render_list_module()
 
-    base.bottom()
+    base.bottom(False)
 
 
 else:
@@ -67,7 +66,7 @@ else:
 
     home_page_list.render_list_module()
 
-    base.bottom()
+    base.bottom(False)
 
     
     

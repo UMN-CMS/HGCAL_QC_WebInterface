@@ -7,33 +7,62 @@ import module_functions
 from connect import connect
 import pandas as pd
 import numpy as np
+ 
+if __name__ == '__main__':
+    #cgi header
+    print("Content-type: text/html\n")
 
-#cgi header
-print("Content-type: text/html\n")
+    # gets serial number and board_id
+    form = cgi.FieldStorage()
+    serial_num = form.getvalue('serial_num')
+    base.header(title='Wagon DB')
+    base.top(False)
+
+    db = connect(0)
+    cur = db.cursor()
+    cur.execute('select board_id from Board where full_id="%s"' % serial_num)
+    board_id = cur.fetchall()[0][0]
+    # adds the top row with header and buttons
+    module_functions.add_test_tab(serial_num, board_id, False)
 
 
-form = cgi.FieldStorage()
-board_id = base.cleanCGInumber(form.getvalue('board_id'))
-serial_num = form.getvalue('serial_num')
-base.header(title='Wagon DB')
-base.top()
-#print('card_id = ', card_id)
-#print  'serial_num = ', serial_num
+    # gets revoked tests
+    revokes=module_functions.Portage_fetch_revokes(serial_num)
 
-module_functions.add_test_tab(serial_num, board_id)
+    # adds info table and images
+    module_functions.board_info(serial_num, False)
 
-db = connect(0)
-cur = db.cursor()
+    # gets all test types
+    cur.execute('select test_type, name from Test_Type where required = 1 order by relative_order ASC')
+    test_types = cur.fetchall()
+    # iterates over test types and displays each test done on the board sorted by test
+    for t in test_types:
+        module_functions.ePortageTest(t[0], serial_num, t[1], revokes, False)
 
-revokes=module_functions.Portage_fetch_revokes(serial_num)
+    base.bottom(False)
 
-#cur.execute('select location, daq_chip_id, trigger_chip_1_id, trigger_chip_2_id from Board where board_id="%s"' % board_id)
-#info = cur.fetchall()
-module_functions.board_info(serial_num)
+def run(serial_num, board_id):
+    # gets serial number and board_id
+    base.header(title='Wagon DB')
+    base.top(True)
 
-cur.execute('select test_type, name from Test_Type where required = 1 order by relative_order ASC')
-test_types = cur.fetchall()
-for t in test_types:
-	module_functions.ePortageTest(t[0], serial_num, t[1], revokes)
+    # adds the top row with header and buttons
+    module_functions.add_test_tab(serial_num, board_id, True)
 
-base.bottom()
+    db = connect(0)
+    cur = db.cursor()
+
+    # gets revoked tests
+    revokes=module_functions.Portage_fetch_revokes(serial_num)
+
+    # adds info table and images
+    module_functions.board_info(serial_num, True)
+
+    # gets all test types
+    cur.execute('select test_type, name from Test_Type where required = 1 order by relative_order ASC')
+    test_types = cur.fetchall()
+    # iterates over test types and displays each test done on the board sorted by test
+    for t in test_types:
+        module_functions.ePortageTest(t[0], serial_num, t[1], revokes, True)
+
+    base.bottom(True)

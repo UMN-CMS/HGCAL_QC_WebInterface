@@ -13,7 +13,7 @@ sn = cgi.escape(form.getvalue("serial_number"))
 fileitems = [form['top_view'], form['bottom_view']]
 
 base.header(title='Add Image')
-base.top()
+base.top(False)
 
 #takes the image from the add_board_image page and sends it to module functions
 for idx,item in enumerate(fileitems):
@@ -27,4 +27,5 @@ for idx,item in enumerate(fileitems):
         print("Issue uploading")
         print(e)
 
-base.bottom()
+base.bottom(False)
+

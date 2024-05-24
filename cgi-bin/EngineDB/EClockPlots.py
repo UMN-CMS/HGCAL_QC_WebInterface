@@ -129,7 +129,7 @@ colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10]
 
 
 #creates a matrix of filterable data to be used in the plot
-def EClockHistogram(columns, data, view, widgets, modules, slider):
+def Histogram(columns, data, view, widgets, modules, slider):
     # creates a dictionary for the histogram data to go in
     hist_data = {}
     for i in modules:
@@ -155,6 +155,10 @@ for (let i = 0; i < modules.length; i++) {
     const indices = view.filters[0].compute_indices(data);
     let mask = new Array(data.data[col].length).fill(false);
     [...indices].forEach((x)=>{mask[x] = true;})
+
+    const all_data = data.data[col].filter((_,y)=>mask[y])
+    let m = Math.max(...all_data);
+
     for (let j = 0; j < data.get_length(); j++) {
         if (data.data['level_1'][j] == modules[i] && mask[j] == true){
             mask[j] = true;
@@ -171,7 +175,6 @@ for (let i = 0; i < modules.length; i++) {
     }
     const good_data = data.data[col].filter((_,y)=>mask[y])
     let bins = slider.value
-    let m = Math.max(...good_data);
     let scale = d3.scaleLinear().domain([0,m]).nice()
     let binner_old = d3.bin().domain(scale.domain()).thresholds(m*bins)
     let binner = d3.bin()
@@ -208,7 +211,7 @@ std.change.emit()
     return hist_data, dt, std
 
 # creates the webpage and plots the data
-def EClockFilter():
+def Filter():
     # create a CDS with all the data to be used
     df_temp = AllData.merge(EC, on='Test ID', how='left')
     df_temp = df_temp.dropna()
@@ -272,7 +275,7 @@ def EClockFilter():
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
     # calls the function that creates the plotting data
-    hds, dt, std = EClockHistogram('Rate', ds, view, widgets.values(), modules, slider)
+    hds, dt, std = Histogram('Rate', ds, view, widgets.values(), modules, slider)
     # tells the figure object what data source to use
     for i in range(len(modules)):
         p.quad(top='top', bottom='bottom', left='left', right='right', source=hds[modules[i]], legend_label=modules[i], color = colors[i])
@@ -307,20 +310,20 @@ widget.options = serial_numbers[this.value]
     w[0].js_on_change('value', update_options)
     # gets the second half of the webpage where the residuals are displayed
     # since it's a separate function, the data can be filtered separately
-    layout = EClockGaussian()
+    layout = Gaussian()
     #converts the bokeh items to json and sends them to the webpage
     plot_json = json.dumps(json_item(row(column(row(w[0:3]), row(w[3:6]), slider, p, data_table, data_table_2), layout)))
     return plot_json
 
-#ResistanceFilter()
 
 ################################################################################################################
 
-def EClockGaussian2(data, view, widgets, serial_numbers, modules, n_sigma):
+def Gaussian2(data, view, widgets, serial_numbers, modules, n_sigma):
     hist = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
     pf = ColumnDataSource(data={'pass':[], 'fail':[], 'x':['Fail', 'Pass']})
     td = ColumnDataSource(data={'Serial Number':[], 'Module':[], 'Deviation':[], 'Pass/Fail':[]})
     x = CustomJS(args=dict(hist=hist, data=data, view=view, serial_numbers=serial_numbers, modules=modules, n_sigma=n_sigma, pf=pf, td=td),code='''
+// same method as previous pages
 const residules = [];
 
 var chis = {};
@@ -429,7 +432,7 @@ td.change.emit()
     n_sigma.js_on_change('value', x)
     return hist, pf, td
 
-def EClockGaussian():
+def Gaussian():
     df_temp = AllData.merge(EC, on='Test ID', how='left')
     df_temp = df_temp.dropna()
     ds = ColumnDataSource(df_temp)
@@ -484,7 +487,7 @@ def EClockGaussian():
 
     n_sigma = NumericInput(value=1, low=0.01, high=10, title='# of standard deviations for passing', mode='float')
 
-    hist, pf, td = EClockGaussian2(ds, view, widgets.values(), serial_numbers, modules, n_sigma)
+    hist, pf, td = Gaussian2(ds, view, widgets.values(), serial_numbers, modules, n_sigma)
     p = figure(
         title='Residual Distribution',
         x_axis_label='# of Standard Deviations from Mean',
@@ -494,8 +497,6 @@ def EClockGaussian():
         )
 
     p.quad(top='top', bottom='bottom', left='left', right='right', source=hist, color = colors[0])
-    p.legend.click_policy='hide'
-    p.legend.label_text_font_size = '8pt' 
 
     q = figure(
         title='Pass vs Fail',
@@ -508,8 +509,6 @@ def EClockGaussian():
 
     q.vbar(x='x', top='pass', source=pf, color=colors[2], width=0.8)
     q.vbar(x='x', top='fail', source=pf, color=colors[3], width=0.8)
-    q.legend.click_policy='hide'
-    q.legend.label_text_font_size = '8pt' 
 
     table_columns = [
                     TableColumn(field='Serial Number', title='Serial Number'),

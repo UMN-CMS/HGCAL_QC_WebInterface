@@ -23,8 +23,9 @@ if comments:
     comments = cgi.escape(comments)
 
 base.header(title='Add Test')
-base.top()
+base.top(False)
 
 test_id=add_test_functions.add_init_tests(serial_num, tester, test_results, comments)
 
-base.bottom()
+base.bottom(False)
+

@@ -13,7 +13,7 @@ sn = cgi.escape(form.getvalue("serial_number"))
 fileitems = [form['top_view'], form['bottom_view']]
 
 base.header(title='Add Image')
-base.top()
+base.top(False)
 for idx,item in enumerate(fileitems):
     if idx == 0:
         view = 'Top'
@@ -25,4 +25,4 @@ for idx,item in enumerate(fileitems):
         print("Issue uploading")
         print(e)
 
-base.bottom()
+base.bottom(False)

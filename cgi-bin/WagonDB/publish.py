@@ -2,6 +2,8 @@
 import sys
 import os
 
+# IN PROGRESS
+# publish a static version of the website
 if len(sys.argv) == 1:
     print("Please input a destination directory after the script call.")
     sys.exit()

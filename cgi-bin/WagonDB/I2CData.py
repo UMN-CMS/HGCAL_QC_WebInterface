@@ -7,26 +7,24 @@ import module_functions
 import sys
 import i2cPlots as mp
 
-cgitb.enable()
+def run(static):
+    base.header(title='I2C Read/Write Data')
+    base.top(static)
+    # adds the bokeh filter to javascript and to the website layout
+    print('''
+    <script>
+    data = {};
+    Bokeh.embed.embed_item(data, 'exfilter');
+    </script>
+    <div id='exfilter' class='bk-root'></div>
+    '''.format(mp.Filter()))
 
-if len(sys.argv) != 1:
-    sys.stdout = open('%(loc)s/summary.html' %{'loc':sys.argv[1]}, 'w')
+    base.bottom(static)
 
-else:
+             
+if __name__ == '__main__':
+    cgitb.enable()
     #cgi header
     print("Content-type: text/html\n")
 
-base.header(title='I2C Read/Write Data')
-base.top()
-print('''
-<script>
-data = {};
-Bokeh.embed.embed_item(data, 'exfilter');
-</script>
-<div id='exfilter' class='bk-root'></div>
-'''.format(mp.I2CFilter()))
-
-base.bottom()
-
-    
-
+    run(False)

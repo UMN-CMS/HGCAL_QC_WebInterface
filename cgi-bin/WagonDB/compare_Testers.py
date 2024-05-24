@@ -118,16 +118,19 @@ return indices;
 #create a color pallete to be used on graphs
 colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10][2], d3['Category10'][10][3], d3['Category10'][10][4], d3['Category10'][10][5], d3['Category10'][10][6], d3['Category10'][10][7], d3['Category10'][10][8], d3['Category10'][10][9], brewer['Accent'][8][0], brewer['Accent'][8][3], brewer['Dark2'][8][0], brewer['Dark2'][8][2], brewer['Dark2'][8][3], brewer['Dark2'][8][4], brewer['Dark2'][8][5], brewer['Dark2'][8][6]]
 
-def ComparePlot(columns, data, view, widgets, date_range, modules):
+def Plot(columns, data, view, widgets, date_range, modules):
+    # creates a column data source for a line chart for each person
     tsd = {}
     for i in modules:
         tsd[i] = ColumnDataSource(data={'dates':[], 'counts':[]})
     
     dt = ColumnDataSource(data={'Person Name':[], 'counts':[]})
     x = CustomJS(args=dict(col=columns, tsd=tsd, data=data, view=view, dt=dt, date_range=date_range, modules=modules),code='''
+// create arrays to be filled
 const names = [];
 const completed = [];
 for (let t = 0; t < modules.length; t++) {
+    // create and modify the mask
     const indices = view.filters[0].compute_indices(data);
     let mask = new Array(data.data['Test ID'].length).fill(false);
     [...indices].forEach((x)=>{mask[x] = true;})
@@ -141,19 +144,30 @@ for (let t = 0; t < modules.length; t++) {
     let count = 0;
     const dates = [];
     const counts = [];
+    // this will go through every day and find the number of tests done that day and add that to the total
+    // the day and the total number of tests after that day will be recorded
+    // by incorporating this mask, it allows the data to be filtered properly by the date range widget
     for (let m = 0; m < mask.length; m++) {
         if (mask[m] ==  true) {
+            // gets the date of the current index
             let temp_date = new Date(data.data['Time'][m]);
+            // makes it a string
             let new_date = temp_date.toLocaleDateString();
+            // creates a Date object
             let date = new Date(new_date);
+            // converts to Central Time
             date = new Date(date.setHours(date.getHours() - 5));
+            // iterate over all the days in the selected range
             for (let i = 0; i < date_range.length; i++) {
+                // set up date range to span one day
                 let day0 = new Date(date_range[i]);
                 let day1 = new Date(date_range[i]);
                 day1 = new Date(day1.setDate(day1.getDate() + 1));
+                // check if date is before the current iterated day
                 if (day0 >= date) {
                     for (let j = 0; j < mask.length; j++) {
                         if (mask[j] == true && data.data['Time'][j] >= day0 && data.data['Time'][j] <= day1){
+                            // count tests done that day
                             count++; 
                         }
                     }
@@ -168,6 +182,7 @@ for (let t = 0; t < modules.length; t++) {
     tsd[modules[t]].data['counts'] = counts;
     tsd[modules[t]].change.emit()
     names.push(modules[t])
+    // grabs the last element
     completed.push(counts.slice(-1))
 }
 dt.data['Person Name'] = names;
@@ -179,10 +194,12 @@ dt.change.emit()
     return tsd, dt
 
 
-def CompareFilter():
+def Filter():
+    # create column data source
     df_temp = AllData
     df_temp = df_temp.dropna()
     ds = ColumnDataSource(df_temp)
+    # see bit_error_ratePlots.py for more details on widgets and creating bokeh plots
     mc_widgets = {}
     dr_widgets = {}
     multi_choice = (lambda x,y: MultiChoice(options=x, value=[], title=y), 'value')
@@ -194,6 +211,7 @@ def CompareFilter():
     while min_date <= today:
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
+    # testers are being compared so the modules to iterate over are the people
     modules = np.unique(ds.data['Person Name'].tolist())
     columns = ['Type ID', 'Full ID', 'Outcome','Start Date', 'End Date']
     data = [ds.data['Type ID'].tolist(), ds.data['Full ID'].tolist(), ds.data['Outcome'].tolist(), date_range, date_range]
@@ -233,8 +251,9 @@ def CompareFilter():
     view = CDSView(source=ds, filters=[custom_filter])
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
-    tsd,dt = ComparePlot('Resistance', ds,view, widgets.values(), date_range, modules)
+    tsd, dt = Plot('Resistance', ds,view, widgets.values(), date_range, modules)
     for i in range(len(modules)):
+        # dates and counts are the field names from the data source to be plotted on x and y
         p.line('dates', 'counts', source=tsd[modules[i]], legend_label=modules[i], color=colors[i], line_width=2)
         
     table_columns = [

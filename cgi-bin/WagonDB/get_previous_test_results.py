@@ -9,7 +9,7 @@ import os
 print("Content-type: text/html\n")
 
 base.header(title='Get Previous Test Results')
-base.top()
+base.top(False)
 
 form = cgi.FieldStorage()
 
@@ -20,4 +20,4 @@ if form.getvalue('serial_number'):
 
 else:
     print('No serial number sent.')
-base.bottom()
+base.bottom(False)

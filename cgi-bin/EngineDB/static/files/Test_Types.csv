@@ -1,14 +1,5 @@
-Test Type,Name,Required,Short Desc.,Long Desc.,Relative Order
+Test Type ID,Name,Required,Short Desc.,Long Desc.,Relative Order
 0,Visual Inspection,1,Preliminary check of board,Check that all components are present on board and that there is no visible damage,0
-1,Power-Ground Resistance,1,Measure resistance between power and ground,"Check that the power and grounds are not shorted at the terminal, or between the inputs.",1
-2,1.5V Input Check,1,Check that the 1.5V input is not shorted.,Check that resistance between across C906 or C908 is non-zero.,2
-3,10V Input Check,1,Check that the 10V input is not shorted.,Check that resistance between across C907 or C909 is non-zero.,3
-4,1.2V Output Check,1,Check that the 1.2V output is not shorted.,Check that resistance between across C904 or C904 or TP901 is non-zero.,4
-5,RX 2.5V Output Check,1,Check that the RX 2.5V output is not shorted.,Check that resistance across C902 is non-zero.,5
-6,TX 2.5V Output Check,1,Check that the TX 2.5V output is not shorted.,Check that resistance across either C903 or TP902 is non-zero.,6
-7,LDO Output,1,Check that the LDO output voltage is around 1.2V,Measure the votlage across either R911 or TP901 and verify that it is appropriate.,7
-8,LinPol RX Check,1,Check that the RX voltage from the linppol is oper,Check that voltages across either R905 or R902 is 2.5V.,8
-9,LinPol TX Check,1,Check that the TX voltage from the linppol is oper,Measure the voltage across either TP902 or R906 or C903 is 2.5V.,9
 10,X_PWR,1,Check the the X_PWR voltage is correct.,"Measure using the tester, and should find approximately 1.2V.",10
 11,lpGBT setup,1,Ensure setup can be performed,"Perform nominal setup from BE. Do setup, link trick, setup. Check PUSMStatus (0x1d9) reports READY (0x13) for all 3 lpGBTs. Check lpGBTs locked to BE All 3 RX equal within 200 Hz. Check All 3 RX-DV equal within 200 Hz",11
 12,EClock Rates,1,Ensure EClock rates are correct,Check that all EClocks are running at 320MHz.,12
@@ -21,4 +12,4 @@ Test Type,Name,Required,Short Desc.,Long Desc.,Relative Order
 19,Fast Command quality,1,Check the quality of the Fast Command path,PRBS validation from and back to ZCU. Check bit error rate below threshold.,19
 20,Elink quality,1,Check the quality of the elinks,PRBS validation from and back to ZCU. Check bit error rate below threshold.,20
 21,Crossover link quality,1,Check the quality of the crossover links,PRBS validation from and back to ZCU. Check bit error rate below threshold.,21
-23,LPGBT ID,1,Check ids,Read lpgbt ids,22
+22,LPGBT ID,1,Check ids,Read lpgbt ids,22

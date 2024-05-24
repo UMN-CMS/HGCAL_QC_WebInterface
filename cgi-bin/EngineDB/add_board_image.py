@@ -26,7 +26,7 @@ sn = cgi.escape(form.getvalue("serial_num"))
 #fileitem = form['file']
 
 base.header(title='Add Board Image')
-base.top()
+base.top(False)
 
 print('<form action="add_board_image_upload.py" method="post" enctype="multipart/form-data">')
 print('<INPUT TYPE="hidden" name="serial_number" value="%s">' % (sn))
@@ -55,4 +55,4 @@ print('<input type="submit" class="btn btn-dark" value="Add Images">')
 print('</div>')
 print('</div>')
 print('</form>')
-base.bottom()
+base.bottom(False)

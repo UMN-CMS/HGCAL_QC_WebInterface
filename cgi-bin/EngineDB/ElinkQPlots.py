@@ -125,15 +125,15 @@ colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10]
 
 
 #creates a matrix of filterable data to be used in the plot
-def ELinkHistogram(data, view, widgets, modules, phase):
+def Histogram(data, view, widgets, phases, elink):
     # creates a dictionary for the histogram data to go in
-    hist_data = ColumnDataSource(data={'x': modules, 'Bit Errors': []})
+    hist_data = ColumnDataSource(data={'x': phases, 'Bit Errors': []})
 
     # creates a dictionary for the filtered data to be put in data tables
-    dt = ColumnDataSource(data={'Type ID':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'Outcome':[], 'E Link':[], 'Bit Errors':[]})
+    dt = ColumnDataSource(data={'Type ID':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'Outcome':[], 'Phase':[], 'Bit Errors':[]})
     # custom javascript to be run to actually create the plotted data client side
     # all done in javascript so it runs on the website and can update without refreshing the page
-    x = CustomJS(args=dict(hist=hist_data, data=data, view=view, modules=modules, dt=dt, phase=phase),code='''
+    x = CustomJS(args=dict(hist=hist_data, data=data, view=view, phases=phases, dt=dt, elink=elink),code='''
 const type_ids=[];
 const full_ids=[];
 const people=[];
@@ -142,19 +142,19 @@ const outcomes=[];
 const pathways=[];
 const res=[];
 const bit_errors = [];
-for (let i = 0; i < modules.length; i++) {
+for (let i = 0; i < phases.length; i++) {
     const indices = view.filters[0].compute_indices(data);
     let mask = new Array(data.data['Bit Errors'].length).fill(false);
     [...indices].forEach((x)=>{mask[x] = true;})
     for (let j = 0; j < data.get_length(); j++) {
-        if (data.data['E Link'][j] == modules[i] && mask[j] == true && data.data['Phase'][j] == phase){
+        if (data.data['Phase'][j] == phases[i] && mask[j] == true && data.data['E Link'][j] == elink){
             mask[j] = true;
             type_ids.push(data.data['Type ID'][j])
             full_ids.push(data.data['Full ID'][j])
             people.push(data.data['Person Name'][j])
             times.push(data.data['Time'][j])
             outcomes.push(data.data['Outcome'][j])
-            pathways.push(data.data['E Link'][j])
+            pathways.push(data.data['Phase'][j])
             res.push(data.data['Bit Errors'][j])
         } else {
             mask[j] = false;
@@ -170,7 +170,7 @@ dt.data['Full ID'] = full_ids;
 dt.data['Person Name'] = people;
 dt.data['Time'] = times;
 dt.data['Outcome'] = outcomes;
-dt.data['E Link'] = pathways;
+dt.data['Phase'] = pathways;
 dt.data['Bit Errors'] = res;
 dt.change.emit()
 
@@ -179,8 +179,8 @@ dt.change.emit()
         widget.js_on_change('value', x)
     return hist_data, dt
 
-# creates the webpage and plots the data
-def ELinkFilter(sel_phase):
+# takes in the selected phase based on the webpage
+def ELinkFilter(sel_elink):
     # create a CDS with all the data to be used
     df_temp = AllData.merge(EC, on='Test ID', how='left')
     df_temp = df_temp.dropna()
@@ -198,7 +198,7 @@ def ELinkFilter(sel_phase):
     while min_date <= today:
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
-    modules = np.unique(ds.data['E Link']).tolist()
+    phases = np.unique(ds.data['Phase']).tolist()
     # widget titles and data for those widgets has to be manually entered, as well as the type
     columns = ['Type ID', 'Full ID', 'Person Name', 'Outcome', 'Start Date', 'End Date']
     data = [ds.data['Type ID'].tolist(), ds.data['Full ID'].tolist(), ds.data['Person Name'].tolist(), ds.data['Outcome'], date_range, date_range]
@@ -234,11 +234,11 @@ def ELinkFilter(sel_phase):
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
     # calls the function that creates the plotting data
-    hds, dt = ELinkHistogram(ds, view, widgets.values(), modules, sel_phase)
+    hds, dt = Histogram(ds, view, widgets.values(), phases, sel_elink)
     # creates the figure object
     p = figure(
-        title='E Link Quality for ' + sel_phase,
-        x_axis_label='Channel Number',
+        title='E Link Quality for ' + sel_elink,
+        x_axis_label='Phase',
         y_axis_label='Number of Bit Errors (x1m)',
         tools='pan,wheel_zoom,box_zoom,reset,save',
         width = 925
@@ -270,7 +270,7 @@ widget.options = serial_numbers[this.value]
 
     # gets the second half of the webpage where the residuals are displayed
     # since it's a separate function, the data can be filtered separately
-    layout = EClockGaussian(sel_phase)
+    layout = Gaussian(sel_elink)
     #converts the bokeh items to json and sends them to the webpage
     plot_json = json.dumps(json_item(row(column(row(w[0:3]), row(w[3:6]), p, data_table), layout)))
     return plot_json
@@ -278,7 +278,7 @@ widget.options = serial_numbers[this.value]
 
 ################################################################################################################
 
-def EClockGaussian2(data, view, widgets, serial_numbers, modules, n_sigma, phase):
+def Gaussian2(data, view, widgets, serial_numbers, modules, n_sigma, phase):
     hist = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
     pf = ColumnDataSource(data={'pass':[], 'fail':[], 'x':['Fail', 'Pass']})
     td = ColumnDataSource(data={'Serial Number':[], 'Module':[], 'Deviation':[], 'Pass/Fail':[]})
@@ -391,7 +391,7 @@ td.change.emit()
     n_sigma.js_on_change('value', x)
     return hist, pf, td
 
-def EClockGaussian(sel_phase):
+def Gaussian(sel_phase):
     df_temp = AllData.merge(EC, on='Test ID', how='left')
     df_temp = df_temp.dropna()
     ds = ColumnDataSource(df_temp)
@@ -446,7 +446,7 @@ def EClockGaussian(sel_phase):
 
     n_sigma = NumericInput(value=1, low=0.01, high=10, title='# of standard deviations for passing', mode='float')
 
-    hist, pf, td = EClockGaussian2(ds, view, widgets.values(), serial_numbers, modules, n_sigma, sel_phase)
+    hist, pf, td = Gaussian2(ds, view, widgets.values(), serial_numbers, modules, n_sigma, sel_phase)
     p = figure(
         title='Residual Distribution',
         x_axis_label='# of Standard Deviations from Mean',
@@ -456,8 +456,6 @@ def EClockGaussian(sel_phase):
         )
 
     p.quad(top='top', bottom='bottom', left='left', right='right', source=hist, color = colors[0])
-    p.legend.click_policy='hide'
-    p.legend.label_text_font_size = '8pt' 
 
     q = figure(
         title='Pass vs Fail',
@@ -470,8 +468,6 @@ def EClockGaussian(sel_phase):
 
     q.vbar(x='x', top='pass', source=pf, color=colors[2], width=0.8)
     q.vbar(x='x', top='fail', source=pf, color=colors[3], width=0.8)
-    q.legend.click_policy='hide'
-    q.legend.label_text_font_size = '8pt' 
 
     table_columns = [
                     TableColumn(field='Serial Number', title='Serial Number'),

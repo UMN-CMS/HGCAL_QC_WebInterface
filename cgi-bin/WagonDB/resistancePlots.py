@@ -128,7 +128,7 @@ colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10]
 
 
 #creates a matrix of filterable data to be used in the plot
-def ResistanceHistogram(columns, data, view, widgets, modules, slider):
+def Histogram(columns, data, view, widgets, modules, slider):
     # creates a dictionary for the histogram data to go in
     hist_data = {}
     for i in modules:
@@ -140,6 +140,7 @@ def ResistanceHistogram(columns, data, view, widgets, modules, slider):
     # custom javascript to be run to actually create the plotted data client side
     # all done in javascript so it runs on the website and can update without refreshing the page
     x = CustomJS(args=dict(col=columns, hist=hist_data, data=data, view=view, modules=modules, slider=slider, dt=dt, std=std),code='''
+// data arrays
 const type_ids=[];
 const full_ids=[];
 const people=[];
@@ -150,10 +151,15 @@ const res=[];
 const means=[];
 const devs=[];
 const pathways_2=[];
+// iterate over resistance measurement pathways
 for (let i = 0; i < modules.length; i++) {
     const indices = view.filters[0].compute_indices(data);
     let mask = new Array(data.data[col].length).fill(false);
     [...indices].forEach((x)=>{mask[x] = true;})
+
+    const all_data = data.data[col].filter((_,y)=>mask[y])
+    let m = Math.max(...all_data);
+
     for (let j = 0; j < data.get_length(); j++) {
         if (data.data['level_1'][j] == modules[i] && mask[j] == true){
             mask[j] = true;
@@ -168,9 +174,9 @@ for (let i = 0; i < modules.length; i++) {
             mask[j] = false;
         }
     }
+    // filter and bin data
     const good_data = data.data[col].filter((_,y)=>mask[y])
     let bins = slider.value
-    let m = Math.max(...good_data);
     let scale = d3.scaleLinear().domain([0,m]).nice()
     let binner = d3.bin().domain(scale.domain()).thresholds(m*bins)
     let d = binner(good_data)
@@ -206,7 +212,7 @@ std.change.emit()
     return hist_data, dt, std
 
 # creates the webpage and plots the data
-def ResistanceFilter():
+def Filter():
     # create a CDS with all the data to be used
     df_temp = AllData.merge(RM, on='Test ID', how='left')
     df_temp = df_temp.dropna()
@@ -274,7 +280,7 @@ def ResistanceFilter():
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
     # calls the function that creates the plotting data
-    hds, dt, std = ResistanceHistogram('Resistance', ds, view, widgets.values(), modules, slider)
+    hds, dt, std = Histogram('Resistance', ds, view, widgets.values(), modules, slider)
     # tells the figure object what data source to use
     for i in range(len(modules)):
         p.quad(top='top', bottom='bottom', left='left', right='right', source=hds[modules[i]], legend_label=modules[i], color = colors[i])
@@ -306,27 +312,28 @@ widget.options = serial_numbers[this.value]
     w[0].js_on_change('value', update_options)
     # gets the second half of the webpage where the residuals are displayed
     # since it's a separate function, the data can be filtered separately
-    layout = ResistanceGaussian()
+    layout = Gaussian()
     #converts the bokeh items to json and sends them to the webpage
     plot_json = json.dumps(json_item(row(column(row(w[0:3]), row(w[3:6]), slider, p, data_table, data_table_2), layout)))
     return plot_json
 
-#ResistanceFilter()
-
 ################################################################################################################
 
-def ResistanceGaussian2(data, view, widgets, subtypes, serial_numbers, modules, n_sigma):
+def Gaussian2(data, view, widgets, subtypes, serial_numbers, modules, n_sigma):
     hist = {}
     pf = {}
     td = {}
+    # residual data is split up by subtype since different subtypes have different modules
     for s in subtypes:
         hist[s] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
         pf[s] = ColumnDataSource(data={'pass':[], 'fail':[], 'x':['Fail', 'Pass']})
         td[s] = ColumnDataSource(data={'Serial Number':[], 'Module':[], 'Deviation':[], 'Pass/Fail':[]})
     x = CustomJS(args=dict(hist=hist, data=data, views=view, subtypes=subtypes, serial_numbers=serial_numbers, modules=modules, n_sigma=n_sigma, pf=pf, td=td),code='''
+// iterate over subtypes
 for (let s = 0; s < subtypes.length; s++) {
     const residules = [];
 
+    // create dictionary for whether each module passes/fails for each sn
     var chis = {};
     for (let sn = 0; sn < serial_numbers[subtypes[s]].length; sn++) {
         chis[serial_numbers[subtypes[s]][sn]] = [];
@@ -336,6 +343,7 @@ for (let s = 0; s < subtypes.length; s++) {
         let mask = new Array(data[subtypes[s]].data['Resistance'].length).fill(false);
         [...indices].forEach((x)=>{mask[x] = true;})
 
+        // modify mask
         for (let j = 0; j < data[subtypes[s]].get_length(); j++) {
             if (mask[j] == true && data[subtypes[s]].data['level_1'][j] == modules[subtypes[s]][k]){
                 mask[j] = true;
@@ -343,11 +351,13 @@ for (let s = 0; s < subtypes.length; s++) {
                 mask[j] = false;
             }
         }
+        // filter data and calculate mean and standard deviation
         const good_data = data[subtypes[s]].data['Resistance'].filter((_,y)=>mask[y])
-        console.log(good_data)
         let mean = d3.mean(good_data)
         let std = d3.deviation(good_data)
+        // iterate over serial numbers
         for (let sn = 0; sn < serial_numbers[subtypes[s]].length; sn++) {
+            // remake mask, prevents bug where everything is false
             const indices = views[subtypes[s]].filters[0].compute_indices(data[subtypes[s]]);
             let mask_sn = new Array(data[subtypes[s]].data['Resistance'].length).fill(false);
             [...indices].forEach((x)=>{mask_sn[x] = true;})
@@ -361,6 +371,9 @@ for (let s = 0; s < subtypes.length; s++) {
                     mask_sn[j] = false;
                 }
             }
+            // find the average of all the tests done on this board
+            // this average is what determines whether the board passes or not
+            // this is nice for when a board has multiple of the same tests done on it
             const good_data_sn = data[subtypes[s]].data['Resistance'].filter((_,y)=>mask_sn[y])
             let mean_sn = d3.mean(good_data_sn)
             let y = mean_sn - mean;
@@ -388,6 +401,7 @@ for (let s = 0; s < subtypes.length; s++) {
     const mod_td = [];
     const chi_td = [];
     const pf_td = [];
+    // determine which boards pass and fail
     for (let sn = 0; sn < serial_numbers[subtypes[s]].length; sn++) {
         let pass = 0;
         let fail = 0;
@@ -426,7 +440,7 @@ for (let s = 0; s < subtypes.length; s++) {
     n_sigma.js_on_change('value', x)
     return hist, pf, td
 
-def ResistanceGaussian():
+def Gaussian():
     df_temp = AllData.merge(RM, on='Test ID', how='left')
     df_temp = df_temp.dropna()
     ds = ColumnDataSource(df_temp)
@@ -493,7 +507,7 @@ for (let i = 0; i < subtypes.length; i++) {
 
     n_sigma = NumericInput(value=1, low=0.01, high=10, title='# of standard deviations for passing', mode='float')
 
-    hist, pf, td = ResistanceGaussian2(data_sources, views, widgets.values(), subtypes, serial_numbers, modules, n_sigma)
+    hist, pf, td = Gaussian2(data_sources, views, widgets.values(), subtypes, serial_numbers, modules, n_sigma)
     plots = {}
     pf_plots = {}
     data_tables = {}
@@ -508,8 +522,6 @@ for (let i = 0; i < subtypes.length; i++) {
 
         p.quad(top='top', bottom='bottom', left='left', right='right', source=hist[s], color = colors[0])
         p.visible = False
-        p.legend.click_policy='hide'
-        p.legend.label_text_font_size = '8pt' 
         plots[s] = p
 
         q = figure(
@@ -524,8 +536,6 @@ for (let i = 0; i < subtypes.length; i++) {
         q.vbar(x='x', top='pass', source=pf[s], color=colors[2], width=0.8)
         q.vbar(x='x', top='fail', source=pf[s], color=colors[3], width=0.8)
         q.visible = False
-        q.legend.click_policy='hide'
-        q.legend.label_text_font_size = '8pt' 
         pf_plots[s] = q
 
         table_columns = [
@@ -567,5 +577,6 @@ widget.options = serial_numbers[this.value]
     select = Select(title='Type ID', options=subtypes)
     select.js_on_change('value', display_plot)
 
+    # column and row objects only take it lists, need to make arguments lists
     layout = column(row(w[0:2] + [select]), row(w[2:5] + [n_sigma]), column(list(plots.values())), column(list(pf_plots.values())), column(list(data_tables.values())))
     return layout

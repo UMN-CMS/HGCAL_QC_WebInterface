@@ -119,31 +119,40 @@ return indices;
 colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10][2], d3['Category10'][10][3], d3['Category10'][10][4], d3['Category10'][10][5], d3['Category10'][10][6], d3['Category10'][10][7], d3['Category10'][10][8], d3['Category10'][10][9], brewer['Accent'][8][0], brewer['Accent'][8][3], brewer['Dark2'][8][0], brewer['Dark2'][8][2], brewer['Dark2'][8][3], brewer['Dark2'][8][4], brewer['Dark2'][8][5], brewer['Dark2'][8][6]]
 
 def TotalPlot(data, view, widgets, date_range, modules):
+    # a data source for each
     time_series_data_total = ColumnDataSource(data={'dates':[], 'counts':[]})
     time_series_data_suc = ColumnDataSource(data={'dates':[], 'counts':[]})
     time_series_data_unc = ColumnDataSource(data={'dates':[], 'counts':[]})
     dt = ColumnDataSource(data={'dates':[], 'total_counts':[], 'suc_counts':[], 'unc_counts':[]})
     x = CustomJS(args=dict(tsd_total=time_series_data_total, tsd_suc=time_series_data_suc, tsd_unc=time_series_data_unc, data=data, view=view, date_range=date_range, modules=modules, dt=dt),code='''
+// goes through the modules case by case
 for (let t = 0; t < modules.length; t++) {
     if (modules[t] == 'Total') {
         const indices = view.filters[0].compute_indices(data);
         let mask = new Array(data.data['Test ID'].length).fill(false);
         [...indices].forEach((x)=>{mask[x] = true;})
-        console.log(mask)
         let count = 0;
         const dates = [];
         const counts = [];
+        // iterate over all data points
+        // by incorporating this mask, it allows the data to be filtered properly by the date range widget
         for (let m = 0; m < mask.length; m++) {
             if (mask[m] ==  true) {
+                // get date of current index
                 let temp_date = new Date(data.data['Time'][m]);
                 let new_date = temp_date.toLocaleDateString();
                 let date = new Date(new_date);
+                // convert to central time
                 date = new Date(date.setHours(date.getHours() - 5));
+                // iterate over all days within range
                 for (let i = 0; i < date_range.length; i++) {
+                    // create a date range of one day
                     let day0 = new Date(date_range[i]);
                     let day1 = new Date(date_range[i]);
                     day1 = new Date(day1.setDate(day1.getDate() + 1));
+                    // check if date of data point is before iterated date
                     if (day0 >= date) {
+                        // if so, check all data points that have occured on this day
                         for (let j = 0; j < mask.length; j++) {
                             if (mask[j] == true && data.data['Time'][j] >= day0 && data.data['Time'][j] <= day1){
                                 count++; 
@@ -252,7 +261,7 @@ dt.change.emit()
     return time_series_data_total, time_series_data_suc, time_series_data_unc, dt
 
 
-def TotalFilter():
+def Filter():
     df_temp = AllData
     df_temp = df_temp.dropna()
     ds = ColumnDataSource(df_temp)
@@ -307,6 +316,7 @@ def TotalFilter():
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
     tsd_total, tsd_suc, tsd_unc, dt = TotalPlot(ds, view, widgets.values(), date_range, modules)
+    # when items on the legend are clicked, the lines are muted instead of hidden
     p.line('dates', 'counts', source=tsd_total, legend_label=modules[0], color=colors[0], line_width=2, muted_alpha=0.2)
     p.line('dates', 'counts', source=tsd_suc, legend_label=modules[1], color=colors[2], line_width=2, muted_alpha=0.2)
     p.line('dates', 'counts', source=tsd_unc, legend_label=modules[2], color=colors[3], line_width=2, muted_alpha=0.2)

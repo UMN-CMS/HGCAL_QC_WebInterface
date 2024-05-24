@@ -22,7 +22,7 @@ try:
         print("Content-type: text/html\n")
 
         base.header(title='Access Granted')
-        base.top()
+        base.top(False)
 
         print("<div class='row'>")
         print('<div class = "col-md-6 pt-4 ps-4 mx-2 my-2">')
@@ -30,13 +30,13 @@ try:
         print("</div>")
         print("</div>")
 
-        base.bottom()
+        base.bottom(False)
 
     else:
         print("Content-type: text/html\n")
         
         base.header(title='Access Denied')
-        base.top()
+        base.top(False)
 
         print("<div class='row'>")
         print('<div class = "col-md-6 pt-4 ps-4 mx-2 my-2">')
@@ -44,7 +44,7 @@ try:
         print("</div>")
         print("</div>")
 
-        base.bottom()
+        base.bottom(False)
 except Exception as e:
     print("content-type: text/html\n")
     print(e)

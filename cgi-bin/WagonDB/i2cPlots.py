@@ -42,6 +42,7 @@ AllData = AllData.rename(columns={'Successful':'Outcome'})
 AllData['Outcome'] = AllData['Outcome'].replace(0, 'Unsuccessful')
 AllData['Outcome'] = AllData['Outcome'].replace(1, 'Successful')
 
+# rename columns and stack the dataframe for better formatting
 tempI2C = pd.read_csv('./static/files/I2C_ReadWrite_Test_Data.csv')
 tempI2C = tempI2C.set_index('Test ID')
 tempI2C = tempI2C.rename(columns={'Correct at Module 1':'Module 1'})
@@ -129,11 +130,13 @@ return indices;
 colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10][2], d3['Category10'][10][3], d3['Category10'][10][4], d3['Category10'][10][5], d3['Category10'][10][6], d3['Category10'][10][7], d3['Category10'][10][8], d3['Category10'][10][9], brewer['Accent'][8][0], brewer['Accent'][8][3], brewer['Dark2'][8][0], brewer['Dark2'][8][2], brewer['Dark2'][8][3], brewer['Dark2'][8][4], brewer['Dark2'][8][5], brewer['Dark2'][8][6]]
 
 
-def I2CHistogram(columns, data, view, widgets, modules):
+def Histogram(columns, data, view, widgets, modules):
+    # one cds for each module
     hist_data0 = ColumnDataSource(data={'top':[], 'x':['-1', '10000']})
     hist_data1 = ColumnDataSource(data={'top':[], 'x':['-1', '10000']})
     hist_data2 = ColumnDataSource(data={'top':[], 'x':['-1', '10000']})
     x = CustomJS(args=dict(col=columns, hist0=hist_data0, hist1=hist_data1, hist2=hist_data2, data=data, view=view, modules=modules),code='''
+// iterate over modules
 for (let i = 0; i < modules.length; i++) {
     const indices = view.filters[0].compute_indices(data);
     let mask = new Array(data.data[col].length).fill(false);
@@ -145,6 +148,7 @@ for (let i = 0; i < modules.length; i++) {
             mask[j] = false;
         }
     }
+    // filter data and determine pass or fail
     const good_data = data.data[col].filter((_,y)=>mask[y])
     let s_counts = 0;
     let u_counts = 0;
@@ -155,8 +159,8 @@ for (let i = 0; i < modules.length; i++) {
             u_counts++;
         }
     }
+    // update correct data source
     let top = [u_counts, s_counts]; 
-    console.log(top)
     if (i == 0) {
         hist0.data["top"] = top
         hist0.change.emit()
@@ -176,7 +180,7 @@ for (let i = 0; i < modules.length; i++) {
     return hist_data0, hist_data1, hist_data2
 
 
-def I2CFilter():
+def Filter():
     df_temp = AllData.merge(I2C, on='Test ID', how='left')
     df_temp = df_temp.dropna()
     newdf = pd.DataFrame(df_temp)
@@ -222,7 +226,7 @@ def I2CFilter():
     view = CDSView(source=ds, filters=[custom_filter])
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
-    hds0, hds1, hds2 = I2CHistogram('Checks', ds, view, widgets.values(), modules)
+    hds0, hds1, hds2 = Histogram('Checks', ds, view, widgets.values(), modules)
     p = figure(
         title='I2C Read/Write',
         x_range=hds0.data['x'],
@@ -239,6 +243,7 @@ def I2CFilter():
     p.legend.label_text_font_size = '8pt'
     w = [*widgets.values()]
 
+    # update options for serial numbers upon selecting a subtype
     subtypes = np.unique(ds.data['Type ID'].tolist()).tolist()
     serial_numbers = {}
     for s in subtypes:
@@ -251,5 +256,4 @@ widget.options = serial_numbers[this.value]
     plot_json = json.dumps(json_item(column(row(w[0:3]), row(w[3:6]), p)))
     return plot_json
     
-#I2CFilter()
 

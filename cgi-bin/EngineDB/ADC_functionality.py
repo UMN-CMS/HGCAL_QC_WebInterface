@@ -7,27 +7,24 @@ import module_functions
 import sys
 import ADC_Plots as mp
 
-cgitb.enable()
 
-if len(sys.argv) != 1:
-    sys.stdout = open('%(loc)s/summary.html' %{'loc':sys.argv[1]}, 'w')
+def run(static):
+    base.header(title='ADC Functionality')
+    base.top(static)
 
-else:
+    print('''
+    <script>
+    data = {};
+    Bokeh.embed.embed_item(data, 'exfilter');
+    </script>
+    <div id='exfilter' class='bk-root'></div>
+    '''.format(mp.Filter()))
+
+    base.bottom(static)
+
+if __name__ == '__main__':
+    cgitb.enable()
     #cgi header
     print("Content-type: text/html\n")
-
-base.header(title='ADC Functionality')
-base.top()
-
-print('''
-<script>
-data = {};
-Bokeh.embed.embed_item(data, 'exfilter');
-</script>
-<div id='exfilter' class='bk-root'></div>
-'''.format(mp.ADC_Filter()))
-
-base.bottom()
-
     
-
+    run(False)
