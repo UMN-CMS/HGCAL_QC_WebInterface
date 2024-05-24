@@ -9,7 +9,7 @@ import os
 print("Content-type: text/html\n")
 
 base.header(title='is_new_board')
-base.top()
+base.top(False)
 
 
 form = cgi.FieldStorage()
@@ -20,6 +20,7 @@ if form.getvalue('serial_number'):
 
     is_new_board_bool, check_id = add_test_functions.is_new_board(serial_number)
 
+    # tells GUI where to look
     print('Begin')
 
     print(is_new_board_bool)
@@ -32,5 +33,5 @@ else:
     print ("NO SERIAL SENT")
 
 
-base.bottom()
+base.bottom(False)
 

@@ -9,8 +9,8 @@ import add_test_functions
 print("Content-type: text/html\n")
 
 base.header(title='Add Tester')
-base.top()
+base.top(False)
 
 add_test_functions.add_tester_template()
 
-base.bottom()
+base.bottom(False)

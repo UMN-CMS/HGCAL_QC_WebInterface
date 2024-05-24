@@ -115,7 +115,7 @@ return indices;
 
 colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10][2], d3['Category10'][10][3], d3['Category10'][10][4], d3['Category10'][10][5], d3['Category10'][10][6], d3['Category10'][10][7], d3['Category10'][10][8], d3['Category10'][10][9], brewer['Accent'][8][0], brewer['Accent'][8][3], brewer['Dark2'][8][0], brewer['Dark2'][8][2], brewer['Dark2'][8][3], brewer['Dark2'][8][4], brewer['Dark2'][8][5], brewer['Dark2'][8][6], d3['Category20'][20][1], d3['Category20'][20][9], d3['Category20c'][20][19]]
 
-def ComparePlot(data, view, widgets, date_range, modules):
+def Plot(data, view, widgets, date_range, modules):
     tsd = {}
     for i in modules:
         tsd[i] = ColumnDataSource(data={'dates':[], 'counts':[]})
@@ -175,7 +175,7 @@ dt.change.emit()
         widget.js_on_change('value', x)
     return tsd, dt
 
-def CompareFilter():
+def Filter():
     df_temp = AllData
     df_temp = df_temp.dropna()
     ds = ColumnDataSource(df_temp)
@@ -229,7 +229,7 @@ def CompareFilter():
     view = CDSView(source=ds, filters=[custom_filter])
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
-    tsd,dt = ComparePlot(ds, view, widgets.values(), date_range, modules)
+    tsd,dt = Plot(ds, view, widgets.values(), date_range, modules)
     for i in range(len(modules)):
         p.line('dates', 'counts', source=tsd[modules[i]], legend_label=modules[i], color=colors[i], line_width=2)
         

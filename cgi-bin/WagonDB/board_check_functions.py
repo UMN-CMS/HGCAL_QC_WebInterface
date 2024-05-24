@@ -11,6 +11,7 @@ def board_checkout_form_sn(sn):
     db = connect(0)
     cur = db.cursor()
 
+    # creates a form that sends the information to board_checkout2.py on submitting
     print('<form action="board_checkout2.py" method="post" enctype="multipart/form-data">')
     print("<div class='row'>")
     print('<div class = "col-md-6 pt-4 ps-4 mx-2 my-2">')
@@ -24,8 +25,8 @@ def board_checkout_form_sn(sn):
     print('<input type="text" name="serial_number" value="%s">'%sn)
     print("</div>")
 
+    # creates a form to select the person checking the board out
     cur.execute("Select person_id, person_name from People;")
-
     print('<div class="col-md-3 pt-2 ps-5 mx-2 my-2">')
     print('<label>Tester')
     print('<select class="form-control" name="person_id">')
@@ -35,17 +36,6 @@ def board_checkout_form_sn(sn):
     print('</select>')
     print('</label>')
     print('</div>')
-
-    #print("<div class='row'>")
-    #print('<div class = "col-md-6 pt-2 ps-5 mx-2 my-2">')
-    #print("<label for='test_type'>Test Type</label>")
-    #cur.execute("select test_type, name from Test_Type order by relative_order ASC;")
-    #print('<select class="form-control" name="test_type">')
-    #for test_type in cur:
-    #    print('<option value="%s">%s</option>' % (test_type[0], test_type[1]))
-    #print('</select>')
-    #print("</div>")
-    #print("</div>")
 
     print("<div class='row'>")
     print('<div class="col-md-9 pt-2 ps-5 mx-2 my-2">')
@@ -63,6 +53,7 @@ def board_checkout_form_sn(sn):
 
     print("<div class='row'>")
     print('<div class = "col-md-6 pt-2 ps-5 mx-2 my-2">')
+    # submits the form on click
     print('<input type="submit" class="btn btn-dark" value="Checkout">')
     print("</div>")
     print("</div>")
@@ -71,17 +62,17 @@ def board_checkout_form_sn(sn):
     print("</form>")
 
 def board_checkout(board_id, person_id, comments, location):
+    # this function is also used by the Testing GUI
     db = connect(1)
     cur = db.cursor()
    
     try:
-        #cur.execute("SELECT board_id FROM Board WHERE '%s' = full_id" % serial_num)
-        #board_id = cur.fetchall()[0][0]
-        #print(board_id)
+        # gets the check in id for this board
         cur.execute('select checkin_id from Check_In where board_id=%s' % board_id)
         checkin_id = cur.fetchall()[0][0]
         print(checkin_id)
       
+        # checks if the board has already been checked out
         sql = "SELECT checkin_id, person_id FROM Check_Out WHERE board_id = %s" % board_id
         cur.execute(sql)
         checkouts = cur.fetchall()
@@ -90,33 +81,8 @@ def board_checkout(board_id, person_id, comments, location):
             checkout_person = checkouts[-1][1]
             print('Error: This board has already been checked out.')
 
-            #sql = "SELECT Check_In.checkout_id FROM Check_In, Check_Out WHERE Check_In.checkout_id = %s AND Check_Out.checkout_id = %s" % (checkout_id, checkout_id)
-            #cur.execute(sql)
-            #results = cur.fetchall()
-            #if results:
-#        else:
-#            sql = "INSERT INTO Check_Out (board_id, person_id, comment, checkout_date) VALUES (%s, %s, '%s', NOW())" % (board_id, person_id, comments)        
-#            cur.execute(sql)
-#
-#            db.commit()
-#                cur.execute("SELECT People.person_name FROM People WHERE People.person_id = %s" % person_id)
-#                tester = cur.fetchone()[0]
-#
-#                print('<div class ="row">')
-#                print('<div class = "col-md-12 pt-4 ps-4 mx-2 my-2">')
-#                print('<h3> This board is currently checked out by %s </h3>' % tester)
-#                print('</div>')
-#                print('</div>')
-#
-#                print('<div class ="row">')
-#                print('<div class="col-md-2 ps-5 pb-3 mx-2 my-2">')
-#                print('<a href="board_checkout.py">')
-#                print('<button class="btn btn-dark"> Return to Checkout </button>')
-#                print('</a>')
-#                print('</div>')
-#                print('</div>')
-
         else:
+            # otherwise, checks the board out
             sql = "INSERT INTO Check_Out (checkin_id, board_id, person_id, comment, checkout_date) VALUES (%s, %s, %s, '%s', NOW())" % (checkin_id, board_id, person_id, comments)        
             cur.execute(sql)
 
@@ -129,6 +95,7 @@ def board_checkout(board_id, person_id, comments, location):
  
             cur.execute('select checkin_id from Check_Out where board_id=%s' % board_id)
             c_id = cur.fetchall()[0][0]
+            # this tells the testing GUI where to look to grab the ID
             print('Begin')
             print(c_id)
             print('End') 
@@ -147,6 +114,7 @@ def board_checkin_form_sn(sn):
     db = connect(0)
     cur = db.cursor()
 
+    # this creates a form that runs board_checkin2.py with the inputted information when submitted
     print('<form action="board_checkin2.py" method="post" enctype="multipart/form-data">')
     print("<div class='row'>")
     print('<div class = "col-md-6 pt-4 ps-4 mx-2 my-2">')
@@ -157,9 +125,11 @@ def board_checkin_form_sn(sn):
     print("<div class='row'>")
     print('<div class = "col-md-3 pt-2 ps-5 mx-2 my-2">')
     print('<label for="sn">Serial Number</label>')
+    # pre-inputs the serial number if the page was loaded with one
     print('<input type="text" name="serial_number" value="%s">'%sn)
     print("</div>")
 
+    # creates an input for who's checking in the board
     cur.execute("Select person_id, person_name from People;")
 
     print('<div class="col-md-3 pt-2 ps-5 mx-2 my-2">')
@@ -172,17 +142,6 @@ def board_checkin_form_sn(sn):
     print('</label>')
     print('</div>')
 
-    #print("<div class='row'>")
-    #print('<div class = "col-md-6 pt-2 ps-5 mx-2 my-2">')
-    #print("<label for='test_type'>Test Type</label>")
-    #cur.execute("select test_type, name from Test_Type order by relative_order ASC;")
-    #print('<select class="form-control" name="test_type">')
-    #for test_type in cur:
-    #    print('<option value="%s">%s</option>' % (test_type[0], test_type[1]))
-    #print('</select>')
-    #print("</div>")
-    #print("</div>")
-
     print("<div class='row'>")
     print('<div class="col-md-9 pt-2 ps-5 mx-2 my-2">')
     print('<label>Comments</label><p>')
@@ -192,6 +151,7 @@ def board_checkin_form_sn(sn):
 
     print("<div class='row'>")
     print('<div class = "col-md-6 pt-2 ps-5 mx-2 my-2">')
+    # button that submits the form on click
     print('<input type="submit" class="btn btn-dark" value="Check In">')
     print("</div>")
     print("</div>")
@@ -200,10 +160,13 @@ def board_checkin_form_sn(sn):
     print("</form>")
 
 def board_checkin(board_id, person_id, comment):
+    # this function is used by both the webpage and the GUI
+    # connect(1) to write to the DB
     db = connect(1)
     cur = db.cursor()
    
     try:
+        # checks if the board has been checked in before
         sql = "SELECT checkin_id, person_id FROM Check_In WHERE board_id = %s" % board_id
         cur.execute(sql)
         checkins = cur.fetchall()
@@ -212,6 +175,7 @@ def board_checkin(board_id, person_id, comment):
             checkin_person = checkins[-1][1]
             print('Error: This board has already been checked in.')
         else:
+            # if it hasn't, add the check in information
             sql = "INSERT INTO Check_In (board_id, person_id, comment, checkin_date) VALUES (%s, %s, '%s', NOW())" % (board_id, person_id, comment)        
             cur.execute(sql)
 
@@ -219,13 +183,13 @@ def board_checkin(board_id, person_id, comment):
 
             cur.execute('select checkin_id from Check_In where board_id=%s' % board_id)
             c_id = cur.fetchall()[0][0]
+            # tells the GUI where to grab the check in id from the output
             print('Begin')
             print(c_id)
             print('End') 
 
     except Exception as e:
         print(e)    
-        #print(cur.fetchall())
 
         print('<div class ="row">')
         print('<div class = "col-md-3 pt-4 ps-4 mx-2 my-2">')

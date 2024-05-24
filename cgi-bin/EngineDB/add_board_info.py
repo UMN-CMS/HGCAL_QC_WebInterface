@@ -8,12 +8,11 @@ import home_page_list
 print("Content-type: text/html\n")
 
 form = cgi.FieldStorage()
-#card_id = form.getvalue('card_id')
 serial_num = base.cleanCGInumber(form.getvalue('serial_num'))
 board_id = base.cleanCGInumber(form.getvalue('board_id'))
 
 base.header(title='Add extra information about board')
-base.top()
+base.top(False)
 
 home_page_list.add_board_info_form(serial_num, board_id)
 
@@ -26,5 +25,5 @@ print('</div>')
 
 home_page_list.render_list_module()
 
-base.bottom()
+base.bottom(False)
 

@@ -9,7 +9,7 @@ import os
 print("Content-type: text/html\n")
 
 base.header(title='Get Usernames')
-base.top()
+base.top(False)
 
 usernames = add_test_functions.get_usernames()
 
@@ -20,4 +20,4 @@ for t in usernames:
 
 print('End')
 
-base.bottom()
+base.bottom(False)

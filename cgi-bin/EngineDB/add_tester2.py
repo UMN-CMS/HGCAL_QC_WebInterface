@@ -17,10 +17,9 @@ person_name = cgi.escape(form.getvalue("person_name"))
 password = cgi.escape(form.getvalue("password"))
 
 base.header(title='Add Tester')
-base.top()
-
+base.top(False)
 
 print(person_name)
 test_id=add_test_functions.add_tester(person_name, password)
 
-base.bottom()
+base.bottom(False)

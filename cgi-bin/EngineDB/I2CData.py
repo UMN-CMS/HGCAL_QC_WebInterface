@@ -7,27 +7,25 @@ import module_functions
 import sys
 import I2CPlots as mp
 
-cgitb.enable()
+def run(static):
+    base.header(title='I2C')
+    base.top(static)
 
-if len(sys.argv) != 1:
-    sys.stdout = open('%(loc)s/summary.html' %{'loc':sys.argv[1]}, 'w')
+    print('''
+    <script>
+    data = {};
+    Bokeh.embed.embed_item(data, 'exfilter');
+    </script>
+    <div id='exfilter' class='bk-root'></div>
+    '''.format(mp.Filter()))
 
-else:
+    base.bottom(static)
+ 
+if __name__ == '__main__':
+    cgitb.enable()
     #cgi header
     print("Content-type: text/html\n")
-
-base.header(title='I2C')
-base.top()
-
-print('''
-<script>
-data = {};
-Bokeh.embed.embed_item(data, 'exfilter');
-</script>
-<div id='exfilter' class='bk-root'></div>
-'''.format(mp.ELinkFilter()))
-
-base.bottom()
-
+    
+    run(False)
     
 

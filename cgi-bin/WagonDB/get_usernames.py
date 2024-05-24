@@ -9,10 +9,11 @@ import os
 print("Content-type: text/html\n")
 
 base.header(title='Get Usernames')
-base.top()
+base.top(False)
 
 usernames = add_test_functions.get_usernames()
 
+# tells the GUI where to look
 print('Begin')
 
 for t in usernames:
@@ -20,4 +21,4 @@ for t in usernames:
 
 print('End')
 
-base.bottom()
+base.bottom(False)

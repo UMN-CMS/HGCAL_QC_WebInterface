@@ -25,7 +25,7 @@ if comments:
     comments = cgi.escape(comments)
 
 base.header(title='Add Test')
-base.top()
+base.top(False)
 
 test_id=add_test_functions.add_test(person_id, test_type, serial_num, success, comments)
 
@@ -48,4 +48,4 @@ for itest in [1]:
             acomment = cgi.escape(acomment)
         add_test_functions.add_test_attachment_gui(test_id,afile,adesc,acomment)
     
-base.bottom()
+base.bottom(False)

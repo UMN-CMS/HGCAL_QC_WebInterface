@@ -121,7 +121,9 @@ return indices;
 #create a color pallete to be used on graphs
 colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10][2], d3['Category10'][10][3], d3['Category10'][10][4], d3['Category10'][10][5], d3['Category10'][10][6], d3['Category10'][10][7], d3['Category10'][10][8], d3['Category10'][10][9], brewer['Accent'][8][0], brewer['Accent'][8][3], brewer['Dark2'][8][0], brewer['Dark2'][8][2], brewer['Dark2'][8][3], brewer['Dark2'][8][4], brewer['Dark2'][8][5], brewer['Dark2'][8][6]]
 
-def IDHistogram(columns, data, views, widgets, subtypes, serial_numbers, slider):
+def Histogram(columns, data, views, widgets, subtypes, serial_numbers, slider):
+    # each subtype gets its own subpage, this is done by changing which plot is visible
+    # each serial number is then iterated over and plotted individually as a legend entry
     hist = {}
     td = {}
     std = {}
@@ -134,14 +136,18 @@ def IDHistogram(columns, data, views, widgets, subtypes, serial_numbers, slider)
         std[s] = ColumnDataSource(data={'Full ID':[], 'mean':[], 'std':[]})
 
     x = CustomJS(args=dict(col=columns, hist=hist, data=data, views=views, subtypes=subtypes, serial_numbers=serial_numbers, slider=slider, td=td, std=std),code='''
+// iterate over subtypes
 for (let s = 0; s < subtypes.length; s++) {
+    // create arrays for table
     const full_ids = [];
     const res = [];
     const outcomes = [];
     const serials = [];
     const means = [];
     const stds = [];
+    // iterate over serial numbers
     for (let sn = 0; sn < serial_numbers[subtypes[s]].length; sn++) {
+        // create mask
         const indices = views[subtypes[s]].filters[0].compute_indices(data[subtypes[s]]);
         let mask = new Array(data[subtypes[s]].data[col].length).fill(false);
         [...indices].forEach((x)=>{mask[x] = true;})
@@ -155,6 +161,7 @@ for (let s = 0; s < subtypes.length; s++) {
                 mask[j] = false;
             }
         }
+        // bin data by subtype
         const good_data = data[subtypes[s]].data[col].filter((_,y)=>mask[y])
         let bins = slider.value
         let min = Math.min(...good_data);
@@ -166,6 +173,7 @@ for (let s = 0; s < subtypes.length; s++) {
         let left = d.map(x=>x.x0)
         let bottom = new Array(d.length).fill(0)
         let top = d.map(x=>x.length);
+        // fill data sources
         hist[subtypes[s]][serial_numbers[subtypes[s]][sn]].data['right'] = right;
         hist[subtypes[s]][serial_numbers[subtypes[s]][sn]].data['left'] = left;
         hist[subtypes[s]][serial_numbers[subtypes[s]][sn]].data['bottom'] = bottom;
@@ -190,10 +198,12 @@ for (let s = 0; s < subtypes.length; s++) {
     slider.js_on_change('value', x)
     return hist, td, std
 
-def IDFilter():
+def Filter():
     df_temp = AllData.merge(IDR, on='Test ID', how='left')
     df_temp = df_temp.dropna()
     ds = ColumnDataSource(df_temp)
+    # create subtypes array and serial numbers dictionary
+    # each subtype has its own data source
     subtypes = np.unique(ds.data['Type ID'].tolist()).tolist()
     data_sources = {}
     serial_numbers = {}
@@ -253,7 +263,8 @@ for (let i = 0; i < subtypes.length; i++) {
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
 
-    hist, td, std = IDHistogram('Resistance', data_sources, views, widgets.values(), subtypes, serial_numbers, slider)
+    hist, td, std = Histogram('Resistance', data_sources, views, widgets.values(), subtypes, serial_numbers, slider)
+    # holds all the plot objects by subtype
     plots = {}
     tables = {}
     tables_2 = {}
@@ -318,6 +329,7 @@ for (let [name,table] of Object.entries(tables_2)){
     select = Select(title='Type ID', options=subtypes)
     select.js_on_change('value', display_plot)
 
+    # column and row objects only take it lists, need to make arguments lists
     layout = column(row(w[0:2] + [select]), row(w[2:5]), slider, column(list(plots.values())),  column(list(tables.values())), column(list(tables_2.values())))
     plot_json = json.dumps(json_item(layout))
     return plot_json

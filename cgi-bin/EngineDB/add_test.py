@@ -10,13 +10,12 @@ import add_test_functions
 print("Content-type: text/html\n")
 
 form = cgi.FieldStorage()
-#card_id = form.getvalue('card_id')
 serial_num = base.cleanCGInumber(form.getvalue('serial_num'))
 suggested_test = base.cleanCGInumber(form.getvalue('suggested'))
 
 base.header(title='Add Test')
-base.top()
+base.top(False)
 
 add_test_functions.add_test_template(serial_num, suggested_test)
 
-base.bottom()
+base.bottom(False)

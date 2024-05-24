@@ -126,41 +126,41 @@ colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10]
 
 
 #creates a matrix of filterable data to be used in the plot
-def ELinkHistogram(data, view, widgets, fibers, phases):
+def Histogram(data, view, widgets, channels, phases):
     # creates a dictionary for the histogram data to go in
     hist_data = {}
     dt = {}
-    for i in fibers:
-        hist_data[i] = ColumnDataSource(data={'x': phases, 'Bit Errors': []})
+    for i in phases:
+        hist_data[i] = ColumnDataSource(data={'x': channels, 'Bit Errors': []})
     
     # creates a dictionary for the filtered data to be put in data tables
-    dt = ColumnDataSource(data={'Type ID':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'Outcome':[], 'Fiber':[], 'Phase':[], 'Bit Errors':[]})
+    dt = ColumnDataSource(data={'Type ID':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'Outcome':[], 'Channel':[], 'Phase':[], 'Bit Errors':[]})
     # custom javascript to be run to actually create the plotted data client side
     # all done in javascript so it runs on the website and can update without refreshing the page
-    x = CustomJS(args=dict(hist=hist_data, data=data, view=view, fibers=fibers, dt=dt, phases=phases),code='''
+    x = CustomJS(args=dict(hist=hist_data, data=data, view=view, channels=channels, dt=dt, phases=phases),code='''
 const type_ids=[];
 const full_ids=[];
 const people=[];
 const times=[];
 const outcomes=[];
-const fibers_2 = [];
+const channels_2=[];
 const pathways=[];
 const res=[];
-for (let k = 0; k < fibers.length; k++) {
+for (let k = 0; k < phases.length; k++) {
     const bit_errors = [];
-    for (let i = 0; i < phases.length; i++) {
+    for (let i = 0; i < channels.length; i++) {
         const indices = view.filters[0].compute_indices(data);
         let mask = new Array(data.data['Bit Errors'].length).fill(false);
         [...indices].forEach((x)=>{mask[x] = true;})
         for (let j = 0; j < data.get_length(); j++) {
-            if (data.data['Fiber'][j] == fibers[k] && mask[j] == true && data.data['Phase'][j] == phases[i]){
+            if (data.data['Phase'][j] == phases[k] && mask[j] == true && data.data['Channel'][j] == channels[i]){
                 mask[j] = true;
                 type_ids.push(data.data['Type ID'][j])
                 full_ids.push(data.data['Full ID'][j])
                 people.push(data.data['Person Name'][j])
                 times.push(data.data['Time'][j])
                 outcomes.push(data.data['Outcome'][j])
-                fibers_2.push(data.data['Fiber'][j])
+                channels_2.push(data.data['Channel'][j])
                 pathways.push(data.data['Phase'][j])
                 res.push(data.data['Bit Errors'][j])
             } else {
@@ -170,9 +170,8 @@ for (let k = 0; k < fibers.length; k++) {
         const good_data = data.data['Bit Errors'].filter((_,y)=>mask[y])
         bit_errors.push(d3.mean(good_data)/100000)
     }
-    hist[fibers[k]].data['Bit Errors'] = bit_errors;
-    console.log(hist[fibers[k]].data)
-    hist[fibers[k]].change.emit()
+    hist[phases[k]].data['Bit Errors'] = bit_errors;
+    hist[phases[k]].change.emit()
     dt.data['Type ID'] = type_ids;
     dt.data['Full ID'] = full_ids;
     dt.data['Person Name'] = people;
@@ -180,7 +179,7 @@ for (let k = 0; k < fibers.length; k++) {
     dt.data['Outcome'] = outcomes;
     dt.data['Phase'] = pathways;
     dt.data['Bit Errors'] = res;
-    dt.data['Fiber'] = fibers_2;
+    dt.data['Channel'] = channels_2;
     dt.change.emit()
 }
     ''')
@@ -189,7 +188,7 @@ for (let k = 0; k < fibers.length; k++) {
     return hist_data, dt
 
 # creates the webpage and plots the data
-def ELinkFilter():
+def Filter():
     # create a CDS with all the data to be used
     df_temp = AllData.merge(EC, on='Test ID', how='left')
     df_temp = df_temp.dropna()
@@ -207,7 +206,10 @@ def ELinkFilter():
     while min_date <= today:
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
-    modules_temp = np.unique(ds.data['Fiber']).tolist()
+    # phases refers to 0, 1, 2, or 3
+    # both channels and phases come in as integers, need to change them to strings
+    # these are the number spots that are tested by Fast Command Quality
+    modules_temp = np.unique(ds.data['Channel']).tolist()
     modules = []
     for m in modules_temp:
         modules.append(str(m))
@@ -215,6 +217,7 @@ def ELinkFilter():
     columns = ['Type ID', 'Full ID', 'Person Name', 'Outcome', 'Start Date', 'End Date']
     data = [ds.data['Type ID'].tolist(), ds.data['Full ID'].tolist(), ds.data['Person Name'].tolist(), ds.data['Outcome'], date_range, date_range]
     t = [multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
+    # the phases are the different phases for which the bit errors are measured
     phases_temp = np.unique(ds.data['Phase']).tolist()
     phases = []
     for p in phases_temp:
@@ -250,21 +253,22 @@ def ELinkFilter():
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
     # calls the function that creates the plotting data
-    hds, dt = ELinkHistogram(ds, view, widgets.values(), modules, phases)
+    hds, dt = Histogram(ds, view, widgets.values(), modules, phases)
     # creates the figure object
-    x = [ (phase, mod) for phase in phases for mod in modules]
     p = figure(
         title='Fast Command Quality',
-        x_axis_label='Phase',        
+        x_axis_label='Channel',        
         x_range=hds[modules[0]].data['x'],
         y_axis_label='Number of Bit Errors (x100k)',
         tools='pan,wheel_zoom,box_zoom,reset,save',
         width = 925
         )
     place = [-0.24, -0.08, 0.08, 0.24]
-    for i in range(len(modules)):
+    for i in range(len(phases)):
         # tells the figure object what data source to use
-        p.vbar(x=dodge('x', place[i], range=p.x_range), top='Bit Errors', source=hds[modules[i]], color=colors[i], width=0.15, legend_label=modules[i])
+        # dodge allows for plotting multiple elements side by side at the same value
+        # place determines how far to shift the bar
+        p.vbar(x=dodge('x', place[i], range=p.x_range), top='Bit Errors', source=hds[modules[i]], color=colors[i], width=0.15, legend_label=phases[i])
     
     p.x_range.range_padding = 0.1
 
@@ -275,7 +279,7 @@ def ELinkFilter():
                     TableColumn(field='Person Name', title='Person Name'),
                     TableColumn(field='Time', title='Date', formatter=DateFormatter()),
                     TableColumn(field='Outcome', title='Outcome'),
-                    TableColumn(field='Fiber', title='Fiber'),
+                    TableColumn(field='Channel', title='Channel'),
                     TableColumn(field='Phase', title='Phase'),
                     TableColumn(field='Bit Errors', title='Bit Errors'),
                     ]
@@ -295,7 +299,7 @@ widget.options = serial_numbers[this.value]
 
     # gets the second half of the webpage where the residuals are displayed
     # since it's a separate function, the data can be filtered separately
-    layout = EClockGaussian()
+    layout = Gaussian()
     #converts the bokeh items to json and sends them to the webpage
     plot_json = json.dumps(json_item(row(column(row(w[0:3]), row(w[3:6]), p, data_table), layout)))
     return plot_json
@@ -303,7 +307,7 @@ widget.options = serial_numbers[this.value]
 
 ################################################################################################################
 
-def EClockGaussian2(data, view, widgets, serial_numbers, modules, n_sigma, phases):
+def Gaussian2(data, view, widgets, serial_numbers, modules, n_sigma, phases):
     hist = {}
     pf = {}
     td = {}
@@ -423,12 +427,12 @@ for (let k = 0; k < modules.length; k++) {
     n_sigma.js_on_change('value', x)
     return hist, pf, td
 
-def EClockGaussian():
+def Gaussian():
     df_temp = AllData.merge(EC, on='Test ID', how='left')
     df_temp = df_temp.dropna()
     ds = ColumnDataSource(df_temp)
     serial_numbers = np.unique(ds.data['Full ID'].tolist()).tolist()
-    modules_temp = np.unique(ds.data['Fiber']).tolist()
+    modules_temp = np.unique(ds.data['Channel']).tolist()
     modules = []
     for m in modules_temp:
         modules.append(str(m))
@@ -486,7 +490,7 @@ def EClockGaussian():
 
     n_sigma = NumericInput(value=1, low=0.01, high=10, title='# of standard deviations for passing', mode='float')
 
-    hist, pf, td = EClockGaussian2(ds, view, widgets.values(), serial_numbers, modules, n_sigma, phases)
+    hist, pf, td = Gaussian2(ds, view, widgets.values(), serial_numbers, modules, n_sigma, phases)
     plots = {}
     pf_plots = {}
     tables = {}
@@ -551,7 +555,7 @@ for (let [name,widget] of Object.entries(tables)){
 }
 '''))
     
-    select = Select(title='Fiber', options=modules)
+    select = Select(title='Channel', options=modules)
     select.js_on_change('value', display_plot)
 
     w = [*widgets.values()]
@@ -564,6 +568,7 @@ widget.options = serial_numbers[this.value]
 '''))
     w[0].js_on_change('value', update_options)
 
+    # column and row objects only take it lists, need to make arguments lists
     layout = column(row(w[0:2] + [select]), row(w[2:5]), row([n_sigma]), column(list(plots.values())), column(list(pf_plots.values())), column(list(tables.values())))
     return layout
 
