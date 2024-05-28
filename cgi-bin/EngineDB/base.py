@@ -113,6 +113,7 @@ def top(static):
             <li><a class="dropdown-item" href="UplinkQuality.html">Uplink Quality</a></li>
             <li><a class="dropdown-item" href="X_PWRData.html">X PWR</a></li>
             <li><a class="dropdown-item" href="I2CData.html">I2C</a></li>
+            <li><a class="dropdown-item" href="GPIO_functionality.html">GPIO Functionality</a></li>
           </ul>
         </li>
       </ul>
@@ -183,6 +184,7 @@ def top(static):
             <li><a class="dropdown-item" href="UplinkQuality.py">Uplink Quality</a></li>
             <li><a class="dropdown-item" href="X_PWRData.py">X PWR</a></li>
             <li><a class="dropdown-item" href="I2CData.py">I2C</a></li>
+            <li><a class="dropdown-item" href="GPIO_functionality.py">GPIO Functionality</a></li>
           </ul>
         </li>
       </ul>

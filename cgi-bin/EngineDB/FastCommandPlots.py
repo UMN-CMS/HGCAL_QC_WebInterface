@@ -258,7 +258,7 @@ def Filter():
     p = figure(
         title='Fast Command Quality',
         x_axis_label='Channel',        
-        x_range=hds[modules[0]].data['x'],
+        x_range=hds[phases[0]].data['x'],
         y_axis_label='Number of Bit Errors (x100k)',
         tools='pan,wheel_zoom,box_zoom,reset,save',
         width = 925
@@ -268,7 +268,7 @@ def Filter():
         # tells the figure object what data source to use
         # dodge allows for plotting multiple elements side by side at the same value
         # place determines how far to shift the bar
-        p.vbar(x=dodge('x', place[i], range=p.x_range), top='Bit Errors', source=hds[modules[i]], color=colors[i], width=0.15, legend_label=phases[i])
+        p.vbar(x=dodge('x', place[i], range=p.x_range), top='Bit Errors', source=hds[phases[i]], color=colors[i], width=0.15, legend_label=phases[i])
     
     p.x_range.range_padding = 0.1
 
