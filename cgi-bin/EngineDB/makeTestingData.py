@@ -330,33 +330,64 @@ def run():
                 for v in keys_2:
                     writer.writerow({'Test ID': TestIDs[n][0], 'Connector': k, 'Channel': v, 'Bit Errors': Attach_Data[n][k][v]})
 
-#    with open('./static/files/GPIO_Functionality.csv', mode='w') as csv_file:
-#        header = ['Test ID', 'Pin', 'Passes', 'Fails']
-#        writer = csv.DictWriter(csv_file, fieldnames=header)
-#        writer.writeheader()
-#
-#        cur.execute('select test_type from Test_Type where name="GPIO functionality"')
-#        type_id = cur.fetchall()[0][0]
-#
-#        cur.execute('select test_id from Test where test_type_id={}'.format(type_id))
-#        TestIDs = cur.fetchall()
-# 
-#        query = 'select attach from Attachments where '
-#        for i in TestIDs:
-#            query += 'test_id={}'.format(i[0])
-#            if i is not TestIDs[-1]:
-#                query += ' or '
-#        cur.execute(query)
-#        Attach = cur.fetchall()
-#
-#        for i in range(len(Attach)):
-#            try:
-#                json.loads(Attach[i][0])
-#            except json.decoder.JSONDecodeError:
+    with open('./static/files/GPIO_Functionality.csv', mode='w') as csv_file:
+        header = ['Test ID', 'Pin', 'Read', 'Write']
+        writer = csv.DictWriter(csv_file, fieldnames=header)
+        writer.writeheader()
 
+        cur.execute('select test_type from Test_Type where name="GPIO functionality"')
+        type_id = cur.fetchall()[0][0]
 
+        cur.execute('select attach from Attachments where test_id=282')
+        fetch = cur.fetchall()[0][0]
+        chips = json.loads(fetch)['walked_read'][0][3].keys()
 
+        cur.execute('select test_id from Test where test_type_id={}'.format(type_id))
+        TestIDs = cur.fetchall()
+ 
+        query = 'select attach from Attachments where '
+        for i in TestIDs:
+            query += 'test_id={}'.format(i[0])
+            if i is not TestIDs[-1]:
+                query += ' or '
+        cur.execute(query)
+        Attach = cur.fetchall()
+
+        for i in range(len(Attach)):
+            try:
+                data = json.loads(Attach[i][0])
+
+                try:
+                    read_data = data['walked_read']
+                    read_keys = []
+                    for d in read_data:
+                        read_keys.append(d[0])
+
+                    write_data = data['walked_write']
+                    write_keys = []
+                    for d in write_data:
+                        write_keys.append(d[0])
+                    
+                    for c in chips:
+                        if c in read_keys and c in write_keys:
+                            writer.writerow({'Test ID': TestIDs[i][0], 'Pin': c, 'Read': 0, 'Write': 0})
+                        elif c in read_keys and c not in write_keys:
+                            writer.writerow({'Test ID': TestIDs[i][0], 'Pin': c, 'Read': 0, 'Write': 1})
+                        elif c in write_keys and c not in read_keys:
+                            writer.writerow({'Test ID': TestIDs[i][0], 'Pin': c, 'Read': 1, 'Write': 0})
+                        else:
+                            writer.writerow({'Test ID': TestIDs[i][0], 'Pin': c, 'Read': 1, 'Write': 1})
+                except IndexError:
+                    for c in chips:
+                            writer.writerow({'Test ID': TestIDs[i][0], 'Pin': c, 'Read': 1, 'Write': 1})
+                
+                
+            except json.decoder.JSONDecodeError:
+                pass
 
 
 if __name__ == '__main__':
     run()
+
+
+
