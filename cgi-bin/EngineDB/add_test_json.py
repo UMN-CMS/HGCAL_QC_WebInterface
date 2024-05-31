@@ -73,7 +73,7 @@ def parse_data(form):
     # test_type_data = [(x,y) for x,y in cur if y.lower() == test.lower()]
 
     if not valid_test:
-        print("Invalid test type, see Wagon DB webpage for valid test types")
+        print("Invalid test type, see Engine DB webpage for valid test types")
         return None
 
     ####################
@@ -138,7 +138,7 @@ base_url = connect.get_base_url()
 print("Content-type: text/html\n")
 
 base.header(title="Add Test From JSON")
-base.top()
+base.top(False)
 
 form = cgi.FieldStorage()
 test_dict = parse_data(form)
@@ -159,7 +159,5 @@ for itest in range(1,4):
             acomment = cgi.escape(acomment)
         add_test_functions.add_test_attachment(test_id,afile,adesc,acomment)
 
-base.bottom()
-
-#print(test_dict)
+base.bottom(False)
 

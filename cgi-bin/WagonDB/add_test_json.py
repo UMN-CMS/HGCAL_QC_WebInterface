@@ -6,6 +6,7 @@ import cgi
 import base
 import add_test_functions
 
+# don't think this is used anywhere as of right now
 def parse_data(form):
     try:
         serial = (form.getvalue('serial_num'))
@@ -138,7 +139,7 @@ base_url = connect.get_base_url()
 print("Content-type: text/html\n")
 
 base.header(title="Add Test From JSON")
-base.top()
+base.top(False)
 
 form = cgi.FieldStorage()
 test_dict = parse_data(form)
@@ -159,7 +160,5 @@ for itest in range(1,4):
             acomment = cgi.escape(acomment)
         add_test_functions.add_test_attachment(test_id,afile,adesc,acomment)
 
-base.bottom()
-
-#print(test_dict)
+base.bottom(False)
 

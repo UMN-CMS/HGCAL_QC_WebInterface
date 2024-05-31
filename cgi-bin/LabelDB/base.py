@@ -93,6 +93,9 @@ def top():
         <li class="nav-item">
           <a class="nav-link" href="label_search.py">Labels Search</a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link" href="filter_labels.py">Filter Labels</a>
+        </li>
       </ul>
     </div>
   </div>
@@ -163,22 +166,9 @@ def bottom():
         <h5 class="text-uppercase mb-0">Links</h5>
 
         <ul class="list-unstyled ms-2">
-          <li>
-            <a href="home_page.py" class="text-light text-decoration-none">Home</a>
           </li>
           <li>
-            <a href="testers.py" class="text-light text-decoration-none">Testers</a>
-          </li>
-          <li>
-            <span class="text-light">Summary</a>
-            <ul class="list">
-                <li>
-                    <a href="summary_east.py" class="text-light text-decoration-none">\tSummary</a>
-                </li>
-                <li>
-                    <a href="summary_west.py" class="text-light text-decoration-none">\tSummary</a>
-                </li>
-            </ul>
+            <a href="../WagonDB/home_page.py" class="text-light text-decoration-none">HGCAL Wagon Test</a>
           </li>
           <li>
             <a href="../EngineDB/home_page.py" class="text-light text-decoration-none">HGCAL Engine Test</a>
@@ -211,22 +201,9 @@ def bottom():
         <h5 class="text-uppercase mb-0">Links</h5>
 
         <ul class="list-unstyled ms-2">
-          <li>
-            <a href="index.html" class="text-light text-decoration-none">Home</a>
           </li>
           <li>
-            <a href="testers.html" class="text-light text-decoration-none">Testers</a>
-          </li>
-          <li>
-            <span class="text-light">Summary</a>
-            <ul class="list">
-                <li>
-                    <a href="summary_east.html" class="text-light text-decoration-none">\tSummary</a>
-                </li>
-                <li>
-                    <a href="summary_west.html" class="text-light text-decoration-none">\tSummary</a>
-                </li>
-            </ul>
+            <a href="../WagonDB/home_page.py" class="text-light text-decoration-none">HGCAL Wagon Test</a>
           </li>
           <li>
             <a href="../EngineDB/home_page.py" class="text-light text-decoration-none">HGCAL Engine Test</a>

@@ -3,84 +3,179 @@
 import cgi
 import base
 from connect import connect
-#import mysql.connector
 from summary_functions import get
 import module_functions
 import sys
 import numpy as np
 
-if len(sys.argv) != 1:
-    sys.stdout = open('%(loc)s/summary.html' %{'loc':sys.argv[1]}, 'w')
-
-else:
+if __name__ == '__main__':
     #cgi header
     print("Content-type: text/html\n")
 
-form = cgi.FieldStorage()
-type_id = form.getvalue('type_id')
-base.header(title='Summary')
-base.top()
+    # gets type_id from previous page
+    form = cgi.FieldStorage()
+    type_id = form.getvalue('type_id')
+    base.header(title='Summary')
+    base.top(False)
 
-db = connect(0)
-cur = db.cursor()
+    db = connect(0)
+    cur = db.cursor()
 
-print('<div class="row">')
-print('<div class="col-md-5 ps-4 pt-4 mx-2 my-2"><h2>Test Summary</h2></div>')
-print('<div class="col-md-2 ps-4 pt-4 my-2">')
-print('<a href="summary.py">')
-print('<button type="button" class="btn btn-dark text-light">Back to Subtype List</button>')
-print('</a>')
-print('</div>')
-print('</div>')
-print('<div class="row">')
-print('<div class="col-md-12">')
-print('<div class="col-md-11 ps-5 py-4my-2"><table class="table table-hover">')
-print('<thead class="table-dark">')
-print('<tr>')
-print('<th> S/N </th>')
-print('<th> Tests</th>')
-print('</tr>')
-print('</thead>')
-print('<tbody>')
-
-s = type_id
-
-cur.execute('select full_id from Board where type_id="%s"' % s)
-li = []
-for l in cur.fetchall():
-    li.append(l[0])
-serial_numbers = np.unique(li).tolist()
-
-for sn in serial_numbers:
-    cur.execute('select name from Test_Type')
-    temp = cur.fetchall()
-    names = []
-    outcomes = []
-    for t in temp:
-        names.append(t[0])
-        outcomes.append(False)
+    print('<div class="row">')
+    print('<div class="col-md-5 ps-4 pt-4 mx-2 my-2"><h2>Test Summary</h2></div>')
+    print('<div class="col-md-2 ps-4 pt-4 my-2">')
+    print('<a href="summary.py">')
+    print('<button type="button" class="btn btn-dark text-light">Back to Subtype List</button>')
+    print('</a>')
+    print('</div>')
+    print('</div>')
+    print('<div class="row">')
+    print('<div class="col-md-12">')
+    print('<div class="col-md-11 ps-5 py-4my-2"><table class="table table-hover">')
+    print('<thead class="table-dark">')
     print('<tr>')
-    cur.execute('select board_id from Board where full_id="%s"' % sn)
-    board_id = cur.fetchall()[0][0]
-    cur.execute('select test_type_id, successful from Test where board_id=%s' % board_id)
-    temp = cur.fetchall()
-    for t in temp:
-        if t[1] == 1:
-            outcomes[t[0]] = True
-    print('<td> <a href=module.py?board_id=%(id)s&serial_num=%(serial)s> %(serial)s </a></td>' %{'serial':sn, 'id':s})
-    print('<td><ul>')
-    for idx,o in enumerate(outcomes): 
-        if o == True:
-            print('<li class="list-group-item-success">%s' %names[idx])
-        else:
-            print('<li class="list-group-item-danger"> <a href="add_test.py?serial_num=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':idx, 'name':names[idx]})
-    print('</ul></td>') 
-
+    print('<th> S/N </th>')
+    print('<th> Tests</th>')
     print('</tr>')
-print('</tbody></table></div></div>')
+    print('</thead>')
+    print('<tbody>')
+
+    s = type_id
+
+    cur.execute('select full_id from Board where type_id="%s"' % s)
+    li = []
+    for l in cur.fetchall():
+        li.append(l[0])
+    serial_numbers = np.unique(li).tolist()
+
+    for sn in serial_numbers:
+        # same structure as home page, now with a variable to see if that test has been run
+        cur.execute('select name,test_type from Test_Type')
+        outcomes = {}
+        run = {}
+        ids = {}
+        names = []
+        for n in cur.fetchall():
+            names.append(n[0])
+            ids[n[0]] = n[1]
+            outcomes[n[0]] = False
+            run[n[0]] = False
+        print('<tr>')
+        cur.execute('select board_id from Board where full_id="%s"' % sn)
+        board_id = cur.fetchall()[0][0]
+        cur.execute('select test_type_id, successful,day from Test where board_id=%s order by day desc' % board_id)
+        temp = cur.fetchall()
+        prev_ids = []
+        for t in temp:
+            if t[0] not in prev_ids:
+                cur.execute('select name from Test_Type where test_type=%s' % t[0])
+                name = cur.fetchall()[0][0]
+                if t[1] == True:    
+                    outcomes[name] = True
+                run[name] = True
+            prev_ids.append(t[0])
+        
+        # only difference is that all tests are printed out
+        print('<td> <a href=module.py?board_id=%(id)s&serial_num=%(serial)s> %(serial)s </a></td>' %{'serial':sn, 'id':s})
+        print('<td><ul>')
+        for n in names: 
+            # if the test was successful it's printed green 
+            if outcomes[n] == True and run[n] == True:
+                print('<li class="list-group-item-success">%s' %n)
+            # if test was done and didn't pass, red with a link to add a test of that type
+            elif outcomes[n] == False and run[n] == True:
+                print('<li class="list-group-item-danger"> <a href="add_test.py?serial_num=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':ids[n], 'name':n})
+            # if no test has been run, gray with a link
+            else:
+                print('<li class="list-group-item-dark"> <a href="add_test.py?serial_num=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':ids[n], 'name':n})
+        
+        print('</ul></td>') 
+
+        print('</tr>')
+    print('</tbody></table></div></div>')
 
 
-base.bottom()
+    base.bottom(False)
 
-    
+def run(type_id):
+    base.header(title='Summary')
+    base.top(True)
 
+    db = connect(0)
+    cur = db.cursor()
+
+    print('<div class="row">')
+    print('<div class="col-md-5 ps-4 pt-4 mx-2 my-2"><h2>Test Summary</h2></div>')
+    print('<div class="col-md-2 ps-4 pt-4 my-2">')
+    print('<a href="summary.py">')
+    print('<button type="button" class="btn btn-dark text-light">Back to Subtype List</button>')
+    print('</a>')
+    print('</div>')
+    print('</div>')
+    print('<div class="row">')
+    print('<div class="col-md-12">')
+    print('<div class="col-md-11 ps-5 py-4my-2"><table class="table table-hover">')
+    print('<thead class="table-dark">')
+    print('<tr>')
+    print('<th> S/N </th>')
+    print('<th> Tests</th>')
+    print('</tr>')
+    print('</thead>')
+    print('<tbody>')
+
+    s = type_id
+
+    cur.execute('select full_id from Board where type_id="%s"' % s)
+    li = []
+    for l in cur.fetchall():
+        li.append(l[0])
+    serial_numbers = np.unique(li).tolist()
+
+    for sn in serial_numbers:
+        # same structure as home page, now with a variable to see if that test has been run
+        cur.execute('select name,test_type from Test_Type')
+        outcomes = {}
+        run = {}
+        ids = {}
+        names = []
+        for n in cur.fetchall():
+            names.append(n[0])
+            ids[n[0]] = n[1]
+            outcomes[n[0]] = False
+            run[n[0]] = False
+        print('<tr>')
+        cur.execute('select board_id from Board where full_id="%s"' % sn)
+        board_id = cur.fetchall()[0][0]
+        cur.execute('select test_type_id, successful,day from Test where board_id=%s order by day desc' % board_id)
+        temp = cur.fetchall()
+        prev_ids = []
+        for t in temp:
+            if t[0] not in prev_ids:
+                cur.execute('select name from Test_Type where test_type=%s' % t[0])
+                name = cur.fetchall()[0][0]
+                if t[1] == True:    
+                    outcomes[name] = True
+                run[name] = True
+            prev_ids.append(t[0])
+        
+        # only difference is that all tests are printed out
+        print('<td> <a href=./%(id)s_%(serial)s_module.html> %(serial)s </a></td>' %{'serial':sn, 'id':s})
+        print('<td><ul>')
+        for n in names: 
+            # if the test was successful it's printed green 
+            if outcomes[n] == True and run[n] == True:
+                print('<li class="list-group-item-success">%s' %n)
+            # if test was done and didn't pass, red with a link to add a test of that type
+            elif outcomes[n] == False and run[n] == True:
+                print('<li class="list-group-item-danger">%s' %n)
+            # if no test has been run, gray with a link
+            else:
+                print('<li class="list-group-item-dark">%s' %n)
+        
+        print('</ul></td>') 
+
+        print('</tr>')
+    print('</tbody></table></div></div>')
+
+
+    base.bottom(True)

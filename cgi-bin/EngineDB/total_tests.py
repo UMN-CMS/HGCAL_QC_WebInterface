@@ -247,7 +247,7 @@ dt.change.emit()
         widget.js_on_change('value', x)
     return time_series_data_total, time_series_data_suc, time_series_data_unc, dt
 
-def TotalFilter():
+def Filter():
     df_temp = AllData
     df_temp = df_temp.dropna()
     ds = ColumnDataSource(df_temp)

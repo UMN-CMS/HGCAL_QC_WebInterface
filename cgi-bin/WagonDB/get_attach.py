@@ -7,40 +7,87 @@ import settings
 import os.path
 import sys
 
+db=connect(0)
+cur=db.cursor()
+
 if __name__ == "__main__": 
     form = cgi.FieldStorage()
     attach_id = base.cleanCGInumber(form.getvalue('attach_id'))
 
-    db=connect(0)
-    cur=db.cursor()
-
+    # gets attachment data from DB
     if(attach_id != 0):
         cur.execute("SELECT test_id, attachmime, originalname, attach FROM Attachments WHERE attach_id=%d" % (attach_id));
 
+    # checks to make sure there is attachment data received
     if not cur.with_rows:
         print("Content-type: text/html\n")
         base.header("Attachment Request Error")
-        base.top()
+        base.top(False)
         print('<div class="col-md-6 ps-4 pt-4 mx-2 my-2">')
         print("<h1>Attachment not available</h1>")
         print('</div>')
-        base.bottom()
+        base.bottom(False)
     else:    
         thevals=cur.fetchall()
+        # grabs attached data
         f = thevals[0][3]
-        attpath=settings.getAttachmentPathFor(thevals[0][0],attach_id)
+        # checks if there is an attachment
         if not f:
             print("Content-type: text/html\n")
             base.header("Attachment Request Error")
-            base.top()
+            base.top(True)
             print("<h1>Attachment not found</h1>")
-            base.bottom()        
+            base.bottom(False)        
         else:
+            # decodes the attachment and displays it
             print('Content-type: %s \n\n' % (thevals[0][1]))
             print(f.decode("utf-8"))
         
     cur.close()
 
+def run(attach_id):
+    # gets attachment data from DB
+    if(attach_id != 0):
+        cur.execute("SELECT test_id, attachmime, originalname, attach FROM Attachments WHERE attach_id=%d" % (attach_id));
+
+    # checks to make sure there is attachment data received
+    if not cur.with_rows:
+        print('<!doctype html>')
+        print('<html lang="en">')
+        print('<head>')
+        print('<title> Attachment not available </title>')
+        print('</head>')
+        print('<body>')
+        print("<h1>Attachment not available</h1>")
+        print('</body>')
+        print('</html>')
+    else:    
+        thevals=cur.fetchall()
+        # grabs attached data
+        f = thevals[0][3]
+        # checks if there is an attachment
+        if not f:
+            print('<!doctype html>')
+            print('<html lang="en">')
+            print('<head>')
+            print('<title> Attachment Request Error </title>')
+            print('</head>')
+            print('<body>')
+            print("<h1>Attachment not found</h1>")
+            print('</body>')
+            print('</html>')
+        else:
+            print('<!doctype html>')
+            print('<html lang="en">')
+            print('<head>')
+            print('<title> Attachment </title>')
+            print('</head>')
+            print('<body>')
+            print(f.decode("utf-8"))
+            print('</body>')
+            print('</html>')
+
+# writes a file for the attachment
 def save(attach_id):
     db=connect(0)
     cur=db.cursor()

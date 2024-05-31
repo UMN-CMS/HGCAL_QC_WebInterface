@@ -14,18 +14,17 @@ cur = db.cursor()
 print("Content-type: text/html\n")
 
 form = cgi.FieldStorage()
-#url = form.getvalue("url")
 try:
     serial_num = cgi.escape(form.getvalue("serial_num"))
 except:
     serial_num = None
 
 base.header(title='Board Checkout')
-base.top()
+base.top(False)
 
 if serial_num:
     board_check_functions.board_checkout_form_sn(serial_num)
 else:
     board_check_functions.board_checkout_form_sn("")
 
-base.bottom()
+base.bottom(False)

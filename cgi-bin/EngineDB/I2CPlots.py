@@ -126,7 +126,7 @@ colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10]
 
 
 #creates a matrix of filterable data to be used in the plot
-def ELinkHistogram(data, view, widgets, modules, channels):
+def Histogram(data, view, widgets, modules, channels):
     # creates a dictionary for the histogram data to go in
     hist_data = {}
     dt = {}
@@ -170,8 +170,8 @@ for (let k = 0; k < channels.length; k++) {
         const good_data = data.data['Bit Errors'].filter((_,y)=>mask[y])
         bit_errors.push(d3.mean(good_data))
     }
+    // rather than binning, just add bit errors an array so that a bar will be plotted with that value
     hist[channels[k]].data['Bit Errors'] = bit_errors;
-    console.log(hist[channels[k]].data)
     hist[channels[k]].change.emit()
 }
 dt.data['Type ID'] = type_ids;
@@ -189,7 +189,7 @@ dt.change.emit()
     return hist_data, dt
 
 # creates the webpage and plots the data
-def ELinkFilter():
+def Filter():
     # create a CDS with all the data to be used
     df_temp = AllData.merge(EC, on='Test ID', how='left')
     df_temp = df_temp.dropna()
@@ -207,6 +207,7 @@ def ELinkFilter():
     while min_date <= today:
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
+    # modules are DAQ, East, West
     modules = np.unique(ds.data['Connector'].tolist()).tolist()
     # widget titles and data for those widgets has to be manually entered, as well as the type
     columns = ['Type ID', 'Full ID', 'Person Name', 'Outcome', 'Start Date', 'End Date']
@@ -242,14 +243,15 @@ def ELinkFilter():
     #sets up all the objects to be created
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
-    # calls the function that creates the plotting data
+    # channels are 0, 1, 2 
     temp_channels = np.unique(ds.data['Channel'].tolist()).tolist()
     channels = []
     for t in temp_channels:
+        # channels come in as integers so need to change to string
         channels.append(str(t))
-    hds, dt = ELinkHistogram(ds, view, widgets.values(), modules, channels)
+    # calls the function that creates the plotting data
+    hds, dt = Histogram(ds, view, widgets.values(), modules, channels)
     # creates the figure object
-    x = [(ch, mod) for ch in channels for mod in modules]
     p = figure(
         title='I2C',
         x_axis_label='Phase',        
@@ -261,6 +263,8 @@ def ELinkFilter():
     place = [-0.2, 0, 0.2]
     for i in range(len(channels)):
         # tells the figure object what data source to use
+        # dodge allows for plotting multiple elements side by side at the same value
+        # place determines how far to shift the bar
         p.vbar(x=dodge('x', place[i], range=p.x_range), top='Bit Errors', source=hds[channels[i]], color=colors[i], width=0.20, legend_label=channels[i])
     
     p.x_range.range_padding = 0.1
@@ -292,7 +296,7 @@ widget.options = serial_numbers[this.value]
 
     # gets the second half of the webpage where the residuals are displayed
     # since it's a separate function, the data can be filtered separately
-    layout = EClockGaussian()
+    layout = Gaussian()
     #converts the bokeh items to json and sends them to the webpage
     plot_json = json.dumps(json_item(row(column(row(w[0:3]), row(w[3:6]), p, data_table), layout)))
     return plot_json
@@ -300,7 +304,7 @@ widget.options = serial_numbers[this.value]
 
 ################################################################################################################
 
-def EClockGaussian2(data, view, widgets, serial_numbers, modules, n_sigma, channels):
+def Gaussian2(data, view, widgets, serial_numbers, modules, n_sigma, channels):
     hist = {}
     pf = {}
     td = {}
@@ -419,13 +423,15 @@ for (let i = 0; i < modules.length; i++) {
     n_sigma.js_on_change('value', x)
     return hist, pf, td
 
-def EClockGaussian():
+def Gaussian():
     df_temp = AllData.merge(EC, on='Test ID', how='left')
     df_temp = df_temp.dropna()
     ds = ColumnDataSource(df_temp)
     serial_numbers = np.unique(ds.data['Full ID'].tolist()).tolist()
+    # modules are DAQ, East, West
     modules = np.unique(ds.data['Connector'].tolist()).tolist()
 
+    # channels are 0, 1, 2
     temp_channels = np.unique(ds.data['Channel'].tolist()).tolist()
     channels = []
     for t in temp_channels:
@@ -479,7 +485,7 @@ def EClockGaussian():
 
     n_sigma = NumericInput(value=1, low=0.01, high=10, title='# of standard deviations for passing', mode='float')
 
-    hist, pf, td = EClockGaussian2(ds, view, widgets.values(), serial_numbers, modules, n_sigma, channels)
+    hist, pf, td = Gaussian2(ds, view, widgets.values(), serial_numbers, modules, n_sigma, channels)
     plots = {}
     pf_plots = {}
     tables = {}
@@ -557,6 +563,7 @@ widget.options = serial_numbers[this.value]
 '''))
     w[0].js_on_change('value', update_options)
 
+    # column and row objects only take it lists, need to make arguments lists
     layout = column(row(w[0:2] + [select]), row(w[2:5]), row([n_sigma]), column(list(plots.values())), column(list(pf_plots.values())), column(list(tables.values())))
     return layout
 

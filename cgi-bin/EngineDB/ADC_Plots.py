@@ -41,6 +41,7 @@ AllData = AllData.rename(columns={'Successful':'Outcome'})
 AllData['Outcome'] = AllData['Outcome'].replace(0, 'Unsuccessful')
 AllData['Outcome'] = AllData['Outcome'].replace(1, 'Successful')
 
+# each value has its own data frame
 temp = pd.read_csv('./static/files/ADC_functionality_resistance.csv')
 ADC_resist = temp.dropna()
 temp = pd.read_csv('./static/files/ADC_functionality_voltage.csv')
@@ -126,7 +127,8 @@ return indices;
 colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10][2], d3['Category10'][10][3], d3['Category10'][10][4], d3['Category10'][10][5], d3['Category10'][10][6], d3['Category10'][10][7], d3['Category10'][10][8], d3['Category10'][10][9], brewer['Accent'][8][0], brewer['Accent'][8][3], brewer['Dark2'][8][0], brewer['Dark2'][8][2], brewer['Dark2'][8][3], brewer['Dark2'][8][4], brewer['Dark2'][8][5], brewer['Dark2'][8][6], d3['Category20'][20][1], d3['Category20'][20][9], d3['Category20c'][20][19]]
 
 
-def ADC_Histograms(data_resist, data_volt, data_temp, data_adc, view, widgets, serial_numbers, resist_modules, volt_modules, temp_modules, adc_modules, slider):
+def Histograms(data_resist, data_volt, data_temp, data_adc, view, widgets, resist_modules, volt_modules, temp_modules, adc_modules, slider):
+    # the dictionary has a dictionary for each quantity
     hist = {}
     td = {}
     hist['adc slope'] = {}
@@ -135,6 +137,7 @@ def ADC_Histograms(data_resist, data_volt, data_temp, data_adc, view, widgets, s
     hist['resist'] = {}
     hist['volt'] = {}
     hist['temp'] = {}
+    # each quantity has a data source for each of its modules
     for a in adc_modules:
         hist['adc slope'][a] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
         hist['adc intercept'][a] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
@@ -148,10 +151,11 @@ def ADC_Histograms(data_resist, data_volt, data_temp, data_adc, view, widgets, s
 
     td['resist'] = ColumnDataSource(data={'E Link':[], 'Resistance':[], 'Outcome':[], 'Serial Number':[]})
     td['volt'] = ColumnDataSource(data={'ADC':[], 'Voltage':[], 'Outcome':[], 'Serial Number':[]})
-    td['temp'] = ColumnDataSource(data={'Location':[], 'Temperature':[], 'Outcome':[], 'Serial Number':[]})
-    td['adc']  = ColumnDataSource(data={'Location':[], 'Slope':[], 'Intercept':[], 'R Squared':[], 'Outcome':[], 'Serial Number':[]})
+    td['temp'] = ColumnDataSource(data={'Chip':[], 'Temperature':[], 'Outcome':[], 'Serial Number':[]})
+    td['adc']  = ColumnDataSource(data={'ADC':[], 'Slope':[], 'Intercept':[], 'R Squared':[], 'Outcome':[], 'Serial Number':[]})
     std = ColumnDataSource(data={'Quantity':[], 'mean':[], 'std':[], 'module':[]})
-    x = CustomJS(args=dict(hist=hist, data_resist=data_resist, data_volt=data_volt, data_temp=data_temp, serial_numbers=serial_numbers, resist_modules=resist_modules, volt_modules=volt_modules, temp_modules=temp_modules, view=view, slider=slider, td=td, std=std, data_adc=data_adc, adc_modules=adc_modules),code='''
+    x = CustomJS(args=dict(hist=hist, data_resist=data_resist, data_volt=data_volt, data_temp=data_temp, resist_modules=resist_modules, volt_modules=volt_modules, temp_modules=temp_modules, view=view, slider=slider, td=td, std=std, data_adc=data_adc, adc_modules=adc_modules),code='''
+// need several arrays to hold data
 const r_sns = [];
 const v_sns = [];
 const t_sns = [];
@@ -174,15 +178,22 @@ const quantities = [];
 const modules = [];
 const means = [];
 const stds = [];
+// construct bins and indices outside of the loop
 let bins = slider.value
 const indices_resist = view['resistance'].filters[0].compute_indices(data_resist);
 const indices_volt = view['voltage'].filters[0].compute_indices(data_volt);
 const indices_temp = view['temperature'].filters[0].compute_indices(data_temp);
 const indices_adc = view['adc'].filters[0].compute_indices(data_adc);
 
+// iterate over resistance modules
 for (let k = 0; k < resist_modules.length; k++) {
+    // create mask
     let mask_resist = new Array(data_resist.data['Resistance'].length).fill(false);
     [...indices_resist].forEach((x)=>{mask_resist[x] = true;})
+    
+    const all_data = data_resist.data['Resistance'].filter((_,y)=>mask_resist[y])
+    let m = Math.max(...all_data);
+    let min = Math.min(...all_data);
 
     for (let j = 0; j < data_resist.data['E Link'].length; j++) {
         if (mask_resist[j] == true && data_resist.data['E Link'][j] == resist_modules[k]) {
@@ -196,9 +207,8 @@ for (let k = 0; k < resist_modules.length; k++) {
         }
     }
 
+    // filter and bin data
     const good_data = data_resist.data['Resistance'].filter((_,y)=>mask_resist[y])
-    let m = Math.max(...good_data);
-    let min = Math.min(...good_data);
     let scale = d3.scaleLinear().domain([min,m]).nice()
     let binner = d3.bin().domain(scale.domain()).thresholds(m*bins)
     let d = binner(good_data)
@@ -227,9 +237,14 @@ td['resist'].data['Resistance'] = resist;
 td['resist'].data['Outcome'] = r_outcomes;
 td['resist'].change.emit()
 
+// same thing for voltage
 for (let k = 0; k < volt_modules.length; k++) {
     let mask_volt = new Array(data_volt.data['Voltage'].length).fill(false);
     [...indices_volt].forEach((x)=>{mask_volt[x] = true;})
+
+    const all_data = data_volt.data['Voltage'].filter((_,y)=>mask_volt[y])
+    let m = Math.max(...all_data);
+    let min = Math.min(...all_data);
 
     for (let j = 0; j < data_volt.data['ADC'].length; j++) {
         if (mask_volt[j] == true && data_volt.data['ADC'][j] == volt_modules[k]) {
@@ -244,8 +259,6 @@ for (let k = 0; k < volt_modules.length; k++) {
     }
 
     const good_data = data_volt.data['Voltage'].filter((_,y)=>mask_volt[y])
-    let m = Math.max(...good_data);
-    let min = Math.min(...good_data);
     let scale = d3.scaleLinear().domain([min,m]).nice()
     let binner = d3.bin().domain(scale.domain()).thresholds(m*bins*2)
     let d = binner(good_data)
@@ -274,15 +287,20 @@ td['volt'].data['Voltage'] = volt;
 td['volt'].data['Outcome'] = v_outcomes;
 td['volt'].change.emit()
 
+// same thing for temperature
 for (let k = 0; k < temp_modules.length; k++) {
     let mask_temp = new Array(data_temp.data['Temperature'].length).fill(false);
     [...indices_temp].forEach((x)=>{mask_temp[x] = true;})
 
+    const all_data = data_temp.data['Temperature'].filter((_,y)=>mask_temp[y])
+    let m = Math.max(...all_data);
+    let min = Math.min(...all_data);
+
     for (let j = 0; j < data_temp.get_length(); j++) {
-        if (mask_temp[j] == true && data_temp.data['Location'][j] == temp_modules[k]) {
+        if (mask_temp[j] == true && data_temp.data['Chip'][j] == temp_modules[k]) {
             mask_temp[j] = true;
             t_sns.push(data_temp.data['Full ID'][j])
-            locations.push(data_temp.data['Location'][j])
+            locations.push(data_temp.data['Chip'][j])
             temp.push(data_temp.data['Temperature'][j])
             t_outcomes.push(data_temp.data['Outcome'][j])
         } else {
@@ -291,8 +309,6 @@ for (let k = 0; k < temp_modules.length; k++) {
     }
 
     const good_data = data_temp.data['Temperature'].filter((_,y)=>mask_temp[y])
-    let m = Math.max(...good_data);
-    let min = Math.min(...good_data);
     let scale = d3.scaleLinear().domain([min,m]).nice()
     let binner = d3.bin().domain(scale.domain()).thresholds(m*bins)
     let d = binner(good_data)
@@ -316,20 +332,34 @@ for (let k = 0; k < temp_modules.length; k++) {
 }
 
 td['temp'].data['Serial Number'] = t_sns;
-td['temp'].data['Location'] = locations;
+td['temp'].data['Chip'] = locations;
 td['temp'].data['Temperature'] = temp;
 td['temp'].data['Outcome'] = t_outcomes;
 td['temp'].change.emit()
 
+// iterate over all the adc modules
 for (let k = 0; k < adc_modules.length; k++) {
+    // can use the same mask for all
     let mask_adc = new Array(data_adc.data['slope'].length).fill(false);
     [...indices_adc].forEach((x)=>{mask_adc[x] = true;})
 
+    const all_data_slope = data_adc.data['slope'].filter((_,y)=>mask_adc[y])
+    let m_s = Math.max(...all_data_slope);
+    let min_s = Math.min(...all_data_slope);
+
+    const all_data_int = data_adc.data['intercept'].filter((_,y)=>mask_adc[y])
+    let m_i = Math.max(...all_data_int);
+    let min_i = Math.min(...all_data_int);
+
+    const all_data_r = data_adc.data['rsquared'].filter((_,y)=>mask_adc[y])
+    let m = Math.max(...all_data_r);
+    let min = Math.min(...all_data_r);
+
     for (let j = 0; j < data_adc.get_length(); j++) {
-        if (mask_adc[j] == true && data_adc.data['Location'][j] == adc_modules[k]) {
+        if (mask_adc[j] == true && data_adc.data['ADC'][j] == adc_modules[k]) {
             mask_adc[j] = true;
             a_sns.push(data_adc.data['Full ID'][j])
-            locations_adc.push(data_adc.data['Location'][j])
+            locations_adc.push(data_adc.data['ADC'][j])
             slope.push(data_adc.data['slope'][j])
             intercept.push(data_adc.data['intercept'][j])
             r_squared.push(data_adc.data['rsquared'][j])
@@ -339,12 +369,10 @@ for (let k = 0; k < adc_modules.length; k++) {
         }
     }
 
+    // create slope data
     const good_data_slope = data_adc.data['slope'].filter((_,y)=>mask_adc[y])
-    console.log(good_data_slope)
-    let m_s = Math.max(...good_data_slope);
-    let min_s = Math.min(...good_data_slope);
     let scale_s = d3.scaleLinear().domain([min_s,m_s]).nice()
-    let binner_s = d3.bin().domain(scale_s.domain()).thresholds(m_s*bins)
+    let binner_s = d3.bin().domain(scale_s.domain()).thresholds(m_s*bins*5)
     let d_s = binner_s(good_data_slope)
 
     quantities.push('Slope')
@@ -363,9 +391,8 @@ for (let k = 0; k < adc_modules.length; k++) {
     hist['adc slope'][adc_modules[k]].data['bottom'] = bottom_s;
     hist['adc slope'][adc_modules[k]].change.emit()
 
+    // create intercept data
     const good_data_int = data_adc.data['intercept'].filter((_,y)=>mask_adc[y])
-    let m_i = Math.max(...good_data_int);
-    let min_i = Math.min(...good_data_int);
     let scale_i = d3.scaleLinear().domain([min_i,m_i]).nice()
     let binner_i = d3.bin().domain(scale_i.domain()).thresholds(m_i*bins)
     let d_i = binner_i(good_data_int)
@@ -386,11 +413,10 @@ for (let k = 0; k < adc_modules.length; k++) {
     hist['adc intercept'][adc_modules[k]].data['bottom'] = bottom_i;
     hist['adc intercept'][adc_modules[k]].change.emit()
 
+    // create r squared data
     const good_data_r = data_adc.data['rsquared'].filter((_,y)=>mask_adc[y])
-    let m = Math.max(...good_data_r);
-    let min = Math.min(...good_data_r);
     let scale = d3.scaleLinear().domain([min,m]).nice()
-    let binner = d3.bin().domain(scale.domain()).thresholds(m*bins)
+    let binner = d3.bin().domain(scale.domain()).thresholds(m*bins*5)
     let d = binner(good_data_r)
 
     quantities.push('R Squared')
@@ -410,9 +436,10 @@ for (let k = 0; k < adc_modules.length; k++) {
     hist['adc r2'][adc_modules[k]].change.emit()
 
 }
+// update data tables
 
 td['adc'].data['Serial Number'] = a_sns;
-td['adc'].data['Location'] = locations_adc;
+td['adc'].data['ADC'] = locations_adc;
 td['adc'].data['Slope'] = slope;
 td['adc'].data['Intercept'] = intercept;
 td['adc'].data['R Squared'] = r_squared;
@@ -430,11 +457,15 @@ std.change.emit()
     slider.js_on_change('value', x)
     return hist, td, std
 
-def ADC_Filter():
+def Filter():
+    # make data sources for each
     df_temp = AllData.merge(ADC_voltage, on='Test ID', how='left')
     df_temp = df_temp.dropna()
     ds_volt = ColumnDataSource(df_temp)
-    serial_numbers = np.unique(ds_volt.data['Full ID'].tolist()).tolist()
+    subtypes = np.unique(ds_volt.data['Type ID'].tolist()).tolist()
+    serial_numbers = {}
+    for s in subtypes:
+        serial_numbers[s] = np.unique(df_temp.query('`Type ID` == @s')['Full ID'].values.tolist()).tolist()
 
     df_temp = AllData.merge(ADC_resist, on='Test ID', how='left')
     df_temp = df_temp.dropna()
@@ -460,7 +491,7 @@ def ADC_Filter():
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
     columns = ['Type ID', 'Full ID', 'Person Name', 'Outcome', 'Start Date', 'End Date']
-    data = [ds_adc.data['Type ID'].tolist(), serial_numbers, ds_adc.data['Person Name'].tolist(), ds_adc.data['Outcome'], date_range, date_range]
+    data = [ds_adc.data['Type ID'].tolist(), ds_adc.data['Full ID'].tolist(), ds_adc.data['Person Name'].tolist(), ds_adc.data['Outcome'], date_range, date_range]
     t = [multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
 
     for i in range(len(columns)):
@@ -506,10 +537,10 @@ src4.change.emit()
 
     resist_modules = np.unique(ds_resist.data['E Link']).tolist()
     volt_modules = np.unique(ds_volt.data['ADC']).tolist()
-    temp_modules = np.unique(ds_temp.data['Location']).tolist()
-    adc_modules = np.unique(ds_adc.data['Location']).tolist()
+    temp_modules = np.unique(ds_temp.data['Chip']).tolist()
+    adc_modules = np.unique(ds_adc.data['ADC']).tolist()
 
-    hist, td, std = ADC_Histograms(ds_resist, ds_volt, ds_temp, ds_adc, views, widgets.values(), serial_numbers, resist_modules, volt_modules, temp_modules, adc_modules, slider)
+    hist, td, std = Histograms(ds_resist, ds_volt, ds_temp, ds_adc, views, widgets.values(), resist_modules, volt_modules, temp_modules, adc_modules, slider)
 
     q_1 = figure(
         title='Slopes',
@@ -599,7 +630,7 @@ src4.change.emit()
 
     table_columns_temp = [
                     TableColumn(field='Serial Number', title='Serial Number'),
-                    TableColumn(field='Location', title='Location'),
+                    TableColumn(field='Chip', title='Chip'),
                     TableColumn(field='Temperature', title='Temperature'),
                     TableColumn(field='Outcome', title='Outcome'),
                     ]
@@ -607,7 +638,7 @@ src4.change.emit()
 
     table_columns_adc = [
                     TableColumn(field='Serial Number', title='Serial Number'),
-                    TableColumn(field='Location', title='Location'),
+                    TableColumn(field='ADC', title='ADC'),
                     TableColumn(field='Slope', title='Slope'),
                     TableColumn(field='Intercept', title='Intercept'),
                     TableColumn(field='R Squared', title='R Squared'),
@@ -625,6 +656,11 @@ src4.change.emit()
     data_table_4 = DataTable(source=std, columns=table_columns_4, autosize_mode='fit_columns')
             
     w = [*widgets.values()]
+
+    update_options = CustomJS(args=dict(serial_numbers=serial_numbers, widget=w[1]), code=('''
+widget.options = serial_numbers[this.value]
+'''))
+    w[0].js_on_change('value', update_options)
     
     L = ADC_Gaussian()
 
@@ -668,6 +704,7 @@ def ADC_Gaussian2(data_resist, data_volt, data_temp, data_adc, view, widgets, se
     td['adc r2'] = ColumnDataSource(data={'Serial Number':[], 'Module':[], 'Pass/Fail':[], 'Deviation':[]})
 
     x = CustomJS(args=dict(hist=hist, data_resist=data_resist, data_volt=data_volt, data_temp=data_temp, serial_numbers=serial_numbers, resist_modules=resist_modules, volt_modules=volt_modules, temp_modules=temp_modules, view=view, n_sigma=n_sigma, data_adc=data_adc, adc_modules=adc_modules, pf=pf, td=td),code='''
+// this follows the same pattern as residual plots for WagonDB, just for way more quantities
 const indices_resist = view['resistance'].filters[0].compute_indices(data_resist);
 const indices_volt = view['voltage'].filters[0].compute_indices(data_volt);
 const indices_temp = view['temperature'].filters[0].compute_indices(data_temp);
@@ -890,8 +927,8 @@ for (let k = 0; k < temp_modules.length; k++) {
     let mask_temp = new Array(data_temp.data['Temperature'].length).fill(false);
     [...indices_temp].forEach((x)=>{mask_temp[x] = true;})
 
-    for (let j = 0; j < data_temp.data['Location'].length; j++) {
-        if (mask_temp[j] == true && data_temp.data['Location'][j] == temp_modules[k]) {
+    for (let j = 0; j < data_temp.data['Chip'].length; j++) {
+        if (mask_temp[j] == true && data_temp.data['Chip'][j] == temp_modules[k]) {
             mask_temp[j] = true;
         } else {
             mask_temp[j] = false;
@@ -906,7 +943,7 @@ for (let k = 0; k < temp_modules.length; k++) {
         [...indices_temp].forEach((x)=>{mask_sn[x] = true;})
 
         for (let j = 0; j < data_temp.get_length(); j++) {
-            if (mask_sn[j] == true && data_temp.data['Full ID'][j] == serial_numbers[sn] && data_temp.data['Location'][j] == temp_modules[k]){
+            if (mask_sn[j] == true && data_temp.data['Full ID'][j] == serial_numbers[sn] && data_temp.data['Chip'][j] == temp_modules[k]){
                 mask_sn[j] = true;
                 let x = data_temp.data['Temperature'][j] - mean;
                 let chi = x/std;
@@ -985,7 +1022,7 @@ for (let sn = 0; sn < serial_numbers.length; sn++) {
         [...indices_adc].forEach((x)=>{mask_sn[x] = true;})
 
         for (let j = 0; j < data_adc.get_length(); j++) {
-            if (mask_sn[j] == true && data_adc.data['Full ID'][j] == serial_numbers[sn] && data_adc.data['Location'][j] == adc_modules[k]){
+            if (mask_sn[j] == true && data_adc.data['Full ID'][j] == serial_numbers[sn] && data_adc.data['ADC'][j] == adc_modules[k]){
                 mask_sn[j] = true;
                 let x = data_adc.data['slope'][j] - mean;
                 let chi = x/std;
@@ -1061,7 +1098,7 @@ for (let sn = 0; sn < serial_numbers.length; sn++) {
         [...indices_adc].forEach((x)=>{mask_sn[x] = true;})
 
         for (let j = 0; j < data_adc.get_length(); j++) {
-            if (mask_sn[j] == true && data_adc.data['Full ID'][j] == serial_numbers[sn] && data_adc.data['Location'][j] == adc_modules[k]){
+            if (mask_sn[j] == true && data_adc.data['Full ID'][j] == serial_numbers[sn] && data_adc.data['ADC'][j] == adc_modules[k]){
                 mask_sn[j] = true;
                 let x = data_adc.data['intercept'][j] - mean_i;
                 let chi = x/std_i;
@@ -1137,7 +1174,7 @@ for (let sn = 0; sn < serial_numbers.length; sn++) {
         [...indices_adc].forEach((x)=>{mask_sn[x] = true;})
 
         for (let j = 0; j < data_adc.get_length(); j++) {
-            if (mask_sn[j] == true && data_adc.data['Full ID'][j] == serial_numbers[sn] && data_adc.data['Location'][j] == adc_modules[k]){
+            if (mask_sn[j] == true && data_adc.data['Full ID'][j] == serial_numbers[sn] && data_adc.data['ADC'][j] == adc_modules[k]){
                 mask_sn[j] = true;
                 let x = data_adc.data['rsquared'][j] - mean_r;
                 let chi = x/std_r;
@@ -1288,8 +1325,8 @@ src4.change.emit()
 
     resist_modules = np.unique(ds_resist.data['E Link']).tolist()
     volt_modules = np.unique(ds_volt.data['ADC']).tolist()
-    temp_modules = np.unique(ds_temp.data['Location']).tolist()
-    adc_modules = np.unique(ds_adc.data['Location']).tolist()
+    temp_modules = np.unique(ds_temp.data['Chip']).tolist()
+    adc_modules = np.unique(ds_adc.data['ADC']).tolist()
 
     n_sigma = NumericInput(value=1, low=0.01, high=10, title='# of standard deviations for passing', mode='float')
 
@@ -1344,33 +1381,21 @@ src4.change.emit()
         )
 
     q_1.quad(top='top', bottom='bottom', left='left', right='right', source=hist['adc slope'], color = colors[0])
-    q_1.legend.click_policy='hide'
-    q_1.legend.label_text_font_size = '8pt' 
     q_1.visible = False
 
     q_2.quad(top='top', bottom='bottom', left='left', right='right', source=hist['adc intercept'], color = colors[0])
-    q_2.legend.click_policy='hide'
-    q_2.legend.label_text_font_size = '8pt' 
     q_2.visible = False
 
     q_3.quad(top='top', bottom='bottom', left='left', right='right', source=hist['adc r2'], color = colors[0])
-    q_3.legend.click_policy='hide'
-    q_3.legend.label_text_font_size = '8pt' 
     q_3.visible = False
 
     q_4.quad(top='top', bottom='bottom', left='left', right='right', source=hist['resist'], color = colors[0])
-    q_4.legend.click_policy='hide'
-    q_4.legend.label_text_font_size = '8pt' 
     q_4.visible = False
 
     q_5.quad(top='top', bottom='bottom', left='left', right='right', source=hist['volt'], color = colors[0])
-    q_5.legend.click_policy='hide'
-    q_5.legend.label_text_font_size = '8pt' 
     q_5.visible = False
 
     q_6.quad(top='top', bottom='bottom', left='left', right='right', source=hist['temp'], color = colors[0])
-    q_6.legend.click_policy='hide'
-    q_6.legend.label_text_font_size = '8pt' 
     q_6.visible = False
 
     p_1 = figure(
@@ -1430,38 +1455,26 @@ src4.change.emit()
     p_1.vbar(x='x', top='pass', source=pf['adc slope'], color=colors[2], width=0.8)
     p_1.vbar(x='x', top='fail', source=pf['adc slope'], color=colors[3], width=0.8)
     p_1.visible = False
-    p_1.legend.click_policy='hide'
-    p_1.legend.label_text_font_size = '8pt' 
 
     p_2.vbar(x='x', top='pass', source=pf['adc intercept'], color=colors[2], width=0.8)
     p_2.vbar(x='x', top='fail', source=pf['adc intercept'], color=colors[3], width=0.8)
     p_2.visible = False
-    p_2.legend.click_policy='hide'
-    p_2.legend.label_text_font_size = '8pt' 
 
     p_3.vbar(x='x', top='pass', source=pf['adc r2'], color=colors[2], width=0.8)
     p_3.vbar(x='x', top='fail', source=pf['adc r2'], color=colors[3], width=0.8)
     p_3.visible = False
-    p_3.legend.click_policy='hide'
-    p_3.legend.label_text_font_size = '8pt' 
 
     p_4.vbar(x='x', top='pass', source=pf['resist'], color=colors[2], width=0.8)
     p_4.vbar(x='x', top='fail', source=pf['resist'], color=colors[3], width=0.8)
     p_4.visible = False
-    p_4.legend.click_policy='hide'
-    p_4.legend.label_text_font_size = '8pt' 
 
     p_5.vbar(x='x', top='pass', source=pf['volt'], color=colors[2], width=0.8)
     p_5.vbar(x='x', top='fail', source=pf['volt'], color=colors[3], width=0.8)
     p_5.visible = False
-    p_5.legend.click_policy='hide'
-    p_5.legend.label_text_font_size = '8pt' 
 
     p_6.vbar(x='x', top='pass', source=pf['temp'], color=colors[2], width=0.8)
     p_6.vbar(x='x', top='fail', source=pf['temp'], color=colors[3], width=0.8)
     p_6.visible = False
-    p_6.legend.click_policy='hide'
-    p_6.legend.label_text_font_size = '8pt' 
 
     q_plots = {'Slope': q_1, 'Intercept': q_2, 'R Squared': q_3, 'Resistance': q_4, 'Voltage': q_5, 'Temperature': q_6}
     p_plots = {'Slope': p_1, 'Intercept': p_2, 'R Squared': p_3, 'Resistance': p_4, 'Voltage': p_5, 'Temperature': p_6}
@@ -1493,6 +1506,7 @@ widget.options = serial_numbers[this.value]
 '''))
     w[0].js_on_change('value', update_options)
 
+    # this allows you to select which value you're seeing residuals for
     display_plot = CustomJS(args=dict(p_plots=p_plots, q_plots=q_plots, tables=tables), code=('''
 for (let [name,plot] of Object.entries(p_plots)){
     if (name == this.value){
@@ -1520,6 +1534,7 @@ for (let [name,widget] of Object.entries(tables)){
     select = Select(title='ADC Value', options=list(q_plots.keys()))
     select.js_on_change('value', display_plot)
         
+    # column and row objects only take it lists, need to make arguments lists
     layout = column(row(w[0:2] + [select]),
                     row(w[2:5]),
                     row([n_sigma]), 

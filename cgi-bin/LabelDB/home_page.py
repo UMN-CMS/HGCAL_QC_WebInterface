@@ -1,28 +1,57 @@
 #!/usr/bin/python3
 
-try:
-    import cgi
-    import cgitb; cgitb.enable()
-    import base
-    import label_functions
-    import sys
+import cgi
+import cgitb; cgitb.enable()
+import base
+import label_functions
+import sys
+import numpy as np
+from connect import connect
 
-    if(len(sys.argv) != 1):
-        stdout = sys.stdout
-        sys.stdout = open('%(loc)s/index.html' %{ 'loc':sys.argv[1]}, 'w') 
-    else:
-        #cgi header
-        print("content-type: text/html\n\n")
+db = connect(0)
+cur = db.cursor()
 
-    base.header(title='HGCAL Labeling Home Page')
-    base.top()
+#cgi header
+print("content-type: text/html\n\n")
 
-    label_functions.label_type_table()
+base.header(title='HGCAL Labeling Home Page')
+base.top()
 
-    base.bottom()
+print('<div class="row">')
+print('<div class="col-md-11 mx-4 my-4"><table class="table table-bordered table-hover table-active">')
+print('<tr><th>Major Type<th>Total Labels Made<th># of Subtypes<th>Total Boards with Labels</tr>')
 
-    if len(sys.argv) != 1:
-        sys.stdout.close()
-        sys.stdout = stdout
-except Exception as e:
-    print(e)
+cur.execute('select major_type_id,name from Major_Type order by name')
+major_types = cur.fetchall()
+
+for m in major_types:
+        cur.execute('select label_id,count(*) from Label where major_type_id=%s' % m[0])
+        a1 = cur.fetchall()[0]
+        cur.execute('select sub_type_id,count(*) from Major_Sub_Stitch where major_type_id=%s' % m[0])
+        a2 = cur.fetchall()[0]
+        cur.execute('select full_label,count(distinct full_label) from Label where major_type_id=%s' % m[0])
+        a3 = cur.fetchall()[0]
+
+        if a2[1] != 0:
+            print('<tr><td><a href="labels_major.py?major_type_id=%s">%s</a>' % (m[0], m[1]))
+        else:
+            print('<tr><td>%s' % (m[1]))
+            
+        try:
+            print('<td>%s' % (a1[1]))
+        except IndexError:
+            print('<td>0')
+        try:
+            print('<td>%s' % (a2[1]))
+        except IndexError:
+            print('<td>0')
+        try:
+            print('<td>%s' % (a3[1]))
+        except IndexError:
+            print('<td>0')
+
+        print('</tr>')
+print('</table></div>')
+print('</div>')
+
+base.bottom()

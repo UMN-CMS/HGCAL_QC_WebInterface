@@ -8,6 +8,8 @@ import pandas as pd
 db = connect(0)
 cur = db.cursor()
 
+# most of this script was replaced in favor of a new method using summary_board.py
+# get_testers() is still used by the Testing GUI?
 def get():
     subtypes = []
     cur.execute('select board_id from Board')

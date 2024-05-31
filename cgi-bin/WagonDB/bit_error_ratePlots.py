@@ -42,17 +42,21 @@ AllData = AllData.rename(columns={'Successful':'Outcome'})
 AllData['Outcome'] = AllData['Outcome'].replace(0, 'Unsuccessful')
 AllData['Outcome'] = AllData['Outcome'].replace(1, 'Successful')
 
+# import the Bit Error rate data and split it into a midpoint and an eye opening dataframe
 tempBE = pd.read_csv('./static/files/Bit_Error_Rate_Test_Data.csv')
 MP = tempBE.drop('Eye Opening', axis=1)
 MP = MP.dropna()
 EO = tempBE.drop('Midpoint', axis=1)
 EO = EO.dropna()
 
+# custom javascript filter to control which data is displayed using the widgets
 filter_code=('''
+// get the selected multi_choice options and selected dates
 const is_selected_map = new Map([
     ["multi_choice", (wi, pos, el, idx) => wi.value.includes(el)],
     ["date_range", (wi, pos, el, idx) => wi.value == el]
 ]);
+// get true/false for each value
 const passed_vals = new Map(
     Object.keys(mc_widgets).map(
         (col) => {
@@ -63,9 +67,12 @@ const passed_vals = new Map(
         })
 );
 const keys = Array.from(passed_vals.keys());
+// function returns true if all values are false
 function allfalse(value) {
     return value === false;
 }
+// set all passed vals to true if all are false
+// makes it so if you have nothing selected then everything is displayed
 for (let k = 0; k < keys.length; k++) {
     const innermap = passed_vals.get(keys[k])
     const pv = Array.from(passed_vals.get(keys[k]).values())
@@ -78,6 +85,8 @@ for (let k = 0; k < keys.length; k++) {
     passed_vals.set(keys[k], innermap);
     }
 }
+// creates indices array that's the length of the data source
+// determines true or false based on the column and passed val
 const indices = [];
 for (let i = 0; i < source.get_length(); i++) {
     if (keys.every((k) => {
@@ -88,6 +97,7 @@ for (let i = 0; i < source.get_length(); i++) {
         indices.push(false);
     }
 }
+// corrects indices based on selected date range
 const dates = new Map(
     Object.keys(dr_widgets).map(
         (col) => {
@@ -124,7 +134,8 @@ return indices;
 #create a color pallete to be used on graphs
 colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10][2], d3['Category10'][10][3], d3['Category10'][10][4], d3['Category10'][10][5], d3['Category10'][10][6], d3['Category10'][10][7], d3['Category10'][10][8], d3['Category10'][10][9], brewer['Accent'][8][0], brewer['Accent'][8][3], brewer['Dark2'][8][0], brewer['Dark2'][8][2], brewer['Dark2'][8][3], brewer['Dark2'][8][4], brewer['Dark2'][8][5], brewer['Dark2'][8][6]]
 
-def BitErrorHistogram(mp_data, eo_data, view, widgets, modules, slider):
+def Histogram(mp_data, eo_data, view, widgets, modules, slider):
+    # creates a dictionary of data sources, need a data source for each plot element
     hist_data_mp = {}
     hist_data_eo = {}
     for i in modules:
@@ -133,7 +144,10 @@ def BitErrorHistogram(mp_data, eo_data, view, widgets, modules, slider):
 
     std = ColumnDataSource(data={'columns':[], 'Midpoint Mean':[], 'Midpoint std':[], 'std':[]})
     dt = ColumnDataSource(data={'Type ID':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'Outcome':[], 'E Link':[], 'Midpoint':[], 'Eye Opening':[], 'Midpoint Errors':[]})
+    # custom javascript to be run to actually create the plotted data on the website
+    # all done in javascript so it runs on the website and can update without refreshing the page
     x = CustomJS(args=dict(hist_mp=hist_data_mp, hist_eo=hist_data_eo, mp_data=mp_data, eo_data=eo_data, view=view, modules=modules, slider=slider, std=std, dt=dt),code='''
+// make arrays for the data sources ahead of time to be appended to
 const columns = [];
 const std_ar = [];
 const type_ids = [];
@@ -147,12 +161,23 @@ const eye_openings = [];
 const errors = [];
 const means = [];
 const std_2 = [];
+// iterate over all the E Links
 for (let i = 0; i < modules.length; i++) {
     const indices = view.filters[0].compute_indices(mp_data);
     let mask = new Array(mp_data.data['Midpoint'].length).fill(false);
     [...indices].forEach((x)=>{mask[x] = true;})
+
+    const mp_all_data = mp_data.data['Midpoint'].filter((_,y)=>mask[y])
+    const eo_all_data = eo_data.data['Eye Opening'].filter((_,y)=>mask[y])
+    let mp_m = Math.max(...mp_all_data);
+    let mp_min = Math.min(...mp_all_data);
+    let eo_m = Math.max(...eo_all_data);
+    let eo_min = Math.min(...eo_all_data);
+
     let mp_mask = mask;
     let eo_mask = mask;
+    // modify mask for whether the E Link is correct
+    // add all table data
     for (let j = 0; j < mp_data.length; j++) {
         if (mp_data.data['E Link'][j] == modules[i] && mp_mask[j] == true){
             mp_mask[j] = true;
@@ -176,18 +201,19 @@ for (let i = 0; i < modules.length; i++) {
             eo_mask[j] = false;
         }
     }
+    // apply filter to the correct column
     const mp_good_data = mp_data.data['Midpoint'].filter((_,y)=>mp_mask[y])
     const eo_good_data = eo_data.data['Eye Opening'].filter((_,y)=>eo_mask[y])
+    // slider adjusts the number of thresholds
     let bins = slider.value
-    let mp_m = Math.max(...mp_good_data);
-    let mp_min = Math.min(...mp_good_data);
-    let eo_m = Math.max(...eo_good_data);
-    let eo_min = Math.min(...eo_good_data);
+    // configure the scale of the graph
     let mp_scale = d3.scaleLinear().domain([mp_min,mp_m]).nice()
     let eo_scale = d3.scaleLinear().domain([eo_min-2,eo_m+2]).nice()
     let n1 = (mp_m - mp_min)
+    // .nice() makes it so that thresholds can only take on certain values
     let mp_binner = d3.bin().domain(mp_scale.domain()).thresholds(n1*bins*0.1)
     let eo_binner = d3.bin().domain(eo_scale.domain()).thresholds(4*bins)
+    // bin data and fill the data sources
     let mp_d = mp_binner(mp_good_data)
     let eo_d = eo_binner(eo_good_data)
     let mp_right = mp_d.map(x=>x.x1)
@@ -208,11 +234,15 @@ for (let i = 0; i < modules.length; i++) {
     hist_eo[modules[i]].data['bottom'] = eo_bottom;
     hist_eo[modules[i]].data['top'] = eo_top;
     hist_eo[modules[i]].change.emit()
+    // find the mean and standard deviation and push it to arrays
+    // Eye Opening mean is always 200
     columns.push(modules[i])
     means.push(d3.mean(mp_good_data))
     std_2.push(d3.deviation(mp_good_data))
     std_ar.push(d3.deviation(eo_good_data))
 }
+// update data sources
+// need .change.emit() for the changes to take effect
 std.data['columns'] = columns;
 std.data['Midpoint Mean'] = means;
 std.data['Midpoint std'] = std_2;
@@ -234,15 +264,20 @@ dt.change.emit()
     slider.js_on_change('value', x)
     return hist_data_mp, hist_data_eo, std, dt
 
-def BitErrorFilter():
+def Filter():
+    # make ColumnDataSources from the Pandas Dataframes
     mp_temp = AllData.merge(MP, on='Test ID', how='left')
     mp_temp = mp_temp.dropna()
     ds_mp = ColumnDataSource(mp_temp)
     eo_temp = AllData.merge(EO, on='Test ID', how='left')
     eo_temp = eo_temp.dropna()
     ds_eo = ColumnDataSource(eo_temp)
+    # make the widgets
     mc_widgets = {}
     dr_widgets = {}
+    # lambda is the inputs they take in
+    # MultiChoice and DatePicker are the widgets being created
+    # this method is nice when creating a bunch of similar widgets at once
     multi_choice = (lambda x,y: MultiChoice(options=x, value=[], title=y), 'value')
     start_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value='2023-03-14', title=z), 'value')
     today = datetime.date.today()
@@ -252,28 +287,24 @@ def BitErrorFilter():
     while min_date <= today:
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
+    # get the E Links
     modules = np.unique(ds_mp.data['E Link'].tolist()).tolist()
+
+    # information for constructing widgets
+    # column name has to be the name of the column in the data source that you're filtering with this widget
     columns = ['Type ID', 'Full ID', 'Person Name', 'Outcome', 'Start Date', 'End Date']
+    # values that you want to choose from in the widget
     data = [ds_mp.data['Type ID'].tolist(), ds_mp.data['Full ID'].tolist(), ds_mp.data['Person Name'].tolist(), ds_mp.data['Outcome'], date_range, date_range]
+    # type of widget
     t = [multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
 
-    p = figure(
-        title='Midpoint',
-        x_axis_label='DAQ Delay',
-        y_axis_label='Number of Boards',
-        tools='pan,wheel_zoom,box_zoom,reset,save',
-        width = 925
-        )
-    q = figure(
-        title='Eye Opening',
-        x_axis_label='Eye Width',
-        y_axis_label='Number of Boards',
-        tools='pan,wheel_zoom,box_zoom,reset,save',
-        width = 925
-        )
-
+    # create the widgets
     for i in range(len(columns)):
+        # widget constructor is the lambda part
+        # trigger is the part in quotes, what causes the widget to update
+        # all these run their javascript when their value is changed
         widget_constructor, trigger = t[i]
+        # multi choice and date picker widgets have to be configured slightly differently
         if t[i] == multi_choice:
             possible_vals = np.unique(data[i]).tolist()
             widget = widget_constructor(possible_vals, columns[i])
@@ -299,12 +330,37 @@ src2.change.emit()
                 'possible_vals': possible_vals,
                 'widget': widget,}
 
+    # applies the custom filter to the widgets and then to the data sources
     custom_filter = CustomJSFilter(args=dict(mc_widgets=mc_widgets, dr_widgets=dr_widgets),code=filter_code)
     view = CDSView(source=ds_mp, filters=[custom_filter])
+    
+    # creates the slider widget and combined the mc and dr widgets
     slider = Slider(start=1, end=18, value=4, step=1, title='Granularity')
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
-    mp_hist, eo_hist, std, dt = BitErrorHistogram(ds_mp, ds_eo, view, widgets.values(), modules, slider)
+
+    # calls the histogram to get the data sources used in plotting and tables
+    mp_hist, eo_hist, std, dt = Histogram(ds_mp, ds_eo, view, widgets.values(), modules, slider)
+
+    # creates the figure objects
+    p = figure(
+        title='Midpoint',
+        x_axis_label='DAQ Delay',
+        y_axis_label='Number of Boards',
+        tools='pan,wheel_zoom,box_zoom,reset,save',
+        width = 925
+        )
+    q = figure(
+        title='Eye Opening',
+        x_axis_label='Eye Width',
+        y_axis_label='Number of Boards',
+        tools='pan,wheel_zoom,box_zoom,reset,save',
+        width = 925
+        )
+    
+    # adds glyphs to the figures
+    # source determines what data source to use to make the plot
+    # this allows the plot to update whenever the data source does
     for i in range(len(modules)):
         p.quad(top='top', bottom='bottom', left='left', right='right', source=mp_hist[modules[i]], legend_label=modules[i], color = colors[i])
         q.quad(top='top', bottom='bottom', left='left', right='right', source=eo_hist[modules[i]], legend_label=modules[i], color = colors[i])
@@ -313,6 +369,9 @@ src2.change.emit()
     p.legend.label_text_font_size = '8pt'
     q.legend.click_policy='hide'
     q.legend.label_text_font_size = '8pt'
+
+    # creates the data tables
+    # they work the same way in terms of updating with the data source
     table_columns = [
                     TableColumn(field='columns', title='E Link'), 
                     TableColumn(field='Midpoint Mean', title='Midpoint Mean'),
@@ -333,6 +392,8 @@ src2.change.emit()
                     ]
     data_table = DataTable(source=dt, columns=table_columns2, autosize_mode='fit_columns', width=900)
     w = [*widgets.values()]
+    
+    # changes the options for the serial numbers widget based on the subtype selected
     subtypes = np.unique(ds_mp.data['Type ID'].tolist()).tolist()
     serial_numbers = {}
     for s in subtypes:
@@ -341,12 +402,16 @@ src2.change.emit()
 widget.options = serial_numbers[this.value]
 '''))
     w[0].js_on_change('value', update_options)
-    layout = BitErrorGaussian()
+
+    # gets the second half of the webpage with the residual plots
+    # by having it in it's own function with it's own widgets it can be controlled separately
+    layout = Gaussian()
+    # turns all the bokeh items into json and returns them
     plot_json = json.dumps(json_item(row(column(row(w[0:3]), row(w[3:6]), slider, p, q, table, data_table), layout)))
     return plot_json
 
 
-def BitErrorGaussian2(mp_data, eo_data, view, subtypes, serial_numbers, widgets, modules, n_sigma):
+def Gaussian2(mp_data, eo_data, view, subtypes, serial_numbers, widgets, modules, n_sigma):
     hist_mp = {}
     hist_eo = {}
     pf_mp = {}
@@ -355,26 +420,35 @@ def BitErrorGaussian2(mp_data, eo_data, view, subtypes, serial_numbers, widgets,
     for s in subtypes:
         hist_mp[s] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
         hist_eo[s] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
+        # these data sources are set up for a vbar plot instead of a quad
         pf_mp[s] = ColumnDataSource(data={'pass':[], 'fail':[], 'x':['Fail', 'Pass']})
         pf_eo[s] = ColumnDataSource(data={'pass':[], 'fail':[], 'x':['Fail', 'Pass']})
         td[s] = ColumnDataSource(data={'Serial Number':[], 'Module':[], 'Midpoint Deviation':[], 'Pass/Fail MP':[], 'Eye Opening Deviation':[], 'Pass/Fail EO':[]})
 
     x = CustomJS(args=dict(hist_mp=hist_mp, hist_eo=hist_eo, mp_data=mp_data, eo_data=eo_data, views=view, subtypes=subtypes, serial_numbers=serial_numbers, modules=modules, n_sigma=n_sigma, pf_mp=pf_mp, pf_eo=pf_eo, td=td),code='''
+// iterate by subtype
 for (let s = 0; s < subtypes.length; s++) {
+    // create an array for the residuals at the start
     const mp_residules = [];
     const eo_residules = [];
 
+    // create a dictionary for each serial number's average deviation for each E Link
     var mp_chis = {};
     var eo_chis = {};
+    // make an empty array for each serial number
     for (let sn = 0; sn < serial_numbers[subtypes[s]].length; sn++) {
         mp_chis[serial_numbers[subtypes[s]][sn]] = [];
         eo_chis[serial_numbers[subtypes[s]][sn]] = [];
     } 
+    // iterate over E Links
+    // each E Link will have a different midpoint, therefore need a different average for each
     for (let k = 0; k < modules[subtypes[s]].length; k++) {
+        // create mask
         const indices = views[subtypes[s]].filters[0].compute_indices(mp_data[subtypes[s]]);
         let mask = new Array(mp_data[subtypes[s]].data['Midpoint'].length).fill(false);
         [...indices].forEach((x)=>{mask[x] = true;})
 
+        // filter by E Link
         for (let j = 0; j < mp_data[subtypes[s]].get_length(); j++) {
             if (mask[j] == true && mp_data[subtypes[s]].data['E Link'][j] == modules[subtypes[s]][k]){
                 mask[j] = true;
@@ -382,24 +456,32 @@ for (let s = 0; s < subtypes.length; s++) {
                 mask[j] = false;
             }
         }
+        // apply filter
         const mp_good_data = mp_data[subtypes[s]].data['Midpoint'].filter((_,y)=>mask[y])
         const eo_good_data = eo_data[subtypes[s]].data['Eye Opening'].filter((_,y)=>mask[y])
+        // calculate mean and standard deviation
         let mp_mean = d3.mean(mp_good_data)
         let eo_mean = d3.mean(eo_good_data)
         let mp_std = d3.deviation(mp_good_data)
         let eo_std = d3.deviation(eo_good_data)
+        // iterate over serial numbers
         for (let sn = 0; sn < serial_numbers[subtypes[s]].length; sn++) {
             const indices = views[subtypes[s]].filters[0].compute_indices(mp_data[subtypes[s]]);
             let mask_sn = new Array(mp_data[subtypes[s]].data['Midpoint'].length).fill(false);
             [...indices].forEach((x)=>{mask_sn[x] = true;})
+
+            // iterate over all valid data points
             for (let j = 0; j < mp_data[subtypes[s]].get_length(); j++) {
                 if (mask_sn[j] == true && mp_data[subtypes[s]].data['E Link'][j] == modules[subtypes[s]][k] && mp_data[subtypes[s]].data['Full ID'][j] == serial_numbers[subtypes[s]][sn]){
                     mask_sn[j] = true;
+                    // calculate difference
                     let x1 = mp_data[subtypes[s]].data['Midpoint'][j] - mp_mean;
+                    // prevents divide by zero error
                     if (mp_std == 0) {
                         let chi1 = 0;
                         mp_residules.push(chi1)
                     } else {
+                        // calculate the number of standard deviations away that this data point is
                         let chi1 = x1/mp_std;
                         mp_residules.push(chi1)
                     }
@@ -415,8 +497,10 @@ for (let s = 0; s < subtypes.length; s++) {
                     mask_sn[j] = false;
                 }
             }
+            // filter data for this serial number and find the average
             const mp_good_data_sn = mp_data[subtypes[s]].data['Midpoint'].filter((_,y)=>mask_sn[y])
             let mean_sn1 = d3.mean(mp_good_data_sn)
+            // determine how far the average for this serial number is from the overall average
             let y1 = mean_sn1 - mp_mean;
             if (mp_std == 0) {
                 let chi_sn1 = 0;
@@ -439,6 +523,7 @@ for (let s = 0; s < subtypes.length; s++) {
         }
     }
 
+    // create the residules histogram
     let binner = d3.bin()
     let d1 = binner(mp_residules)
     let right1 = d1.map(x=>x.x1)
@@ -464,6 +549,7 @@ for (let s = 0; s < subtypes.length; s++) {
     hist_eo[subtypes[s]].data['top'] = top2;
     hist_eo[subtypes[s]].change.emit()
 
+    // determine if boards passed or failed
     let mp_t_pass = 0;
     let mp_t_fail = 0;
     let eo_t_pass = 0;
@@ -474,13 +560,16 @@ for (let s = 0; s < subtypes.length; s++) {
     const eo_chi_td = [];
     const mp_pf_td = [];
     const eo_pf_td = [];
+    // iterate over serial numbers
     for (let sn = 0; sn < serial_numbers[subtypes[s]].length; sn++) {
         let mp_pass = 0;
         let mp_fail = 0;
         let eo_pass = 0;
         let eo_fail = 0;
+        // iterate over the average residuals for this board
         for (let m = 0; m < mp_chis[serial_numbers[subtypes[s]][sn]].length; m++) {
             let chi_i_mp = mp_chis[serial_numbers[subtypes[s]][sn]][m]
+            // check if it passes
             if (chi_i_mp <= n_sigma.value) {
                 mp_pass = mp_pass + 1;
                 mp_pf_td.push('PASS')
@@ -505,6 +594,7 @@ for (let s = 0; s < subtypes.length; s++) {
             eo_chi_td.push(chi_i)
         }
 
+        // if all pass, only then does the board pass
         if (mp_fail == 0) {
             mp_t_pass = mp_t_pass + 1;
         } else {
@@ -525,8 +615,6 @@ for (let s = 0; s < subtypes.length; s++) {
     pf_eo[subtypes[s]].data['fail'] = [eo_t_fail, 0];
     pf_eo[subtypes[s]].change.emit()
 
-    console.log(eo_chi_td)
-    console.log(eo_pf_td)
     td[subtypes[s]].data['Serial Number'] = sn_td;
     td[subtypes[s]].data['Module'] = mod_td;
     td[subtypes[s]].data['Midpoint Deviation'] = mp_chi_td;
@@ -541,7 +629,8 @@ for (let s = 0; s < subtypes.length; s++) {
     n_sigma.js_on_change('value', x)
     return hist_mp, hist_eo, td, pf_mp, pf_eo
 
-def BitErrorGaussian():
+def Gaussian():
+    # make data sources
     mp_temp = AllData.merge(MP, on='Test ID', how='left')
     mp_temp = mp_temp.dropna()
     ds_mp = ColumnDataSource(mp_temp)
@@ -549,17 +638,22 @@ def BitErrorGaussian():
     eo_temp = eo_temp.dropna()
     ds_eo = ColumnDataSource(eo_temp)
 
+    # get subtypes list
     subtypes = np.unique(ds_mp.data['Type ID'].tolist()).tolist()
     mp_data_sources = {}
     eo_data_sources = {}
     serial_numbers = {}
     modules = {}
+    # make serial numbers dict
+    # make data sources for each subtype
+    # sort E Links by subtype (not all have the same E Links)
     for s in subtypes:
         mp_data_sources[s] = ColumnDataSource(mp_temp.query('`Type ID` == @s'))
         eo_data_sources[s] = ColumnDataSource(eo_temp.query('`Type ID` == @s'))
         serial_numbers[s] = np.unique(mp_temp.query('`Type ID` == @s')['Full ID'].values.tolist()).tolist()
         modules[s] = np.unique(mp_data_sources[s].data['E Link']).tolist()
 
+    # widget creation is the same as before
     mc_widgets = {}
     dr_widgets = {}
     multi_choice = (lambda x,y: MultiChoice(options=x, value=[], title=y), 'value')
@@ -606,18 +700,23 @@ for (let i = 0; i < subtypes.length; i++) {
                 'possible_vals': possible_vals,
                 'widget': widget,}
 
+    # make and apply filter
     custom_filter = CustomJSFilter(args=dict(mc_widgets=mc_widgets, dr_widgets=dr_widgets),code=filter_code)
     views = {}
     for s in subtypes:
         views[s] = CDSView(source=mp_data_sources[s], filters=[custom_filter])
 
+    # combine widgets
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
 
+    # create widget to input passing criteria
     n_sigma = NumericInput(value=1, low=0.01, high=10, title='# of standard deviations for passing', mode='float')
 
-    mp_hist, eo_hist, td, mp_pf, eo_pf = BitErrorGaussian2(mp_data_sources, eo_data_sources, views, subtypes, serial_numbers, widgets.values(), modules, n_sigma)
+    # get plotting data sources
+    mp_hist, eo_hist, td, mp_pf, eo_pf = Gaussian2(mp_data_sources, eo_data_sources, views, subtypes, serial_numbers, widgets.values(), modules, n_sigma)
 
+    # create dictionaries for plots
     mp_plots = {}
     eo_plots = {}
     mp_pf_plots = {}
@@ -634,8 +733,6 @@ for (let i = 0; i < subtypes.length; i++) {
 
         p.quad(top='top', bottom='bottom', left='left', right='right', source=mp_hist[s], color = colors[0])
         p.visible = False
-        p.legend.click_policy='hide'
-        p.legend.label_text_font_size = '8pt' 
         mp_plots[s] = p
 
         r = figure(
@@ -648,8 +745,6 @@ for (let i = 0; i < subtypes.length; i++) {
 
         r.quad(top='top', bottom='bottom', left='left', right='right', source=eo_hist[s], color = colors[0])
         r.visible = False
-        r.legend.click_policy='hide'
-        r.legend.label_text_font_size = '8pt' 
         eo_plots[s] = r
 
         q = figure(
@@ -664,8 +759,6 @@ for (let i = 0; i < subtypes.length; i++) {
         q.vbar(x='x', top='pass', source=mp_pf[s], color=colors[2], width=0.8)
         q.vbar(x='x', top='fail', source=mp_pf[s], color=colors[3], width=0.8)
         q.visible = False
-        q.legend.click_policy='hide'
-        q.legend.label_text_font_size = '8pt' 
         mp_pf_plots[s] = q
 
         l = figure(
@@ -680,8 +773,6 @@ for (let i = 0; i < subtypes.length; i++) {
         l.vbar(x='x', top='pass', source=eo_pf[s], color=colors[2], width=0.8)
         l.vbar(x='x', top='fail', source=eo_pf[s], color=colors[3], width=0.8)
         l.visible = False
-        l.legend.click_policy='hide'
-        l.legend.label_text_font_size = '8pt' 
         eo_pf_plots[s] = l
 
         table_columns = [
@@ -697,6 +788,9 @@ for (let i = 0; i < subtypes.length; i++) {
 
     w = [*widgets.values()]
 
+    # custom javascript that gets run when the subtypes select widget is changed
+    # displays the plots for that subtype and hides the others
+    # also changes serial number options
     display_plot = CustomJS(args=dict(mp_plots=mp_plots, eo_plots=eo_plots, mp_pf_plots=mp_pf_plots, eo_pf_plots=eo_pf_plots, tables=data_tables, widget=w[0], serial_numbers=serial_numbers), code=('''
 for (let [name,plot] of Object.entries(mp_plots)){
     if (name == this.value){
@@ -739,5 +833,7 @@ widget.options = serial_numbers[this.value]
     select = Select(title='Type ID', options=subtypes)
     select.js_on_change('value', display_plot)
 
+    # create and return layout
+    # column and row objects only take it lists, need to make arguments lists
     layout = column(row(w[0:2] + [select]), row(w[2:5] + [n_sigma]), column(list(mp_plots.values())), column(list(mp_pf_plots.values())), column(list(eo_plots.values())), column(list(eo_pf_plots.values())), column(list(data_tables.values())))
     return layout

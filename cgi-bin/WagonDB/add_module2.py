@@ -8,19 +8,18 @@ import os
 
 base_url = connect.get_base_url()
 
-#print("Location: %s/summary.py\n\n" % base_url)
-
 #cgi header
 print("Content-type: text/html\n")
 
 base.header(title='Adding a new module...')
-base.top()
+base.top(False)
 
 form = cgi.FieldStorage()
 
 if form.getvalue('serial_number'):
     sn = (form.getvalue('serial_number'))
 
+    # calls add_module() to add it to DB
     home_page_list.add_module(sn)
     
     print('<div class="row">')
@@ -37,10 +36,7 @@ if form.getvalue('serial_number'):
 
     print('<br><br>')
 
-
-    home_page_list.render_list_module()
-
-    base.bottom()
+    base.bottom(False)
 
 
 else:
@@ -62,10 +58,5 @@ else:
 
     print('<br><br>')
 
-    home_page_list.render_list_module()
-
-    base.bottom()
-
-    
-    
+    base.bottom(False) 
     

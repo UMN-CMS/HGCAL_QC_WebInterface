@@ -9,7 +9,7 @@ def get_labels(major_type=None, sub_type=None):
 
     if major_type != None and sub_type != None:
         
-        query = "SELECT full_label FROM Label WHERE major_type_id=%s AND sub_type_id=%s"
+        query = "SELECT full_label FROM Label WHERE major_type_id=%s AND sub_type_id=%s order by full_label"
         args = (major_type, sub_type)
 
         cur.execute(query, args)
@@ -19,7 +19,7 @@ def get_labels(major_type=None, sub_type=None):
 
     elif sub_type != None:
 
-        query = "SELECT full_label FROM Label WHERE major_type_id=%s"
+        query = "SELECT full_label FROM Label WHERE major_type_id=%s order by full_label"
         args = (major_type,)
 
         cur.execute(query, args)

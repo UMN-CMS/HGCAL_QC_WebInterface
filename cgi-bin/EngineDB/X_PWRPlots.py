@@ -125,7 +125,7 @@ colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10]
 
 
 #creates a matrix of filterable data to be used in the plot
-def XPWRHistogram(columns, data, view, widgets):
+def Histogram(columns, data, view, widgets):
     # creates a dictionary for the histogram data to go in
     hist_data = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
     
@@ -160,7 +160,6 @@ for (let j = 0; j < data.get_length(); j++) {
 const good_data = data.data[col].filter((_,y)=>mask[y])
 let m = Math.max(...good_data);
 let scale = d3.scaleLinear().domain([0,m]).nice()
-let binner_old = d3.bin().domain(scale.domain()).thresholds(m*bins)
 let binner = d3.bin()
 let d = binner(good_data)
 let right = d.map(x=>x.x1)
@@ -189,7 +188,7 @@ std.change.emit()
     return hist_data, dt, std
 
 # creates the webpage and plots the data
-def XPWRFilter():
+def Filter():
     # create a CDS with all the data to be used
     df_temp = AllData.merge(XP, on='Test ID', how='left')
     df_temp = df_temp.dropna()
@@ -251,7 +250,7 @@ def XPWRFilter():
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
     # calls the function that creates the plotting data
-    hds, dt, std = XPWRHistogram('Voltage', ds, view, widgets.values())
+    hds, dt, std = Histogram('Voltage', ds, view, widgets.values())
     # tells the figure object what data source to use
     p.quad(top='top', bottom='bottom', left='left', right='right', source=hds, color = colors[0])
 
@@ -270,8 +269,7 @@ def XPWRFilter():
                     TableColumn(field='std', title='Standard Deviation'),
                     ]
     data_table_2 = DataTable(source=std, columns=table_columns_2, autosize_mode='fit_columns')
-    p.legend.click_policy='hide'
-    p.legend.label_text_font_size = '8pt'
+
     w = [*widgets.values()]
     subtypes = np.unique(ds.data['Type ID'].tolist()).tolist()
     serial_numbers = {}
@@ -283,16 +281,15 @@ widget.options = serial_numbers[this.value]
     w[0].js_on_change('value', update_options)
     # gets the second half of the webpage where the residuals are displayed
     # since it's a separate function, the data can be filtered separately
-    layout = XPWRGaussian()
+    layout = Gaussian()
     #converts the bokeh items to json and sends them to the webpage
     plot_json = json.dumps(json_item(row(column(row(w[0:3]), row(w[3:6]), p, data_table, data_table_2), layout)))
     return plot_json
 
-#ResistanceFilter()
 
 ################################################################################################################
 
-def XPWRGaussian2(data, view, widgets, serial_numbers, n_sigma):
+def Gaussian2(data, view, widgets, serial_numbers, n_sigma):
     hist = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
     pf = ColumnDataSource(data={'pass':[], 'fail':[], 'x':['Fail', 'Pass']})
     td = ColumnDataSource(data={'Serial Number':[], 'Deviation':[], 'Pass/Fail':[]})
@@ -394,7 +391,7 @@ td.change.emit()
     n_sigma.js_on_change('value', x)
     return hist, pf, td
 
-def XPWRGaussian():
+def Gaussian():
     df_temp = AllData.merge(XP, on='Test ID', how='left')
     df_temp = df_temp.dropna()
     ds = ColumnDataSource(df_temp)
@@ -448,7 +445,7 @@ def XPWRGaussian():
 
     n_sigma = NumericInput(value=1, low=0.01, high=10, title='# of standard deviations for passing', mode='float')
 
-    hist, pf, td = XPWRGaussian2(ds, view, widgets.values(), serial_numbers, n_sigma)
+    hist, pf, td = Gaussian2(ds, view, widgets.values(), serial_numbers, n_sigma)
     p = figure(
         title='Residual Distribution',
         x_axis_label='# of Standard Deviations from Mean',
@@ -458,8 +455,6 @@ def XPWRGaussian():
         )
 
     p.quad(top='top', bottom='bottom', left='left', right='right', source=hist, color = colors[0])
-    p.legend.click_policy='hide'
-    p.legend.label_text_font_size = '8pt' 
 
     q = figure(
         title='Pass vs Fail',
@@ -472,8 +467,6 @@ def XPWRGaussian():
 
     q.vbar(x='x', top='pass', source=pf, color=colors[2], width=0.8)
     q.vbar(x='x', top='fail', source=pf, color=colors[3], width=0.8)
-    q.legend.click_policy='hide'
-    q.legend.label_text_font_size = '8pt' 
 
     table_columns = [
                     TableColumn(field='Serial Number', title='Serial Number'),
