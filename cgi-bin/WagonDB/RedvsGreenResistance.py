@@ -5,10 +5,10 @@ import cgitb
 import base
 import module_functions
 import sys
-import id_resistancePlots as mp
+import red_vs_green_resistance as mp
 
 def run(static):
-    base.header(title='ID Resistor Data')
+    base.header(title='Red vs Green Resistance')
     base.top(static)
     # adds the bokeh filter to javascript and to the website layout
     print('''
@@ -21,12 +21,11 @@ def run(static):
 
     base.bottom(static)
 
+        
     
 if __name__ == '__main__':
-    cgitb.enable()
     #cgi header
     print("Content-type: text/html\n")
 
     run(False)
-        
 

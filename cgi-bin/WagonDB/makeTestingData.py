@@ -2,13 +2,16 @@ from connect import connect
 import numpy as np
 import json
 import csv
+import os
+
+path = os.path.dirname(os.path.abspath(__file__))
 
 db = connect(0)
 cur = db.cursor()
 
 def run():
     # collects all the necessary data from the database to be put into .csv files for the plotting scripts
-    with open('./static/files/Test.csv', mode='w') as csv_file:
+    with open('{}/static/files/Test.csv'.format(path), mode='w') as csv_file:
         # some data can easily be written into a .csv just by writing rows
         # in this case a csv.writer can be used
         columns = ['Test ID', 'Test Type ID', 'Board ID', 'Person ID', 'Time', 'Successful','comments']
@@ -19,7 +22,7 @@ def run():
         Test_Data = cur.fetchall()
         writer.writerows(Test_Data)
 
-    with open('./static/files/ID_Resistor_Test_Data.csv', mode='w') as csv_file:
+    with open('{}/static/files/ID_Resistor_Test_Data.csv'.format(path), mode='w') as csv_file:
         # some data requires decoding first
         # in this case it's better to use csv.DictWriter
         header = ['Test ID','Resistance']
@@ -61,7 +64,7 @@ def run():
         for i in range(len(TestIDs)):
             writer.writerow({'Test ID':TestIDs[i][0], 'Resistance':Resistance[i]})
 
-    with open('./static/files/I2C_ReadWrite_Test_Data.csv', mode='w') as csv_file:
+    with open('{}/static/files/I2C_ReadWrite_Test_Data.csv'.format(path), mode='w') as csv_file:
         header= ['Test ID', 'Checks', 'Correct at Module 1', 'Correct at Module 2', 'Correct at Module 3']
         writer = csv.DictWriter(csv_file, fieldnames = header)
 
@@ -101,7 +104,7 @@ def run():
         for i in range(len(TestIDs)):
             writer.writerow({'Test ID':TestIDs[i][0], 'Checks':mod9999[i], 'Correct at Module 1':mod0[i], 'Correct at Module 2':mod1[i], 'Correct at Module 3':mod2[i]})
 
-    with open('./static/files/Resistance_Measurement.csv', mode='w') as csv_file:
+    with open('{}/static/files/Resistance_Measurement.csv'.format(path), mode='w') as csv_file:
         header = ['Test ID','RTD -> VMON_LVS Module 1', 'ECON_RE_Sb -> HGCROC_RE_Sb Module 1', 'PWR_EN -> PG_LDO Module 1', 'RTD -> HGCROC_RE_Sb Module 1', 'HGCROC_RE_Hb -> HGCROC_RE_Sb Module 1', 'PG_DCDC -> ECON_RE_Hb Module 1', 'RTD -> VMON_LVS Module 2', 'ECON_RE_Sb -> HGCROC_RE_Sb Module 2', 'PWR_EN -> PG_LDO Module 2', 'RTD -> HGCROC_RE_Sb Module 2', 'HGCROC_RE_Hb -> HGCROC_RE_Sb Module 2', 'PG_DCDC -> ECON_RE_Hb Module 2', 'RTD -> VMON_LVS Module 3', 'ECON_RE_Sb -> HGCROC_RE_Sb Module 3', 'PWR_EN -> PG_LDO Module 3', 'RTD -> HGCROC_RE_Sb Module 3', 'HGCROC_RE_Hb -> HGCROC_RE_Sb Module 3', 'PG_DCDC -> ECON_RE_Hb Module 3']
         writer = csv.DictWriter(csv_file, fieldnames = header)
 
@@ -222,7 +225,7 @@ def run():
         for i in range(len(TestIDs)):
             writer.writerow({'Test ID':TestIDs[i][0], 'RTD -> VMON_LVS Module 1':RTD_VMON_1[i], 'ECON_RE_Sb -> HGCROC_RE_Sb Module 1':ECON_HG_1[i], 'PWR_EN -> PG_LDO Module 1':PWR_PG_1[i], 'RTD -> HGCROC_RE_Sb Module 1':RTD_HG_1[i], 'HGCROC_RE_Hb -> HGCROC_RE_Sb Module 1':HG_HG_1[i], 'PG_DCDC -> ECON_RE_Hb Module 1':PG_ECON_1[i], 'RTD -> VMON_LVS Module 2':RTD_VMON_2[i], 'ECON_RE_Sb -> HGCROC_RE_Sb Module 2':ECON_HG_2[i], 'PWR_EN -> PG_LDO Module 2':PWR_PG_2[i], 'RTD -> HGCROC_RE_Sb Module 2':RTD_HG_2[i], 'HGCROC_RE_Hb -> HGCROC_RE_Sb Module 2':HG_HG_2[i], 'PG_DCDC -> ECON_RE_Hb Module 2':PG_ECON_2[i], 'RTD -> VMON_LVS Module 3':RTD_VMON_3[i], 'ECON_RE_Sb -> HGCROC_RE_Sb Module 3':ECON_HG_3[i], 'PWR_EN -> PG_LDO Module 3':PWR_PG_3[i], 'RTD -> HGCROC_RE_Sb Module 3':RTD_HG_3[i], 'HGCROC_RE_Hb -> HGCROC_RE_Sb Module 3':HG_HG_3[i], 'PG_DCDC -> ECON_RE_Hb Module 3':PG_ECON_3[i]})
 
-    with open('./static/files/Bit_Error_Rate_Test_Data.csv', mode='w') as csv_file:
+    with open('{}/static/files/Bit_Error_Rate_Test_Data.csv'.format(path), mode='w') as csv_file:
         header = ['Test ID', 'E Link', 'Midpoint', 'Eye Opening', 'Passed', 'Midpoint Errors']
         writer = csv.DictWriter(csv_file, fieldnames=header)
         writer.writeheader()
@@ -255,16 +258,33 @@ def run():
                     except:
                         pass
                 
-    with open('./static/files/Board.csv', mode='w') as csv_file:
-        header = ['Full ID', 'Board ID', 'Type ID', 'Location']
+    with open('{}/static/files/Board.csv'.format(path), mode='w') as csv_file:
+        header = ['Full ID', 'Board ID', 'Type ID', 'Location', 'Color']
         writer = csv.writer(csv_file)
         writer.writerow(header)
         
         cur.execute('select full_id,board_id,type_id,location from Board')
         Board_Data = cur.fetchall()
+        # assigns a color for each of the board based on the serial number position
+        # this will be removed later for the production stage
+        for b in range(len(Board_Data)):
+            line = list(Board_Data[b])
+            if line[0][12] == '0':
+                line.append('Red')
+            if line[0][12] == '1':
+                line.append('Green')
+            if line[0][12] == '7':
+                line.append('Red')
+            if line[0][12] == '8':
+                line.append('Red')
+            if line[0][12] == '9':
+                line.append('Red')
+                 
+            line = tuple(line)
+            Board_Data[b] = line
         writer.writerows(Board_Data)
 
-    with open('./static/files/People.csv', mode='w') as csv_file:
+    with open('{}/static/files/People.csv'.format(path), mode='w') as csv_file:
         header = ['Person ID', 'Person Name']
         writer = csv.writer(csv_file)
         writer.writerow(header)
@@ -273,7 +293,7 @@ def run():
         People_Data = cur.fetchall()
         writer.writerows(People_Data)
 
-    with open('./static/files/Test_Types.csv', mode='w') as csv_file:
+    with open('{}/static/files/Test_Types.csv'.format(path), mode='w') as csv_file:
         columns = ['Test Type ID', 'Name', 'Required', 'Short Desc.', 'Long Desc.', 'Relative Order']
         writer = csv.writer(csv_file)
         writer.writerow(columns)
@@ -282,21 +302,12 @@ def run():
         Test_Data = cur.fetchall()
         writer.writerows(Test_Data)
 
-    with open('./static/files/TestRevoke.csv', mode='w') as csv_file:
-        columns = ['Test ID', 'Comment']
+    with open('{}/static/files/Attachments.csv'.format(path), mode='w') as csv_file:
+        columns = ['Test ID', 'Attach ID']
         writer = csv.writer(csv_file)
         writer.writerow(columns)
 
-        cur.execute('select * from TestRevoke')
-        Test_Data = cur.fetchall()
-        writer.writerows(Test_Data)
-
-    with open('./static/files/Attachments.csv', mode='w') as csv_file:
-        columns = ['Test ID', 'Attachment']
-        writer = csv.writer(csv_file)
-        writer.writerow(columns)
-
-        cur.execute('select * from Attachments')
+        cur.execute('select test_id, attach_id from Attachments')
         Test_Data = cur.fetchall()
         writer.writerows(Test_Data)
 

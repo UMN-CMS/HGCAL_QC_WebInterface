@@ -195,6 +195,7 @@ def allboards(static):
             temp = cur.fetchall()
             ids = []
             for t in temp:
+                # only uses the most recent of all the tests
                 if t[0] not in ids:
                     if t[1] == 1:
                         outcomes[t[0]] = True

@@ -34,6 +34,8 @@ AllData = AllData.rename(columns={'Successful':'Outcome'})
 AllData['Outcome'] = AllData['Outcome'].replace(0, 'Unsuccessful')
 AllData['Outcome'] = AllData['Outcome'].replace(1, 'Successful')
 AllData = AllData.merge(TestTypeData, on='Test Type ID', how='left')
+AttachData = pd.read_csv('./static/files/Attachments.csv')
+AllData = AllData.merge(AttachData, on='Test ID', how='left')
 AllData.dropna()
 
 filter_code=('''
@@ -110,7 +112,7 @@ return indices;
 ''')
 
 def makeTable(ds, widgets, view):
-    td = ColumnDataSource({'Type ID':[], 'Full ID':[], 'Person Name':[], 'Test Type':[], 'Date':[], 'Outcome':[], 'Raw Time':[], 'Location':[]})
+    td = ColumnDataSource({'Type ID':[], 'Full ID':[], 'Person Name':[], 'Test Type':[], 'Date':[], 'Outcome':[], 'Raw Time':[], 'Location':[], 'Color':[], 'Attachment':[]})
 
     x = CustomJS(args=dict(td=td, data=ds, view=view),code='''
 const type_ids=[];
@@ -121,6 +123,8 @@ const times=[];
 const outcomes=[];
 const raw_time=[];
 const locations=[];
+const colors=[];
+const attachments=[];
 
 const indices = view.filters[0].compute_indices(data);
 let mask = new Array(data.data['Full ID'].length).fill(false);
@@ -132,6 +136,7 @@ for (let j = 0; j < data.get_length(); j++) {
         people.push(data.data['Person Name'][j])
         tests.push(data.data['Test Name'][j])
     
+        // converts date to a readable format
         let temp_date = new Date(data.data['Time'][j]);
         let date = temp_date.toString().slice(4, 24)
         times.push(date)
@@ -139,6 +144,8 @@ for (let j = 0; j < data.get_length(); j++) {
 
         outcomes.push(data.data['Outcome'][j])
         locations.push(data.data['Location'][j])
+        colors.push(data.data['Color'][j])
+        attachments.push(data.data['Attach ID'][j])
     }
 }
 td.data['Type ID'] = type_ids;
@@ -149,6 +156,8 @@ td.data['Date'] = times;
 td.data['Outcome'] = outcomes;
 td.data['Raw Time'] = raw_time;
 td.data['Location'] = locations;
+td.data['Color'] = colors;
+td.data['Attachment'] = attachments;
 td.change.emit()
 ''')
 
@@ -173,9 +182,9 @@ def Filter():
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
     # widget titles and data for those widgets has to be manually entered, as well as the type
-    columns = ['Type ID', 'Full ID', 'Test Name', 'Location', 'Person Name', 'Outcome', 'Start Date', 'End Date']
-    data = [ds.data['Type ID'].tolist(), ds.data['Full ID'].tolist(), ds.data['Test Name'].tolist(), ds.data['Location'].tolist(), ds.data['Person Name'].tolist(), ds.data['Outcome'], date_range, date_range]
-    t = [multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
+    columns = ['Type ID', 'Full ID', 'Test Name', 'Location', 'Color', 'Person Name', 'Outcome', 'Start Date', 'End Date']
+    data = [ds.data['Type ID'].tolist(), ds.data['Full ID'].tolist(), ds.data['Test Name'].tolist(), ds.data['Location'].tolist(), ds.data['Color'].tolist(), ds.data['Person Name'].tolist(), ds.data['Outcome'], date_range, date_range]
+    t = [multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
 
     # constructs the widgets
     for i in range(len(columns)):
@@ -209,12 +218,22 @@ def Filter():
 
     td = makeTable(ds, widgets, view)
     
+    # html template formatter can be used to apply typical html code to bokeh elements
     template = '''
 <div style="font-size: 150%">
 <%= value %>
 </div> 
 '''
     bigger_font = HTMLTemplateFormatter(template=template)
+
+    link_template = '''
+<div style="font-size: 150%">
+<a href="get_attach.py?attach_id=<%= value %>"target="_blank">
+Attach
+</a>
+</div> 
+'''
+    link = HTMLTemplateFormatter(template=link_template)
 
     table_columns = [
                     TableColumn(field='Type ID', title='Type ID', formatter=bigger_font),
@@ -225,6 +244,8 @@ def Filter():
                     TableColumn(field='Raw Time', title='Raw Time', formatter=bigger_font),
                     TableColumn(field='Location', title='Location', formatter=bigger_font),
                     TableColumn(field='Outcome', title='Outcome', formatter=bigger_font),
+                    TableColumn(field='Color', title='Color', formatter=bigger_font),
+                    TableColumn(field='Attachment', title='Attachment', formatter=link),
                     ]
 
     data_table = DataTable(source=td, columns=table_columns, row_height = 40, autosize_mode='fit_columns', width_policy = 'fit', height=600)
@@ -239,5 +260,5 @@ widget.options = serial_numbers[this.value]
 '''))
     w[0].js_on_change('value', update_options)
 
-    return json.dumps(json_item(row(column(row(w[0:4]), row(w[4:]), data_table))))
+    return json.dumps(json_item(row(column(row(w[0:5]), row(w[5:]), data_table))))
 

@@ -1,3 +1,8 @@
+import os
+
+local_path = os.path.dirname(os.path.abspath(__file__))
+
+# input all scripts that are to be converted to html
 def get_pages():
     scripts = ['home_page.py',
                 'testers.py',
@@ -16,6 +21,7 @@ def get_pages():
              ]
     return scripts
 
+# key is the variable that is looped over, scripts then follow in a list
 def looped_pages():
     scripts = {'Serial Numbers': ['module.py'],
                 'Subtypes': ['summary_board.py'],
@@ -27,10 +33,11 @@ def looped_pages():
 def get_db_name():
     return 'WagonDB'
 
+# directories that need to be made
 def get_paths():
-    paths = ['../../static_html',
-            '../../static_html/WagonDB/',
-            '../../static_html/files/',
-            '../../static_html/files/wagondb',
+    paths = ['{}/../../static_html'.format(local_path),
+            '{}/../../static_html/WagonDB/'.format(local_path),
+            '{}/../../static_html/files/'.format(local_path),
+            '{}/../../static_html/files/wagondb'.format(local_path),
             ]
     return paths
