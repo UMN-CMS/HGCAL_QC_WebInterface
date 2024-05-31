@@ -7,6 +7,8 @@ import makeTestingData
 db = connect(0)
 cur = db.cursor()
 
+local_path = os.path.dirname(os.path.abspath(__file__))
+
 paths = publish_config.get_paths()
 for p in paths:
     if not os.path.isdir(p):
@@ -26,28 +28,29 @@ for b in board_id:
         img_name_top = cur.fetchall()[0][0]
         cur.execute('select image_name,date from Board_images where board_id=%s and view="Bottom" order by date desc' % b[0])
         img_name_bottom = cur.fetchall()[0][0]
+
         # writes images to local files
         with open('/home/ePortage/wagondb/%s' % img_name_top, 'rb') as f:
             img_str = f.read()
-        with open('../../static_html/files/%(db)s/%(name)s' % {'db': db_lower, 'name': img_name_top}, 'wb') as f:
+        with open('%(path)s/../../static_html/files/%(db)s/%(name)s' % {'path': local_path, 'db': db_lower, 'name': img_name_top}, 'wb') as f:
             f.write(img_str)
 
         with open('/home/ePortage/wagondb/%s' % img_name_bottom, 'rb') as f:
             img_str = f.read()
-        with open('../../static_html/files/%(db)s/%(name)s' % {'db': db_lower, 'name': img_name_bottom}, 'wb') as f:
+        with open('%(path)s/../../static_html/files/%(db)s/%(name)s' % {'path': local_path, 'db': db_lower, 'name': img_name_bottom}, 'wb') as f:
             f.write(img_str)
     except IndexError:
         pass
 
     
-with open('../../static/files/goldy2.png', 'rb') as tmp:
+with open('{}/../../static/files/goldy2.png'.format(local_path), 'rb') as tmp:
     img_str = tmp.read()
-with open('../../static_html/files/goldy2.png', 'wb') as f:
+with open('{}/../../static_html/files/goldy2.png'.format(local_path), 'wb') as f:
     f.write(img_str)
 
 pages = publish_config.get_pages()
 for p in pages:
-    sys.stdout = open('../../static_html/%(db)s/%(script)s.html' % {'script': p[:-3], 'db': db_name}, 'w')
+    sys.stdout = open('%(path)s/../../static_html/%(db)s/%(script)s.html' % {'script': p[:-3], 'db': db_name, 'path': local_path}, 'w')
     script = __import__(p[:-3])
     script.run(True) 
 
@@ -58,7 +61,7 @@ for k in looped.keys():
         cur.execute('select full_id, type_id from Board')
         for sn in cur.fetchall():
             for p in looped[k]:
-                path = '../../static_html/%(db)s/%(type_id)s_%(sn)s' % {'sn': sn[0], 'type_id': sn[1], 'db': db_name}
+                path = '%(path)s/../../static_html/%(db)s/%(type_id)s_%(sn)s' % {'sn': sn[0], 'type_id': sn[1], 'db': db_name, 'path': local_path}
                 sys.stdout = open('%(path)s_%(script)s.html' % {'script': p[:-3], 'path': path}, 'w')
                 script = __import__(p[:-3])
                 script.run(sn[0], sn[1]) 
@@ -67,7 +70,7 @@ for k in looped.keys():
         cur.execute('select type_id from Board')
         for t in cur.fetchall():
             for p in looped[k]:
-                path = '../../static_html/%(db)s/%(type_id)s' % {'type_id': t[0], 'db': db_name}
+                path = '%(path)s/../../static_html/%(db)s/%(type_id)s' % {'type_id': t[0], 'db': db_name, 'path': local_path}
                 sys.stdout = open('%(path)s_%(script)s.html' % {'script': p[:-3], 'path': path}, 'w')
                 script = __import__(p[:-3])
                 script.run(t[0]) 
@@ -76,7 +79,7 @@ for k in looped.keys():
         cur.execute('select person_id,person_name from People')
         for t in cur.fetchall():
             for p in looped[k]:
-                path = '../../static_html/%(db)s/%(id)s' % {'id': t[1], 'db': db_name}
+                path = '%(path)s/../../static_html/%(db)s/%(id)s' % {'id': t[1], 'db': db_name, 'path': local_path}
                 sys.stdout = open('%(path)s_%(script)s.html' % {'script': p[:-3], 'path': path}, 'w')
                 script = __import__(p[:-3])
                 script.run(t[0]) 
@@ -87,7 +90,7 @@ for k in looped.keys():
         attach_id = cur.fetchall()
         for a in attach_id:
             for p in looped[k]:
-                sys.stdout = open('../../static_html/%(db)s/attach_%(id)s.html' % {'db': db_name, 'id': a[0]}, 'w')
+                sys.stdout = open('%(path)s/../../static_html/%(db)s/attach_%(id)s.html' % {'db': db_name, 'id': a[0], 'path': local_path}, 'w')
                 script = __import__(p[:-3])
                 script.run(a[0])
 

@@ -136,22 +136,23 @@ def get_previous_test_results(serial_num):
 
     cur.execute("SELECT board_id FROM Board WHERE full_id = '{}'".format(serial_num))
     board_id = cur.fetchone()[0]
-    cur.execute("SELECT test_type_id, successful FROM Test WHERE board_id = {}".format(board_id))
+    cur.execute("SELECT test_type_id, successful, day FROM Test WHERE board_id = {} order by day desc".format(board_id))
     test_results_list = cur.fetchall()
     tests_run = []
     outcomes = []
+    ids = []
     for i in test_results_list:
-        temp = [0,1]
-        cur.execute('select name from Test_Type where test_type = %s' % i[0])
-        print(test_results_list)
-        print(i[0])
-        temp[0] = cur.fetchall()[0][0]
-        if i[1] == 0:
-            temp[1] = 'Failed'
-        if i[1] == 1:
-            temp[1] = 'Passed'
-        tests_run.append(temp[0])
-        outcomes.append(temp[1])
+        if i[0] not in ids:
+            temp = [0,1]
+            cur.execute('select name from Test_Type where test_type = %s' % i[0])
+            temp[0] = cur.fetchall()[0][0]
+            if i[1] == 0:
+                temp[1] = 'Failed'
+            if i[1] == 1:
+                temp[1] = 'Passed'
+            tests_run.append(temp[0])
+            outcomes.append(temp[1])
+        ids.append(i[0])
 
     cur.execute('select name from Test_Type')
     tests = cur.fetchall()

@@ -1,3 +1,7 @@
+import os
+
+local_path = os.path.dirname(os.path.abspath(__file__))
+
 def get_pages():
     scripts = ['home_page.py',
                 'testers.py',
@@ -50,9 +54,9 @@ def get_db_name():
     return 'EngineDB'
 
 def get_paths():
-    paths = ['../../static_html',
-            '../../static_html/EngineDB/',
-            '../../static_html/files/',
-            '../../static_html/files/enginedb',
+    paths = ['{}/../../static_html'.format(local_path),
+            '{}/../../static_html/EngineDB/'.format(local_path),
+            '{}/../../static_html/files/'.format(local_path),
+            '{}/../../static_html/files/enginedb'.format(local_path),
             ]
     return paths

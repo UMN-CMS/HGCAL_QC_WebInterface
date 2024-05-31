@@ -34,6 +34,8 @@ AllData = AllData.rename(columns={'Successful':'Outcome'})
 AllData['Outcome'] = AllData['Outcome'].replace(0, 'Unsuccessful')
 AllData['Outcome'] = AllData['Outcome'].replace(1, 'Successful')
 AllData = AllData.merge(TestTypeData, on='Test Type ID', how='left')
+AttachData = pd.read_csv('./static/files/Attachments.csv')
+AllData = AllData.merge(AttachData, on='Test ID', how='left')
 AllData.dropna()
 
 filter_code=('''
@@ -110,7 +112,7 @@ return indices;
 ''')
 
 def makeTable(ds, widgets, view):
-    td = ColumnDataSource({'Type ID':[], 'Full ID':[], 'Person Name':[], 'Test Type':[], 'Date':[], 'Outcome':[], 'Raw Time':[], 'Location':[]})
+    td = ColumnDataSource({'Type ID':[], 'Full ID':[], 'Person Name':[], 'Test Type':[], 'Date':[], 'Outcome':[], 'Raw Time':[], 'Location':[], 'Attachment':[]})
 
     x = CustomJS(args=dict(td=td, data=ds, view=view),code='''
 const type_ids=[];
@@ -121,6 +123,7 @@ const times=[];
 const raw_time = [];
 const outcomes=[];
 const locations=[];
+const attachments=[];
 
 const indices = view.filters[0].compute_indices(data);
 let mask = new Array(data.data['Full ID'].length).fill(false);
@@ -139,6 +142,7 @@ for (let j = 0; j < data.get_length(); j++) {
 
         outcomes.push(data.data['Outcome'][j])
         locations.push(data.data['Location'][j])
+        attachments.push(data.data['Attach ID'][j])
     }
 }
 td.data['Type ID'] = type_ids;
@@ -149,6 +153,7 @@ td.data['Date'] = times;
 td.data['Raw Time'] = raw_time;
 td.data['Outcome'] = outcomes;
 td.data['Location'] = locations;
+td.data['Attachment'] = attachments;
 td.change.emit()
 ''')
 
@@ -216,6 +221,15 @@ def Filter():
 '''
     bigger_font = HTMLTemplateFormatter(template=template)
 
+    link_template = '''
+<div style="font-size: 150%">
+<a href="get_attach.py?attach_id=<%= value %>"target="_blank">
+Attach
+</a>
+</div> 
+'''
+    link = HTMLTemplateFormatter(template=link_template)
+
     table_columns = [
                     TableColumn(field='Type ID', title='Type ID', formatter=bigger_font),
                     TableColumn(field='Full ID', title='Full ID', formatter=bigger_font),
@@ -225,6 +239,7 @@ def Filter():
                     TableColumn(field='Raw Time', title='Raw Time', formatter=bigger_font),
                     TableColumn(field='Location', title='Location', formatter=bigger_font),
                     TableColumn(field='Outcome', title='Outcome', formatter=bigger_font),
+                    TableColumn(field='Attachment', title='Attachment', formatter=link),
                     ]
 
     data_table = DataTable(source=td, columns=table_columns, row_height = 40, autosize_mode='fit_columns', width_policy = 'fit', height=600)

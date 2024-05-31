@@ -3,12 +3,15 @@ import numpy as np
 import json
 import csv
 import datetime
+import os
+
+path = os.path.dirname(os.path.abspath(__file__))
 
 db = connect(0)
 cur = db.cursor()
 
 def run():
-    with open('./static/files/Test.csv', mode='w') as csv_file:
+    with open('{}/static/files/Test.csv'.format(path), mode='w') as csv_file:
         columns = ['Test ID', 'Test Type ID', 'Board ID', 'Person ID', 'Time', 'Successful','comments']
         writer = csv.writer(csv_file)
         writer.writerow(columns)
@@ -17,7 +20,7 @@ def run():
         Test_Data = cur.fetchall()
         writer.writerows(Test_Data)
      
-    with open('./static/files/Board.csv', mode='w') as csv_file:
+    with open('{}/static/files/Board.csv'.format(path), mode='w') as csv_file:
         header = ['Full ID', 'Board ID', 'Type ID', 'Location']
         writer = csv.writer(csv_file)
         writer.writerow(header)
@@ -26,7 +29,7 @@ def run():
         Board_Data = cur.fetchall()
         writer.writerows(Board_Data)
 
-    with open('./static/files/People.csv', mode='w') as csv_file:
+    with open('{}/static/files/People.csv'.format(path), mode='w') as csv_file:
         header = ['Person ID', 'Person Name']
         writer = csv.writer(csv_file)
         writer.writerow(header)
@@ -35,7 +38,7 @@ def run():
         People_Data = cur.fetchall()
         writer.writerows(People_Data)
 
-    with open('./static/files/Test_Types.csv', mode='w') as csv_file:
+    with open('{}/static/files/Test_Types.csv'.format(path), mode='w') as csv_file:
         columns = ['Test Type ID', 'Name', 'Required', 'Short Desc.', 'Long Desc.', 'Relative Order']
         writer = csv.writer(csv_file)
         writer.writerow(columns)
@@ -45,7 +48,7 @@ def run():
         writer.writerows(Test_Data)
 
     # opens four files at once
-    with open('./static/files/ADC_functionality_resistance.csv', mode='w') as csv_file_resist, open('./static/files/ADC_functionality_voltage.csv', mode='w') as csv_file_volt, open('./static/files/ADC_functionality_temp.csv', mode='w') as csv_file_temp, open('./static/files/ADC_main.csv', mode='w') as csv_file_adc:
+    with open('{}/static/files/ADC_functionality_resistance.csv'.format(path), mode='w') as csv_file_resist, open('{}/static/files/ADC_functionality_voltage.csv'.format(path), mode='w') as csv_file_volt, open('{}/static/files/ADC_functionality_temp.csv'.format(path), mode='w') as csv_file_temp, open('{}/static/files/ADC_main.csv'.format(path), mode='w') as csv_file_adc:
         # need a writer for each file
         header_resist = ['Test ID', 'E Link', 'Resistance']
         writer_1 = csv.DictWriter(csv_file_resist, fieldnames = header_resist)
@@ -135,7 +138,7 @@ def run():
                 r2 = Attach_Data[n]['walk_engine_read_adc'][i][1]['rsquared']
                 writer_4.writerow({'Test ID': TestIDs[n][0], 'ADC': i, 'slope': slope, 'intercept': intercept, 'rsquared': r2})
 
-    with open('./static/files/EClockRates.csv', mode='w') as csv_file:
+    with open('{}/static/files/EClockRates.csv'.format(path), mode='w') as csv_file:
         header = ['Test ID', 'Module 1', 'Module 2', 'Module 3', 'Module 4', 'Module 5', 'Module 6', 'Module 7']
         writer = csv.DictWriter(csv_file, fieldnames=header)
         
@@ -171,7 +174,7 @@ def run():
                             'Module 6': Attach_Data[n][5],
                             'Module 7': Attach_Data[n][6],})
 
-    with open('./static/files/X_PWR.csv', mode='w') as csv_file:
+    with open('{}/static/files/X_PWR.csv'.format(path), mode='w') as csv_file:
         header = ['Test ID', 'Voltage']
         writer = csv.DictWriter(csv_file, fieldnames=header)
         writer.writeheader()
@@ -200,7 +203,7 @@ def run():
         for n in range(len(Attach_Data)):
             writer.writerow({'Test ID': TestIDs[n][0], 'Voltage': Attach_Data[n]['voltage']})
 
-    with open('./static/files/ElinkQuality.csv', mode='w') as csv_file:
+    with open('{}/static/files/ElinkQuality.csv'.format(path), mode='w') as csv_file:
         header = ['Test ID', 'Phase', 'E Link', 'Bit Errors']
         writer = csv.DictWriter(csv_file, fieldnames=header)
         writer.writeheader()
@@ -232,7 +235,7 @@ def run():
                 for v in Attach_Data[n][k]:
                     writer.writerow({'Test ID': TestIDs[n][0], 'Phase': k, 'E Link': v[0], 'Bit Errors': v[1]})
 
-    with open('./static/files/FastCommandQuality.csv', mode='w') as csv_file:
+    with open('{}/static/files/FastCommandQuality.csv'.format(path), mode='w') as csv_file:
         header = ['Test ID', 'Phase', 'Channel', 'Bit Errors']
         writer = csv.DictWriter(csv_file, fieldnames=header)
         writer.writeheader()
@@ -267,7 +270,7 @@ def run():
             except AttributeError:
                 pass
 
-    with open('./static/files/UplinkQuality.csv', mode='w') as csv_file:
+    with open('{}/static/files/UplinkQuality.csv'.format(path), mode='w') as csv_file:
         header = ['Test ID', 'Module', 'Bit Errors']
         writer = csv.DictWriter(csv_file, fieldnames=header)
         writer.writeheader()
@@ -297,7 +300,7 @@ def run():
             for i in Attach_Data[n]:
                 writer.writerow({'Test ID': TestIDs[n][0], 'Module': i[0], 'Bit Errors': i[1]})
 
-    with open('./static/files/I2C.csv', mode='w') as csv_file:
+    with open('{}/static/files/I2C.csv'.format(path), mode='w') as csv_file:
         header = ['Test ID', 'Connector', 'Channel', 'Bit Errors']
         writer = csv.DictWriter(csv_file, fieldnames=header)
         writer.writeheader()
@@ -330,7 +333,7 @@ def run():
                 for v in keys_2:
                     writer.writerow({'Test ID': TestIDs[n][0], 'Connector': k, 'Channel': v, 'Bit Errors': Attach_Data[n][k][v]})
 
-    with open('./static/files/GPIO_Functionality.csv', mode='w') as csv_file:
+    with open('{}/static/files/GPIO_Functionality.csv'.format(path), mode='w') as csv_file:
         header = ['Test ID', 'Pin', 'Read', 'Write']
         writer = csv.DictWriter(csv_file, fieldnames=header)
         writer.writeheader()
@@ -385,6 +388,14 @@ def run():
             except json.decoder.JSONDecodeError:
                 pass
 
+    with open('{}/static/files/Attachments.csv'.format(path), mode='w') as csv_file:
+        columns = ['Test ID', 'Attach ID']
+        writer = csv.writer(csv_file)
+        writer.writerow(columns)
+
+        cur.execute('select test_id, attach_id from Attachments')
+        Test_Data = cur.fetchall()
+        writer.writerows(Test_Data)
 
 if __name__ == '__main__':
     run()
