@@ -7,8 +7,8 @@ import home_page_list
 #cgi header
 print("Content-type: text/html\n")
 
-base.header(title='Add a new module to HGCAL Wagon Test')
-base.top()
+base.header(title='Add a new module to HGCAL Engine Test')
+base.top(False)
 
 home_page_list.add_module_form()
 
@@ -21,5 +21,5 @@ print('</div>')
 
 home_page_list.render_list_module()
 
-base.bottom()
+base.bottom(False)
 

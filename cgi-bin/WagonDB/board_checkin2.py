@@ -11,10 +11,10 @@ base_url = get_base_url()
 db = connect(0)
 cur = db.cursor()
 
-#print("Location: %s/summary.py\n\n" % base_url)
 #cgi header
 print("Content-type: text/html\n")
 
+# grabs the information from the form and calls board_checkout() to enter info into the DB
 form = cgi.FieldStorage()
 try:
     sn = form.getvalue('serial_number')
@@ -32,8 +32,8 @@ except:
 comments = form.getvalue("comments")
 
 base.header(title='Board Check In')
-base.top()
+base.top(False)
 
 board_check_functions.board_checkin(board_id, person_id, comments)
 
-base.bottom()
+base.bottom(False)

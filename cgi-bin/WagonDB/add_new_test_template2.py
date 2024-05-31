@@ -20,8 +20,9 @@ test_desc_long = cgi.escape(form.getvalue("test_desc_long"))
 password = cgi.escape(form.getvalue("password"))
 
 base.header(title='Add New Test Template')
-base.top()
+base.top(False)
 
+# adds the new test to the database
 test_id=add_test_functions.add_new_test(test_name, required, test_desc_short, test_desc_long, password)
     
-base.bottom()
+base.bottom(False)

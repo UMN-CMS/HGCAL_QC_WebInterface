@@ -1,26 +1,45 @@
 #!/usr/bin/python3
 
 import cgi
+import cgitb
+cgitb.enable()
 import base
-import home_page_list
+import connect
+import os
 
-#cgi header
 print("Content-type: text/html\n")
 
-base.header(title='Add a new module to HGCAL Wagon Test')
+base.header(title='Search for Label')
 base.top()
 
-# calls this function for the form
-home_page_list.add_module_form()
-
+# creates form to change board location
+# runs change_board_location2.py with the form info on submit 
+print('<form action="label_search2.py" method="post" enctype="multipart/form-data">')
 print('<div class="row">')
-print('<div class="col-md-5 pt-2 ps-5 mx-2 my-2">')
-print('<h2>List of All Boards</h2>' )
-print('<b><em>(Sorted by Serial Number)</em></b>&emsp;<badge class="badge bg-primary">Successful Tests</badge>')
+print('<div class="col-md-12 pt-4 ps-5 mx-2 my-2">')
+print('<h2>Search for Label</h2>')
 print('</div>')
 print('</div>')
 
-home_page_list.render_list_module()
+print('<div class="col">')
+print('<div class="col-md-3 pt-2 ps-5 mx-2 my-2">')
+print('<label> Query')
+print('<select class="form-control" name="query">')
+print('<option value="Contains">Contains</option>')
+print('<option value="Starts with">Starts with</option>')
+print('<option value="Ends with">Ends with</option>')
+print('</select>')
+print('</label>')
+print('</div>')
+print('<div class="col-md-3 pt-2 ps-5 mx-2 my-2">')
+print('<input type="text" name="serial_num" placeholder="Serial Number">')
+print('</div>')
+print('</div>')
+print('<div class="row">')
+print('<div class="col-md-6 pt-2 ps-5 mx-2 my-2">')
+print('<input type="submit" class="btn btn-dark" value="Search">')
+print('</div>')
+print('</div>')
+print('</form>')
 
 base.bottom()
-

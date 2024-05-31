@@ -22,10 +22,10 @@ if comments:
     comments = cgi.escape(comments)
 
 base.header(title='Revoke Success')
-base.top()
+base.top(False)
 
 module_functions.revoke_success(test_id, comments)
 
-base.bottom()
+base.bottom(False)
 
 

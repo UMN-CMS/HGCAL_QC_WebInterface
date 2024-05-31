@@ -9,7 +9,7 @@ import os
 print("Content-type: text/html\n")
 
 base.header(title='Get Test Types')
-base.top()
+base.top(False)
 
 form = cgi.FieldStorage()
 print("\n\n\n\n\n\n\n\n\n\n\n\n\nABSOLUTELY MASSIVE", form, "\n\n\n\n\n\n\n\n\n")
@@ -25,4 +25,4 @@ print(tests)
 
 print('End')
 
-base.bottom()
+base.bottom(False)

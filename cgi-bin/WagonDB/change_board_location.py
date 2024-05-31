@@ -10,24 +10,16 @@ import os
 import tempfile
 
 print("Content-type: text/html\n")
-#try:
-#    os.environ["TEMP"] = '/tmp/HGCAL_ApacheServer/board_images' 
-#    tos.mkdtemp(prefix="BoardImage_", dir=os.environ["TEMP"])
-#    sysTemp = tempfile.gettempdir()
-#    print(sysTemp)
-#except Exception as e:
-#    print(e)
 base_url = connect.get_base_url()
 
-#print("Location: %s/summary.py\n\n"%(base_url))
-#cgi header
 form = cgi.FieldStorage()
 sn = cgi.escape(form.getvalue("serial_num"))
-#fileitem = form['file']
 
 base.header(title='Change Board Location')
-base.top()
+base.top(False)
 
+# creates form to change board location
+# runs change_board_location2.py with the form info on submit
 print('<form action="change_board_location2.py" method="post" enctype="multipart/form-data">')
 print('<INPUT TYPE="hidden" name="serial_number" value="%s">' % (sn))
 print('<div class="row">')
@@ -47,4 +39,4 @@ print('</div>')
 print('</div>')
 print('</form>')
 
-base.bottom()
+base.bottom(False)

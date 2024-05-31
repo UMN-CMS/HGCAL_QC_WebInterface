@@ -1,7 +1,3 @@
-#!/usr/bin/python3
+import get_attach
 
-import cgi
-
-print("Content-Type: text/html")
-
-print("This is my webpage!")
+get_attach.run(1)

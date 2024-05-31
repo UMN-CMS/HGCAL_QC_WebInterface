@@ -11,10 +11,10 @@ base_url = get_base_url()
 db = connect(0)
 cur = db.cursor()
 
-#print("Location: %s/summary.py\n\n" % base_url)
 #cgi header
 print("Content-type: text/html\n")
 
+# grabs the information from the form and calls board_checkout() to enter info into the DB
 form = cgi.FieldStorage()
 print(form)
 try:
@@ -36,8 +36,8 @@ location = cgi.escape(form.getvalue("location"))
 comments = form.getvalue("comments")
 
 base.header(title='Board Check Out')
-base.top()
+base.top(False)
 
 board_check_functions.board_checkout(board_id, person_id, comments, location)
 
-base.bottom()
+base.bottom(False)

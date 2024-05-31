@@ -9,8 +9,8 @@ import os
 print("Content-type: text/html\n")
 
 base.header(title='Add New User')
-base.top()
+base.top(False)
 
 tests = module_functions.add_new_user_ID()
 
-base.bottom()
+base.bottom(False)

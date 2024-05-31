@@ -12,6 +12,8 @@ import json
 def add_new_user_ID():
     pass
 
+# a lot of these functions are used for the GUI
+# however, some are used both in the GUI and Website
 
 
 # Returns the JSONs for a specified test ID
@@ -61,7 +63,7 @@ def get_successful_times():
     
     return successful_tests
 
-
+# checks if name is in database
 def verify_person(name):
     db = connect(0)
     cur = db.cursor()
@@ -77,7 +79,7 @@ def verify_person(name):
         print(people)
         return people
 
-
+# checks if the board is in the database already
 def is_new_board(serial_number):
     db = connect(0)
     cur = db.cursor()
@@ -99,9 +101,7 @@ def is_new_board(serial_number):
     return is_new_board_bool, check_in_id
 
 
-
-
-
+# selects all person names
 def get_usernames():
     db = connect(0)
     cur = db.cursor()
@@ -115,12 +115,11 @@ def get_usernames():
     else:
         return people   
 
-
+# superceded by get_previous_test_results()
 def get_test_completion_status(serial_num):
     db = connect(0)
     cur = db.cursor()
 
-    # TODO
     cur.execute("SELECT board_id FROM Board WHERE full_id = '%s'" % (serial_num))
     board_ID = cur.fetchone()
 
@@ -129,7 +128,7 @@ def get_test_completion_status(serial_num):
     else:
         return True
 
-
+# gets the results from previous tests
 def get_previous_test_results(serial_num):
 
     db = connect(0)
@@ -141,7 +140,6 @@ def get_previous_test_results(serial_num):
     test_results_list = cur.fetchall()
     tests_run = []
     outcomes = []
-    #try:
     for i in test_results_list:
         temp = [0,1]
         cur.execute('select name from Test_Type where test_type = %s' % i[0])
@@ -154,13 +152,11 @@ def get_previous_test_results(serial_num):
             temp[1] = 'Passed'
         tests_run.append(temp[0])
         outcomes.append(temp[1])
-    #except Exception as e:
-    #    print(e)
-    #    test_results = None
 
     cur.execute('select name from Test_Type')
     tests = cur.fetchall()
 
+    # tells the GUI where to find the previous test info
     print('Begin1')
     try:
         for i in tests_run:
@@ -189,7 +185,7 @@ def get_previous_test_results(serial_num):
     print('End3')
 
 
-
+# adds a test into the Test table
 def add_test(person_id, test_type, serial_num, success, comments):
     if success:
         success = 1
@@ -223,11 +219,9 @@ def add_test(person_id, test_type, serial_num, success, comments):
     else:
         print('<div class ="row">')
         print('<div class = "col-md-3 pt-4 ps-4 mx-2 my-2">')
-        print('<h3> Attempt Failed. Please Specify Testers Name </h3>')
+        print('<h3> Attempt Failed. Please Specify Serial Number </h3>')
         print('</div>')
         print('</div>')
-
-    # add_test_template(serial_num)
 
 
 # Adds a tester person
@@ -254,10 +248,11 @@ def add_tester(person_name, passwd):
     else:
         print('<div class ="row">')
         print('<div class = "col-md-3 pt-4 ps-4 mx-2 my-2">')
-        print('<h3> Attempt Failed. Please Specify Serial Number </h3>')
+        print('<h3> Attempt Failed. Please Specify Testers Name </h3>')
         print('</div>')
         print('</div>')
 
+# adds a new test into Test_Type
 def add_new_test(test_name, required, test_desc_short, test_desc_long, passwd):
     try:
         db = connect_admin(passwd)
@@ -276,10 +271,11 @@ def add_new_test(test_name, required, test_desc_short, test_desc_long, passwd):
     else:
         print('<div class ="row">')
         print('<div class = "col-md-3 pt-4 ps-4 mx-2 my-2">')
-        print('<h3> Attempt Failed. Please Specify Serial Number </h3>')
+        print('<h3> Attempt Failed. Please Ensure All Fields are Filled </h3>')
         print('</div>')
         print('</div>')
 
+# old method of adding tests?
 def add_init_tests(serial_num, tester, test_results, comments):
     db = connect(1)
     cur = db.cursor()
@@ -316,8 +312,7 @@ def add_init_tests(serial_num, tester, test_results, comments):
         print('</div>')
         print('</div>')
 
-    #add_test_template(serial_num)
-
+# adds attachment, called after test has been added
 def add_test_attachment(test_id, afile, desc, comments):
     print("Adding attachment...")
     if afile.filename:
@@ -325,19 +320,16 @@ def add_test_attachment(test_id, afile, desc, comments):
         cur = db.cursor()
         originalname = os.path.basename(afile.name)
 
+        # decodes file
         f = afile.file.read().decode('utf-8')
 
         cur.execute("INSERT INTO Attachments (test_id,attach,attachmime,attachdesc,comments,originalname) VALUES (%s,%s,%s,%s,%s,%s)",
                     (test_id,f,afile.type,desc,comments,originalname));
         att_id=cur.lastrowid
         db.commit()
-        #ofn=settings.getAttachmentPathFor(int(test_id),int(att_id));
-        #sub_path = os.path.dirname(ofn)
-        #if not os.path.exists(sub_path):
-        #    os.mkdir(sub_path)
-        #open(ofn,'wb').write(afile.file.read())
         print('<div> The file %s was uploaded successfully. </div>' % (originalname))
     
+# creates page to add a new test
 def add_test_template(serial_number, suggested_test):
     db = connect(0)
     cur = db.cursor()
@@ -349,9 +341,8 @@ def add_test_template(serial_number, suggested_test):
     print('<h2>Add Test for Board %s</h2>' %serial_number)
     print('</div>')
     print('</div>')
-
-    #print('<br><br>')
-    
+ 
+    # gives options for tester
     cur.execute("Select person_id, person_name from People;")
 
     print('<div class="row">')
@@ -364,10 +355,13 @@ def add_test_template(serial_number, suggested_test):
     print('</select>')
     print('</label>')
     print('</div>')
+    
+    # gives options of for test type
     cur.execute("select test_type, name from Test_Type order by relative_order ASC;")
     print('<div class="col-md-3 pt-2 ps-5 mx-2 my-2">')
     print('<label>Test Type')
     print('<select class="form-control" name="test_type">')
+    # if there's a suggested test, put it first
     if suggested_test:
         for test_type in cur:
             if test_type[0] == suggested_test:
@@ -384,17 +378,6 @@ def add_test_template(serial_number, suggested_test):
     print('</label>')
     print('</div>')
     print('</div>')
-    #print          '<br><br>'
-
-    #print          '<div class = "row">'
-    #print              '<div class = "col-md-6">'
-    #print                  '<label> Serial Number:'
-    #print                      '<input name="serial_number" value="%s">'%serial_number
-    #print                  '</label>'
-    #print              '</div>'
-    #print          '</div>'
-
-    #print('<br><br>')
 
     print('<div class="row">')
     print('<div class="col-md-3 pt-2 ps-5 mx-2 my-2">')
@@ -408,12 +391,13 @@ def add_test_template(serial_number, suggested_test):
     print('</div>')
     print('</div>')
                                     
-    #print('<br><br>')
     print('<div class="row">')
     print('<div class="col-md-6 pt-2 ps-5 mx-2 my-2">')
     print('<input type="submit" class="btn btn-dark" value="Add Test">')
     print('</div>')
     print('</div>')
+    
+    #creates spots to attach attachments
     for iattach in (1,2,3):
         print('<br><hr><br>'    )
         print('<div class="row">')
@@ -432,18 +416,15 @@ def add_test_template(serial_number, suggested_test):
         print('</div>')
         print('</div>')
 
-    #print('<br><br><br><br>')
-
     print('<div class="row">')
     print('<div class="col-md-6 pt-2 ps-5 mx-2 my-2">')
     print('<input type="submit" class="btn btn-dark" value="Add Test">')
     print('</div>')
     print('</div>')
 
-    #print('<br><br><br><br>')
-
     print('</form>')
 
+# form for adding a new test type
 def add_new_test_template():
     print('<form action="add_new_test_template2.py" method="post" enctype="multipart/form-data">')
     print('<div class="row">')

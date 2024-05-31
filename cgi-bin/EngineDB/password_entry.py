@@ -13,7 +13,7 @@ form = cgi.FieldStorage()
 url = form.getvalue("url")
 
 base.header(title='Admin Access')
-base.top()
+base.top(False)
 
 print('<form action="password_entry2.py" method="post" enctype="multipart/form-data">')
 print('<input type="hidden" name="url" value="%s">'%url)
@@ -37,4 +37,4 @@ print("</form>")
 
 print("<div class='row pt-4 my-2'>")
 
-base.bottom()
+base.bottom(False)
