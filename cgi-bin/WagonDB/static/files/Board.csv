@@ -22,7 +22,7 @@ Full ID,Board ID,Type ID,Location,Color
 320WE10A1000011,40,WE10A1,UMN,Red
 320WE10A1000010,41,WE10A1,UMN,Red
 320WE10A1000009,42,WE10A1,UMN,Red
-320WW20A1000007,43,WW20A1,Last seen at cmsfactory5,Red
+320WW20A1000007,43,WW20A1,Last seen at cmsfactory2.cmsfactorynet,Red
 320WW20A1000009,44,WW20A1,UMN,Red
 320WW10A1000011,45,WW10A1,UMN,Red
 320WW10A1000009,46,WW10A1,UMN,Red
@@ -74,4 +74,32 @@ Full ID,Board ID,Type ID,Location,Color
 320WW20A1000102,98,WW20A1,UMN,Green
 320WE20A1000101,99,WE20A1,UMN,Green
 320WW20A1000103,100,WW20A1,UMN,Green
-320WW30A1009999,101,WW30A1,UMN,Red
+320WW30A1009999,101,WW30A1,Last seen at Visual Inspection,Red
+320WE10A1000101,102,WE10A1,Last seen at Visual Inspection,Green
+320WW20A1000104,103,WW20A1,Last seen at Visual Inspection,Green
+320WW10A1000101,104,WW10A1,Last seen at Visual Inspection,Green
+320WE10A1000102,105,WE10A1,Last seen at Visual Inspection,Green
+320WE20B1000101,106,WE20B1,Last seen at Visual Inspection,Green
+320WE20A1000102,107,WE20A1,Last seen at Visual Inspection,Green
+320WE10A1000104,108,WE10A1,Last seen at Visual Inspection,Green
+320WE10A1000103,109,WE10A1,Last seen at Visual Inspection,Green
+320WE20B1000102,110,WE20B1,Last seen at Visual Inspection,Green
+320WW10A1000102,111,WW10A1,Last seen at Visual Inspection,Green
+320WW30A1000101,112,WW30A1,Last seen at Visual Inspection,Green
+320WW30A1000102,113,WW30A1,Last seen at Visual Inspection,Green
+320WE30A1000102,114,WE30A1,Last seen at Visual Inspection,Green
+320WE30A1000101,115,WE30A1,Last seen at Visual Inspection,Green
+320WE20A1000103,116,WE20A1,Last seen at Visual Inspection,Green
+320WE20B1000103,117,WE20B1,Last seen at Visual Inspection,Green
+320WE10A1000105,118,WE10A1,Last seen at Visual Inspection,Green
+320WE10A1000106,119,WE10A1,Last seen at Visual Inspection,Green
+320WW10A1000103,120,WW10A1,Last seen at Visual Inspection,Green
+320WW20A1000106,121,WW20A1,Last seen at Visual Inspection,Green
+320WW20A1000105,122,WW20A1,Last seen at Visual Inspection,Green
+320WW20A1000107,123,WW20A1,Last seen at Visual Inspection,Green
+320WW20A1000108,124,WW20A1,Last seen at Visual Inspection,Green
+320WE20B1000104,125,WE20B1,Last seen at Visual Inspection,Green
+320WE20A1000104,126,WE20A1,Last seen at Visual Inspection,Green
+320WE10A1000107,127,WE10A1,Last seen at Visual Inspection,Green
+320WE10A1000108,128,WE10A1,Last seen at Visual Inspection,Green
+320WW10A1000104,129,WW10A1,Last seen at Visual Inspection,Green
