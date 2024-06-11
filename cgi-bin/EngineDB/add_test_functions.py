@@ -78,16 +78,16 @@ def verify_person(name):
         return people
 
 
-def is_new_board(serial_number):
+def is_new_board(full_id):
     db = connect(0)
     cur = db.cursor()
 
     is_new_board_bool = False
 
     try:
-        cur.execute("SELECT board_id FROM Board WHERE full_id = '{}'".format(serial_number))
-        board_matching_sn = cur.fetchone()
-        cur.execute('select Checkin_id from Check_In where board_id=%s' % board_matching_sn)
+        cur.execute("SELECT board_id FROM Board WHERE full_id = '{}'".format(full_id))
+        board_id = cur.fetchone()
+        cur.execute('select Checkin_id from Check_In where board_id=%s' % board_id)
         check_in_id = cur.fetchone()
 
         if not check_in_id:
@@ -199,6 +199,9 @@ def add_test(person_id, test_type, serial_num, success, comments):
     db = connect(1)
     cur = db.cursor()
 
+    cur.execute('select test_type from Test_Type where name="%s"' % test_type)
+    test_type_id = cur.fetchall()[0][0]
+
     if type(person_id) == type(""):
         person_id = verify_person(person_id)
 
@@ -210,7 +213,7 @@ def add_test(person_id, test_type, serial_num, success, comments):
         
         sql="INSERT INTO Test (person_id, test_type_id, board_id, successful, comments, day) VALUES (%s,%s,%s,%s,%s,NOW())"
         # This is safer because Python takes care of escaping any illegal/invalid text
-        items=(person_id,test_type,card_id,success,comments)
+        items=(person_id,test_type_id,card_id,success,comments)
         cur.execute(sql,items)
         test_id = cur.lastrowid
 

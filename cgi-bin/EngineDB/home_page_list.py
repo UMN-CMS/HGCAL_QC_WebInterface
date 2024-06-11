@@ -68,7 +68,7 @@ def add_module_form():
 
     print('<div class="row">')
     print('<div class = "col-md-3 ps-5 mx-2 my-2">')
-    print('<input type="int" name="serial_number" placeholder="Serial Number">')
+    print('<input type="int" name="full_id" placeholder="Full ID">')
     print('</div>')
     print('<div class="col-md-1 sub-card-submit">')
     print('<button type="submit" class="btn btn-dark">Submit</button>')

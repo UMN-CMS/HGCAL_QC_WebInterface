@@ -21,6 +21,9 @@ import pandas as pd
 import json
 from datetime import datetime as dt
 import datetime
+import makeTestingData
+
+makeTestingData.run()
 
 
 TestData = pd.read_csv('./static/files/Test.csv', parse_dates=['Time'])
@@ -175,10 +178,11 @@ def Filter():
     multi_choice = (lambda x,y: MultiChoice(options=x, value=[], title=y), 'value')
     start_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value=x, title=z), 'value')
     today = datetime.date.today()
-    end_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value=today, title=z), 'value')
+    today_plus_one = today + datetime.timedelta(days=1)
+    end_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value=today_plus_one, title=z), 'value')
     min_date = pd.Timestamp((min(ds.data['Time']))).date()
     date_range = []
-    while min_date <= today:
+    while min_date <= today_plus_one:
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
     # widget titles and data for those widgets has to be manually entered, as well as the type

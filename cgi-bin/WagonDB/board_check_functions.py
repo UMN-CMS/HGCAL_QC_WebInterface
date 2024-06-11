@@ -7,7 +7,7 @@ import base
 import home_page_list
 import add_test_functions
 
-def board_checkout_form_sn(sn):
+def board_checkout_form_sn(full):
     db = connect(0)
     cur = db.cursor()
 
@@ -21,8 +21,8 @@ def board_checkout_form_sn(sn):
 
     print("<div class='row'>")
     print('<div class = "col-md-3 pt-2 ps-5 mx-2 my-2">')
-    print('<label for="sn">Serial Number</label>')
-    print('<input type="text" name="serial_number" value="%s">'%sn)
+    print('<label for="sn">Full ID</label>')
+    print('<input type="text" name="full_id" value="%s">'%full)
     print("</div>")
 
     # creates a form to select the person checking the board out
@@ -110,7 +110,7 @@ def board_checkout(board_id, person_id, comments, location):
         print('</div>')
     
 
-def board_checkin_form_sn(sn):
+def board_checkin_form_sn(full):
     db = connect(0)
     cur = db.cursor()
 
@@ -124,9 +124,9 @@ def board_checkin_form_sn(sn):
 
     print("<div class='row'>")
     print('<div class = "col-md-3 pt-2 ps-5 mx-2 my-2">')
-    print('<label for="sn">Serial Number</label>')
+    print('<label for="sn">Full ID</label>')
     # pre-inputs the serial number if the page was loaded with one
-    print('<input type="text" name="serial_number" value="%s">'%sn)
+    print('<input type="text" name="full_id" value="%s">'%full)
     print("</div>")
 
     # creates an input for who's checking in the board

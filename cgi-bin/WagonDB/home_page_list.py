@@ -68,7 +68,7 @@ def add_module_form():
 
     print('<div class="row">')
     print('<div class = "col-md-3 ps-5 mx-2 my-2">')
-    print('<input type="int" name="serial_number" placeholder="Serial Number">')
+    print('<input type="int" name="full_id" placeholder="Full ID">')
     print('</div>')
     print('<div class="col-md-1 sub-card-submit">')
     print('<button type="submit" class="btn btn-dark">Submit</button>')
@@ -79,7 +79,7 @@ def add_module_form():
 
     print('<hr>')
 
-def add_board_info_form(sn, board_id):
+def add_board_info_form(full_id, board_id):
     
     # creates a form for board info and calls add_board_info2.py to submit it
     print('<form method="post" class="sub-card-form" action="add_board_info2.py">')
@@ -89,7 +89,7 @@ def add_board_info_form(sn, board_id):
     print('</div>')
     print('</div>')
 
-    print('<input type="hidden" name="serial_number" value="%s">' % sn)
+    print('<input type="hidden" name="full_id" value="%s">' % full_id)
     print('<input type="hidden" name="board_id" value="%s">' % board_id)
     print('<div class="row">')
     print('<div class = "col-md-5 ps-5 pt-2 mx-2 my-2">')
