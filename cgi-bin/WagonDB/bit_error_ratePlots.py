@@ -292,11 +292,11 @@ def Filter():
 
     # information for constructing widgets
     # column name has to be the name of the column in the data source that you're filtering with this widget
-    columns = ['Type ID', 'Full ID', 'Person Name', 'Outcome', 'Start Date', 'End Date']
+    columns = ['Type ID', 'Full ID', 'Person Name', 'Outcome', 'Start Date', 'End Date', 'Color']
     # values that you want to choose from in the widget
-    data = [ds_mp.data['Type ID'].tolist(), ds_mp.data['Full ID'].tolist(), ds_mp.data['Person Name'].tolist(), ds_mp.data['Outcome'], date_range, date_range]
+    data = [ds_mp.data['Type ID'].tolist(), ds_mp.data['Full ID'].tolist(), ds_mp.data['Person Name'].tolist(), ds_mp.data['Outcome'], date_range, date_range, ds_mp.data['Color']]
     # type of widget
-    t = [multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
+    t = [multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date, multi_choice]
 
     # create the widgets
     for i in range(len(columns)):
@@ -407,7 +407,7 @@ widget.options = serial_numbers[this.value]
     # by having it in it's own function with it's own widgets it can be controlled separately
     layout = Gaussian()
     # turns all the bokeh items into json and returns them
-    plot_json = json.dumps(json_item(row(column(row(w[0:3]), row(w[3:6]), slider, p, q, table, data_table), layout)))
+    plot_json = json.dumps(json_item(row(column(row(w[0:3]), row([w[3]] + w[5:7]), w[4], slider, p, q, table, data_table), layout)))
     return plot_json
 
 

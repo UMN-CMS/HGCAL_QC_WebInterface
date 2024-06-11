@@ -8,8 +8,8 @@ import add_test_functions
 
 def parse_data(form):
     try:
-        serial = (form.getvalue('serial_num'))
-        print("serial_num:", serial)
+        full_id = (form.getvalue('full_id'))
+        print("full_id:", full_id)
         
         # board_type is a str
         board_type = str(serial)[3:9]
@@ -17,8 +17,8 @@ def parse_data(form):
         tester = cgi.escape(form.getvalue('tester'))
         print("tester:", tester)
         
-        # test_type is an integer
-        test_type = int(cgi.escape(form.getvalue('test_type')))
+        # test_name is a str
+        test_name = str(cgi.escape(form.getvalue('test_type')))
         print("test_type:", test_type)
         successful = base.cleanCGInumber(form.getvalue('successful'))
         print("successful:", successful)
@@ -54,70 +54,8 @@ def parse_data(form):
         return None
 
 
-    ####################
-    # Tester has been verified
-    ####################
-
-    cur.execute('SELECT test_type, name FROM Test_Type;')
-    test_dict0 = cur.fetchall()
-
-    test_name = ""
-    valid_test = False
-    for i in test_dict0:
-        print("Current index value:", i, "                   ")
-        if int(i[0]) == test_type:
-            test_name = str(i[1])
-            valid_test = True
-
-    
-    # test_type_data = [(x,y) for x,y in cur if y.lower() == test.lower()]
-
-    if not valid_test:
-        print("Invalid test type, see Engine DB webpage for valid test types")
-        return None
-
-    ####################
-    # Test type has been verified
-    ####################
-    
-
-    cur.execute('SELECT type_sn FROM Board_type;')
-    type_id_dict = cur.fetchall()
-
-
-    valid_board_ID = False
-   
-    for i in type_id_dict:
-        if i[0] == board_type:
-            valid_board_ID = True
-        
-
-    if not valid_board_ID:
-        print('Please enter a valid board type id')
-        print("Board_type", board_type)
-        # return None
-
-    if comments == "":
-        print("Please enter comments for this test")
-        return None
-
-
-    #######################
-    # Valid Test Board
-    #######################
-
-
-
-    cur.execute("SELECT type_id, test_type_id FROM Type_test_stitch WHERE type_id = '%s' AND test_type_id = %s;" % (board_type, test_type))
-
-    if not cur:
-        print('Invalid test for this board type. Check the DB webpage for valid tests')
-        return None
-
-
-
-    # Creates outpur 
-    test_dict = {'serial_num': serial, 'board_type': board_type, 'tester': tester, 'person_id': person_id, 'test': test_name, 'test_type': test_type, 'successful': successful, 'comments': comments}
+    # Creates output
+    test_dict = {'full_id': full_id, 'board_type': board_type, 'tester': tester, 'person_id': person_id, 'test': test_name, 'successful': successful, 'comments': comments}
 
 
     print("          RETURNING TEST_DICT            ")
@@ -143,7 +81,7 @@ base.top(False)
 form = cgi.FieldStorage()
 test_dict = parse_data(form)
 
-test_id = add_test_functions.add_test(test_dict['person_id'], test_dict['test_type'], test_dict['serial_num'], test_dict['successful'], test_dict['comments'])
+test_id = add_test_functions.add_test(test_dict['person_id'], test_dict['test'], test_dict['full_id'], test_dict['successful'], test_dict['comments'])
 
 
 for itest in range(1,4):

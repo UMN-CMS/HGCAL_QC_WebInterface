@@ -77,12 +77,12 @@ def Portage_fetch_attach(test_id):
     cur.execute('select attach_id, attachmime, attachdesc, originalname from Attachments where test_id=%s order by attach_id' % test_id)
     return cur.fetchall()
 
-def add_test_tab(sn, board_id, static):
+def add_test_tab(f_id, board_id, static):
 
     # adds header
     print('<div class="row">')
     print('<div class="col-md-5 pt-4 ps-5 mx-2 my-2">')
-    print('<h2>Wagon Test Info for %s</h2>' %sn)
+    print('<h2>Wagon Test Info for %s</h2>' %f_id)
     print('</div>')
     print('</div>')
     if static: 
@@ -91,32 +91,32 @@ def add_test_tab(sn, board_id, static):
         # adds buttons
         print('<div class="row">')
         print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="add_test.py?board_id=%(id)d&serial_num=%(serial)s">' %{'serial':sn, 'id':board_id})
+        print('<a href="add_test.py?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':f_id, 'id':board_id})
         print('<button class="btn btn-dark"> Add a New Test </button>')
         print('</a>')
         print('</div>')
         print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="add_board_info.py?board_id=%(id)d&serial_num=%(serial)s">' %{'serial':sn, 'id':board_id})
+        print('<a href="add_board_info.py?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':f_id, 'id':board_id})
         print('<button class="btn btn-dark"> Add Board Info </button>')
         print('</a>')
         print('</div>')
         print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="board_checkout.py?serial_num=%(serial)s">' %{'serial':sn})
+        print('<a href="board_checkout.py?full_id=%(full_id)s">' %{'full_id':f_id})
         print('<button class="btn btn-dark"> Checkout Board </button>')
         print('</a>')
         print('</div>')
         print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="board_checkin.py?serial_num=%(serial)s">' %{'serial':sn})
+        print('<a href="board_checkin.py?full_id=%(full_id)s">' %{'full_id':f_id})
         print('<button class="btn btn-dark"> Checkin Board </button>')
         print('</a>')
         print('</div>')
         print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="add_board_image.py?board_id=%(id)d&serial_num=%(serial)s">' %{'serial':sn, 'id':board_id})
+        print('<a href="add_board_image.py?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':f_id, 'id':board_id})
         print('<button class="btn btn-dark"> Add Board Image </button>')
         print('</a>')
         print('</div>')
         print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="change_board_location.py?board_id=?board_id=%(id)d&serial_num=%(serial)s">' %{'serial':sn, 'id':board_id})
+        print('<a href="change_board_location.py?board_id=?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':f_id, 'id':board_id})
         print('<button class="btn btn-dark"> Update Location </button>')
         print('</a>')
         print('</div>')
@@ -455,8 +455,7 @@ def revoke_success(test_id, comments):
         print(err)
 
 def get_test_types():
-    # not sure where this is still used
-    # Testing GUI?
+    # used in Testing GUI
     db = connect(0)
     cur = db.cursor()
 

@@ -15,13 +15,13 @@ cur = db.cursor()
 
 form = cgi.FieldStorage()
 
-if form.getvalue('serial_number'):
-    serial_number = cgi.escape(form.getvalue('serial_number'))
+if form.getvalue('full_id'):
+    full_id = cgi.escape(form.getvalue('full_id'))
     loc = cgi.escape(form.getvalue('location'))
     loc = 'Last seen at ' + loc
 
     try:
-        cur.execute('update Board set location="%s" where full_id="%s"' %(loc, serial_number))
+        cur.execute('update Board set location="%s" where full_id="%s"' %(loc, full_id))
         db.commit()
 
         # tells GUI where to look

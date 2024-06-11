@@ -236,9 +236,9 @@ def Filter():
         min_date += datetime.timedelta(days=1)
     modules = np.unique(ds.data['level_1']).tolist()
     # widget titles and data for those widgets has to be manually entered, as well as the type
-    columns = ['Type ID', 'Full ID', 'Person Name', 'Outcome', 'Start Date', 'End Date']
-    data = [ds.data['Type ID'].tolist(), ds.data['Full ID'].tolist(), ds.data['Person Name'].tolist(), ds.data['Outcome'], date_range, date_range]
-    t = [multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
+    columns = ['Type ID', 'Full ID', 'Person Name', 'Outcome', 'Start Date', 'End Date', 'Color']
+    data = [ds.data['Type ID'].tolist(), ds.data['Full ID'].tolist(), ds.data['Person Name'].tolist(), ds.data['Outcome'], date_range, date_range, ds.data['Color']]
+    t = [multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date, multi_choice]
     
     # creates the figure object
     p = figure(
@@ -314,7 +314,7 @@ widget.options = serial_numbers[this.value]
     # since it's a separate function, the data can be filtered separately
     layout = Gaussian()
     #converts the bokeh items to json and sends them to the webpage
-    plot_json = json.dumps(json_item(row(column(row(w[0:3]), row(w[3:6]), slider, p, data_table, data_table_2), layout)))
+    plot_json = json.dumps(json_item(row(column(row(w[0:3]), row([w[3]] + w[5:]), w[4], slider, p, data_table, data_table_2), layout)))
     return plot_json
 
 ################################################################################################################
