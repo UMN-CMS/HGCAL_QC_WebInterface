@@ -125,7 +125,7 @@ def board_checkin_form_sn(full):
     print("<div class='row'>")
     print('<div class = "col-md-3 pt-2 ps-5 mx-2 my-2">')
     print('<label for="sn">Full ID</label>')
-    # pre-inputs the serial number if the page was loaded with one
+    # pre-inputs the barcode if the page was loaded with one
     print('<input type="text" name="full_id" value="%s">'%full)
     print("</div>")
 

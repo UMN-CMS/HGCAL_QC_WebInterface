@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
     # gets serial number and board_id
     form = cgi.FieldStorage()
-    serial_num = form.getvalue('serial_num')
+    serial_num = form.getvalue('full_id')
     base.header(title='Wagon DB')
     base.top(False)
 

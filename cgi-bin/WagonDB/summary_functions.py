@@ -60,7 +60,7 @@ def get():
             for t in temp:
                 names.append(t[0])
             print('<tr>')
-            print('<td> <a href=module.py?board_id=%(id)s&serial_num=%(serial)s> %(serial)s </a></td>' %{'serial':sn, 'id':s})
+            print('<td> <a href=module.py?board_id=%(id)s&full_id=%(serial)s> %(serial)s </a></td>' %{'serial':sn, 'id':s})
             print('<td><ul>')
             for idx,o in enumerate(outcomes[0:2]):
                 if o == True:
@@ -86,15 +86,15 @@ def get():
             for idx,o in enumerate(outcomes[0:2]):
                 if o == False:
                     if idx == 0:
-                        print('<li> <a href="add_test.py?serial_num=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':tt_ids[0], 'name':names[0]})
+                        print('<li> <a href="add_test.py?full_id=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':tt_ids[0], 'name':names[0]})
                     if idx == 1:
-                        print('<li> <a href="add_test.py?serial_num=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':tt_ids[1], 'name':names[1]})
+                        print('<li> <a href="add_test.py?full_id=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':tt_ids[1], 'name':names[1]})
             print('</ul></td>') 
             print('<td><ul>')
             for idx,o in enumerate(outcomes[2:5]):
                 if o == False:
                     if idx == 0:
-                        print('<li> <a href="add_test.py?serial_num=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':tt_ids[2], 'name':names[2]})
+                        print('<li> <a href="add_test.py?full_id=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':tt_ids[2], 'name':names[2]})
                     if idx == 1:
                         print('<li> <a href="add_test.py?serial_num=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':tt_ids[2], 'name':names[3]})
                     if idx == 2:

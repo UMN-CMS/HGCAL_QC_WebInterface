@@ -18,7 +18,6 @@ form = cgi.FieldStorage()
 if form.getvalue('full_id'):
     full_id = cgi.escape(form.getvalue('full_id'))
     loc = cgi.escape(form.getvalue('location'))
-    loc = 'Last seen at ' + loc
 
     try:
         # updates the location of the board in the database

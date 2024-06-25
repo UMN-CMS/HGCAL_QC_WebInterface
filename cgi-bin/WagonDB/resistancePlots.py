@@ -539,7 +539,7 @@ for (let i = 0; i < subtypes.length; i++) {
         pf_plots[s] = q
 
         table_columns = [
-                        TableColumn(field='Serial Number', title='Serial Number'),
+                        TableColumn(field='Serial Number', title='Full ID'),
                         TableColumn(field='Module', title='Module'),
                         TableColumn(field='Deviation', title='# of Standard Deviations'),
                         TableColumn(field='Pass/Fail', title='Pass/Fail'),

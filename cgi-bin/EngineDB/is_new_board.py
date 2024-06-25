@@ -19,7 +19,7 @@ if form.getvalue('full_id'):
     full_id = cgi.escape(form.getvalue('full_id'))
 
 
-    is_new_board_bool = add_test_functions.is_new_board(full_id)
+    is_new_board_bool, check_in_id = add_test_functions.is_new_board(full_id)
 
     print('Begin')
 

@@ -3,6 +3,7 @@
 import mysql.connector
 
 # connects to the database, 1 is for inserting and 0 is for reading
+# TODO change usernames and passwords for production database
 def connect( num ):
     if(num==1):
 
@@ -44,6 +45,7 @@ def connect_admin(passwd):
         return None
 
 # holds the directory location
+# TODO change to production database url
 def get_base_url():
     base = "http://cmslab3.spa.umn.edu/~cros0400/cgi-bin/WagonDB"
     return base

@@ -257,7 +257,7 @@ def add_tester(person_name, passwd):
     else:
         print('<div class ="row">')
         print('<div class = "col-md-3 pt-4 ps-4 mx-2 my-2">')
-        print('<h3> Attempt Failed. Please Specify Serial Number </h3>')
+        print('<h3> Attempt Failed. Please Specify Full ID </h3>')
         print('</div>')
         print('</div>')
 
@@ -279,7 +279,7 @@ def add_new_test(test_name, required, test_desc_short, test_desc_long, passwd):
     else:
         print('<div class ="row">')
         print('<div class = "col-md-3 pt-4 ps-4 mx-2 my-2">')
-        print('<h3> Attempt Failed. Please Specify Serial Number </h3>')
+        print('<h3> Attempt Failed. Please Specify Full ID </h3>')
         print('</div>')
         print('</div>')
 
@@ -315,7 +315,7 @@ def add_init_tests(serial_num, tester, test_results, comments):
     else:
         print('<div class ="row">')
         print('<div class = "col-md-3 pt-4 ps-4 mx-2 my-2">')
-        print('<h3> Attempt Failed. Please Specify Serial Number and Tester </h3>')
+        print('<h3> Attempt Failed. Please Specify Full ID and Tester </h3>')
         print('</div>')
         print('</div>')
 
