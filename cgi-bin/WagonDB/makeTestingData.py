@@ -272,16 +272,15 @@ def run():
         # this will be removed later for the production stage
         for b in range(len(Board_Data)):
             line = list(Board_Data[b])
-            if line[0][12] == '0':
-                line.append('Red')
-            if line[0][12] == '1':
-                line.append('Green')
-            if line[0][12] == '7':
-                line.append('Red')
-            if line[0][12] == '8':
-                line.append('Red')
-            if line[0][12] == '9':
-                line.append('Red')
+            try:
+                if line[0][12] == '0':
+                    line.append('Red')
+                if line[0][12] == '1':
+                    line.append('Green')
+                else:
+                    line = []
+            except:
+                line = []
                  
             line = tuple(line)
             Board_Data[b] = line
