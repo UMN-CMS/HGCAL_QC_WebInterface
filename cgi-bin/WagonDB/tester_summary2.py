@@ -63,7 +63,7 @@ if __name__ == '__main__':
         cur.execute('select full_id from Board where board_id=%s' % c[0])
         sn = cur.fetchone()
         # links board page
-        print('<td> <a href=module.py?board_id=%(id)s&serial_num=%(sn)s> %(sn)s </a></td>' %{'id':c[0], 'sn':sn[0]})
+        print('<td> <a href=module.py?board_id=%(id)s&full_id=%(sn)s> %(sn)s </a></td>' %{'id':c[0], 'sn':sn[0]})
 
         cur.execute('select name from Test_Type where test_type=%s' %c[1])
         test_name = cur.fetchone()

@@ -64,8 +64,11 @@ def run(static):
             for t in temp:
                 cur.execute('select type_id from Board where board_id="%s"' % t[0])
                 new = cur.fetchall()
-                subtypes.append(new[0][0])
-                temp_ids.append(t[0])
+                try:
+                    subtypes.append(new[0][0])
+                    temp_ids.append(t[0])
+                except:
+                    pass
 
             # removes any duplicates
             temp_ids = np.unique(temp_ids).tolist()
@@ -97,7 +100,7 @@ def run(static):
                     if static:
                         print('<td> <a href="./%(id)s_%(sn)s_module.html"> %(sn)s </a></td>' %{'id':s, 'sn':sn})
                     else:
-                        print('<td> <a href="module.py?board_id=%(id)s&serial_num=%(sn)s"> %(sn)s </a></td>' %{'id':b, 'sn':sn})
+                        print('<td> <a href="module.py?board_id=%(id)s&full_id=%(sn)s"> %(sn)s </a></td>' %{'id':b, 'sn':sn})
                     print('<td>')
                     print('<ul>')
                     # gets test names and prints them

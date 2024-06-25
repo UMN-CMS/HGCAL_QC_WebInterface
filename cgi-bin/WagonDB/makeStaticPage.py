@@ -3,6 +3,7 @@ import publish_config
 from connect import connect
 import os
 import makeTestingData
+import numpy as np
 
 db = connect(0)
 cur = db.cursor()
@@ -80,22 +81,29 @@ for k in looped.keys():
                 script.run(t[0]) 
 
     if k == 'People':
-        cur.execute('select person_id,person_name from People')
-        for t in cur.fetchall():
-            for p in looped[k]:
-                path = '%(path)s/../../static_html/%(db)s/%(id)s' % {'id': t[1], 'db': db_name, 'path': local_path}
-                sys.stdout = open('%(path)s_%(script)s.html' % {'script': p[:-3], 'path': path}, 'w')
-                script = __import__(p[:-3])
-                script.run(t[0]) 
+        cur.execute('select person_id from Test')
+        temp = cur.fetchall()
+        person_ids = []
+        for t in temp:
+            person_ids.append(t[0])
+        people = np.unique(person_ids).tolist()
+        for t in people:
+            if t != 0:
+                cur.execute('select person_name from People where person_id=%s' % t)
+                name = cur.fetchall()[0][0]
+                for p in looped[k]:
+                    path = '%(path)s/../../static_html/%(db)s/%(id)s' % {'id': name, 'db': db_name, 'path': local_path}
+                    sys.stdout = open('%(path)s_%(script)s.html' % {'script': p[:-3], 'path': path}, 'w')
+                    script = __import__(p[:-3])
+                    script.run(t) 
 
     if k == 'Attachments': 
-        sys.stdout = sys.__stdout__
         cur.execute('select attach_id from Attachments')
         attach_id = cur.fetchall()
         for a in attach_id:
             for p in looped[k]:
                 sys.stdout = open('%(path)s/../../static_html/%(db)s/attach_%(id)s.html' % {'db': db_name, 'id': a[0], 'path': local_path}, 'w')
                 script = __import__(p[:-3])
-                script.run(a[0])
+                script.run(a[0]) 
 
 sys.stdout.close()

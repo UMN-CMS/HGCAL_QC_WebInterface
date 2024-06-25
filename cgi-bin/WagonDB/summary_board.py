@@ -34,7 +34,7 @@ if __name__ == '__main__':
     print('<div class="col-md-11 ps-5 py-4my-2"><table class="table table-hover">')
     print('<thead class="table-dark">')
     print('<tr>')
-    print('<th> S/N </th>')
+    print('<th> Full ID </th>')
     print('<th> Tests</th>')
     print('</tr>')
     print('</thead>')
@@ -73,7 +73,7 @@ if __name__ == '__main__':
             ids.append(t[0])
         
         # only difference is that all tests are printed out
-        print('<td> <a href=module.py?board_id=%(id)s&serial_num=%(serial)s> %(serial)s </a></td>' %{'serial':sn, 'id':s})
+        print('<td> <a href=module.py?board_id=%(id)s&full_id=%(serial)s> %(serial)s </a></td>' %{'serial':sn, 'id':s})
         print('<td><ul>')
         for idx,o in enumerate(outcomes): 
             # if the test was successful it's printed green 
@@ -81,10 +81,10 @@ if __name__ == '__main__':
                 print('<li class="list-group-item-success">%s' %names[idx])
             # if test was done and didn't pass, red with a link to add a test of that type
             elif o == False and run[idx] == True:
-                print('<li class="list-group-item-danger"> <a href="add_test.py?serial_num=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':idx, 'name':names[idx]})
+                print('<li class="list-group-item-danger"> <a href="add_test.py?full_id=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':idx, 'name':names[idx]})
             # if no test has been run, gray with a link
             else:
-                print('<li class="list-group-item-dark"> <a href="add_test.py?serial_num=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':idx, 'name':names[idx]})
+                print('<li class="list-group-item-dark"> <a href="add_test.py?full_id=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':idx, 'name':names[idx]})
         
         print('</ul></td>') 
 
@@ -114,7 +114,7 @@ def run(type_id):
     print('<div class="col-md-11 ps-5 py-4my-2"><table class="table table-hover">')
     print('<thead class="table-dark">')
     print('<tr>')
-    print('<th> S/N </th>')
+    print('<th> Full ID </th>')
     print('<th> Tests</th>')
     print('</tr>')
     print('</thead>')

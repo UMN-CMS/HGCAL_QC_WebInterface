@@ -115,26 +115,13 @@ def get_usernames():
     else:
         return people   
 
-# superceded by get_previous_test_results()
-def get_test_completion_status(serial_num):
-    db = connect(0)
-    cur = db.cursor()
-
-    cur.execute("SELECT board_id FROM Board WHERE full_id = '%s'" % (serial_num))
-    board_ID = cur.fetchone()
-
-    if not board_ID:
-        return False
-    else:
-        return True
-
 # gets the results from previous tests
-def get_previous_test_results(serial_num):
+def get_previous_test_results(barcode):
 
     db = connect(0)
     cur = db.cursor()
 
-    cur.execute("SELECT board_id FROM Board WHERE full_id = '{}'".format(serial_num))
+    cur.execute("SELECT board_id FROM Board WHERE full_id = '{}'".format(barcode))
     board_id = cur.fetchone()[0]
     cur.execute("SELECT test_type_id, successful, day FROM Test WHERE board_id = {} order by day desc".format(board_id))
     test_results_list = cur.fetchall()
@@ -187,7 +174,7 @@ def get_previous_test_results(serial_num):
 
 
 # adds a test into the Test table
-def add_test(person_id, test_type, serial_num, success, comments):
+def add_test(person_id, test_type, barcode, success, comments):
     if success:
         success = 1
     else:
@@ -202,8 +189,8 @@ def add_test(person_id, test_type, serial_num, success, comments):
     if type(person_id) == type(""):
         person_id = verify_person(person_id)
 
-    if serial_num:
-        cur.execute("SELECT board_id FROM Board WHERE full_id = '{}'".format(serial_num))
+    if barcode:
+        cur.execute("SELECT board_id FROM Board WHERE full_id = '{}'".format(barcode))
         row = cur.fetchone()
         print("The Card_ID=", row[0])
         card_id = row[0]
@@ -223,7 +210,7 @@ def add_test(person_id, test_type, serial_num, success, comments):
     else:
         print('<div class ="row">')
         print('<div class = "col-md-3 pt-4 ps-4 mx-2 my-2">')
-        print('<h3> Attempt Failed. Please Specify Serial Number </h3>')
+        print('<h3> Attempt Failed. Please Specify Full ID </h3>')
         print('</div>')
         print('</div>')
 
@@ -312,7 +299,7 @@ def add_init_tests(serial_num, tester, test_results, comments):
     else:
         print('<div class ="row">')
         print('<div class = "col-md-3 pt-4 ps-4 mx-2 my-2">')
-        print('<h3> Attempt Failed. Please Specify Serial Number and Tester </h3>')
+        print('<h3> Attempt Failed. Please Specify Full ID and Tester </h3>')
         print('</div>')
         print('</div>')
 
@@ -334,15 +321,15 @@ def add_test_attachment(test_id, afile, desc, comments):
         print('<div> The file %s was uploaded successfully. </div>' % (originalname))
     
 # creates page to add a new test
-def add_test_template(serial_number, suggested_test):
+def add_test_template(barcode, suggested_test):
     db = connect(0)
     cur = db.cursor()
 
     print('<form action="add_test2.py" method="post" enctype="multipart/form-data">')
-    print('<INPUT TYPE="hidden" name="serial_number" value="%s">' % (serial_number))
+    print('<INPUT TYPE="hidden" name="full_id" value="%s">' % (barcode))
     print('<div class="row">')
     print('<div class="col-md-12 pt-4 ps-5 mx-2 my-2">')
-    print('<h2>Add Test for Board %s</h2>' %serial_number)
+    print('<h2>Add Test for Board %s</h2>' %barcode)
     print('</div>')
     print('</div>')
  

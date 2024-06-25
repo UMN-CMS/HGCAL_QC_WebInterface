@@ -121,6 +121,9 @@ return indices;
 #create a color pallete to be used on graphs
 colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10][2], d3['Category10'][10][3], d3['Category10'][10][4], d3['Category10'][10][5], d3['Category10'][10][6], d3['Category10'][10][7], d3['Category10'][10][8], d3['Category10'][10][9], brewer['Accent'][8][0], brewer['Accent'][8][3], brewer['Dark2'][8][0], brewer['Dark2'][8][2], brewer['Dark2'][8][3], brewer['Dark2'][8][4], brewer['Dark2'][8][5], brewer['Dark2'][8][6]]
 
+for i in range(0,20):
+    colors.append(d3['Category20c'][20][i])
+
 def Histogram(columns, data, views, widgets, subtypes, serial_numbers, slider):
     # each subtype gets its own subpage, this is done by changing which plot is visible
     # each serial number is then iterated over and plotted individually as a legend entry

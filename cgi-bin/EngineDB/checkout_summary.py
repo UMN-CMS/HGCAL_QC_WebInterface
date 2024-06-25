@@ -27,7 +27,7 @@ def run(static):
     print('<div class="col-md-11 ps-5 py-4my-2"><table class="table table-hover">')
     print('<thead class="table-dark">')
     print('<tr>')
-    print('<th> S/N </th>')
+    print('<th> Full ID </th>')
     print('<th> Check Out Date </th>')
     print('<th> Person </th>')
     print('<th> Comment </th>')
@@ -60,7 +60,7 @@ def run(static):
             if static:
                 print('<td> <a href=./%(id)s_%(serial)s_module.html> %(serial)s </a></td>' %{'serial':sn, 'id':sn[3:9]})
             else:
-                print('<td> <a href=module.py?board_id=%(id)s&serial_num=%(serial)s> %(serial)s </a></td>' %{'serial':sn, 'id':d[0]})
+                print('<td> <a href=module.py?board_id=%(id)s&full_id=%(serial)s> %(serial)s </a></td>' %{'serial':sn, 'id':d[0]})
             print('<td> %s </td>' % d[1])
             cur.execute('select person_name from People where person_id=%s' % d[2])
             print('<td> %s </td>' % cur.fetchall()[0][0])

@@ -20,15 +20,15 @@ base.top(False)
 
 form = cgi.FieldStorage()
 
-if form.getvalue('serial_number'):
-    sn = cgi.escape(form.getvalue('serial_number'))
+if form.getvalue('full_id'):
+    sn = cgi.escape(form.getvalue('full_id'))
 
     home_page_list.add_module(sn)
     
     print('<div class="row">')
     print('<div class="col-md-3 ps-4 pt-2 mx-2 my-2">')
     print('<h2>List of All Boards</h2>' )
-    print('<b><em>(Sorted by Serial Number)</em></b>')
+    print('<b><em>(Sorted by Full ID)</em></b>')
     print('</div>')
     print('<div class="col-md-3 ps-5 pt-2 mx-2 my-2">')
     print('<a href="add_module.py">')
@@ -48,7 +48,7 @@ if form.getvalue('serial_number'):
 else:
     print('<div class="row">')
     print('<div class="col-md-12 ps-4 pt-2 mx-2 my-2">')
-    print('<h4><b> FAILED. Enter SERIAL NUMBER </b></h4>')
+    print('<h4><b> FAILED. Enter Full ID </b></h4>')
     print('</div>')
     print('</div>')
 
@@ -58,7 +58,7 @@ else:
     print('<div class="row">')
     print('<div class="col-md-3 ps-4 pt-2 mx-2 my-2">')
     print('<h2>List of All Boards</h2>' )
-    print('<b><em>(Sorted by Serial Number)</em></b>')
+    print('<b><em>(Sorted by Full ID)</em></b>')
     print('</div>')
     print('</div>')
 

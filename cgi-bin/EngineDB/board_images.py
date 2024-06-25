@@ -20,7 +20,7 @@ def run(static):
     print('<div class="col-md-11 ps-5 py-4my-2"><table class="table table-hover">')
     print('<thead class="table-dark">')
     print('<tr>')
-    print('<th> S/N </th>')
+    print('<th> Full ID </th>')
     print('<th colspan=2> Top View </th>')
     print('<th colspan=2> Bottom View </th>')
     print('</tr>')
@@ -75,7 +75,7 @@ def run(static):
                     print('<a href="../../static_html/files/enginedb/%(img)s"><img src="../../static_html/files/enginedb/%(img)s" width=400 height=auto></a>' % {'img':name_bottom})
                     print('</td>') 
                 else:
-                    print('<td> <a href=module.py?board_id=%(id)s&serial_num=%(serial)s> %(serial)s </a></td>' %{'serial':sn, 'id':board_id})
+                    print('<td> <a href=module.py?board_id=%(id)s&full_id=%(serial)s> %(serial)s </a></td>' %{'serial':sn, 'id':board_id})
                     print('<td colspan=2>')
                     print('<a href="../../static/files/enginedb/%(img)s"><img src="../../static/files/enginedb/%(img)s" width=400 height=auto></a>' % {'img':name_top})
                     print('</td>') 
@@ -88,7 +88,7 @@ def run(static):
                 if static:
                     print('<td> <a href=./%(id)s_%(serial)s_module.html> %(serial)s </a></td>' %{'serial':sn, 'id':s})
                 else:
-                    print('<td> <a href=module.py?board_id=%(id)s&serial_num=%(serial)s> %(serial)s </a></td>' %{'serial':sn, 'id':s})
+                    print('<td> <a href=module.py?board_id=%(id)s&full_id=%(serial)s> %(serial)s </a></td>' %{'serial':sn, 'id':s})
                 print('<td colspan=4>')
                 print('<a>This board has no images.</a>')
                 print('</td>') 

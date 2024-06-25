@@ -20,7 +20,7 @@ def run(static):
     print('<div class="col-md-11 ps-5 py-4my-2"><table class="table table-hover">')
     print('<thead class="table-dark">')
     print('<tr>')
-    print('<th> S/N </th>')
+    print('<th> Full ID </th>')
     print('<th colspan=2> Top View </th>')
     print('<th colspan=2> Bottom View </th>')
     print('</tr>')
@@ -40,13 +40,13 @@ def run(static):
     subtypes = np.unique(subtypes).tolist()
 
     # sorts by subtype
-    serial_numbers = {}
+    barcodes = {}
     for s in subtypes:
         cur.execute('select full_id from Board where type_id="%s"' % s)
         li = []
         for l in cur.fetchall():
             li.append(l[0])
-        serial_numbers[s] = np.unique(li).tolist()
+        barcodes[s] = np.unique(li).tolist()
 
         print('<tr><td colspan=5><a class="btn btn-dark" data-bs-toggle="collapse" href="#col%(id)s">%(id)s</a></td></tr>' %{'id':s})
 
@@ -54,7 +54,7 @@ def run(static):
         print('<div class="collapse" id="col%s">' %s)
         print('<table>')
 
-        for sn in serial_numbers[s]:
+        for sn in barcodes[s]:
             cur.execute('select board_id from Board where full_id="%s"' % sn)
             board_id = cur.fetchall()[0][0]
             # gets the top and bottom images
@@ -67,7 +67,7 @@ def run(static):
                 name_bottom = cur.fetchall()[0][0]
                 print('<tr>')
                 if static:
-                    print('<td> <a href=./%(id)s_%(serial)s_module.html> %(serial)s </a></td>' %{'serial':sn, 'id':s})
+                    print('<td> <a href=./%(id)s_%(full_id)s_module.html> %(full_id)s </a></td>' %{'full_id':sn, 'id':s})
                     print('<td colspan=2>')
                     print('<a href="../../static_html/files/wagondb/%(img)s"><img src="../../static_html/files/wagondb/%(img)s" width=400 height=auto></a>' % {'img':name_top})
                     print('</td>') 
@@ -75,7 +75,7 @@ def run(static):
                     print('<a href="../../static_html/files/wagondb/%(img)s"><img src="../../static_html/files/wagondb/%(img)s" width=400 height=auto></a>' % {'img':name_bottom})
                     print('</td>') 
                 else:
-                    print('<td> <a href=module.py?board_id=%(id)s&serial_num=%(serial)s> %(serial)s </a></td>' %{'serial':sn, 'id':board_id})
+                    print('<td> <a href=module.py?board_id=%(id)s&full_id=%(full_id)s> %(full_id)s </a></td>' %{'full_id':sn, 'id':board_id})
                     print('<td colspan=2>')
                     print('<a href="../../static/files/wagondb/%(img)s"><img src="../../static/files/wagondb/%(img)s" width=400 height=auto></a>' % {'img':name_top})
                     print('</td>') 
@@ -86,9 +86,9 @@ def run(static):
             except:
                 print('<tr>')
                 if static:
-                    print('<td> <a href=./%(id)s_%(serial)s_module.html> %(serial)s </a></td>' %{'serial':sn, 'id':s})
+                    print('<td> <a href=./%(id)s_%(full_id)s_module.html> %(full_id)s </a></td>' %{'full_id':sn, 'id':s})
                 else:
-                    print('<td> <a href=module.py?board_id=%(id)s&serial_num=%(serial)s> %(serial)s </a></td>' %{'serial':sn, 'id':s})
+                    print('<td> <a href=module.py?board_id=%(id)s&full_id=%(full_id)s> %(full_id)s </a></td>' %{'full_id':sn, 'id':s})
                 print('<td colspan=4>')
                 print('<a>This board has no images.</a>')
                 print('</td>') 

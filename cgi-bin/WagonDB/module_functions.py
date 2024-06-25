@@ -141,6 +141,7 @@ def ePortageTest(test_type_id, board_sn, test_name, revokes, static):
         n = i+1
 
         if i == 0:
+            # displays the first test 
             print('<table class="table table-bordered table-hover table-active">')
             print('<tbody>')
             print('<tr>')
@@ -190,6 +191,7 @@ def ePortageTest(test_type_id, board_sn, test_name, revokes, static):
 
                 print('<div class="collapse" id="moretests%s">' % test_type_id)
 
+        # hides the others in a dropdown menu
         if i != 0:
             print('<table class="table table-bordered table-hover table-active">')
             print('<tbody>')
@@ -223,6 +225,7 @@ def ePortageTest(test_type_id, board_sn, test_name, revokes, static):
             print('</tr>')
             # gets attachment(s)
             attachments=Portage_fetch_attach(test_id[i])
+            # TODO add test station info link if it exists
             for afile in attachments:
                 # links attachment
                 if static:
@@ -233,6 +236,7 @@ def ePortageTest(test_type_id, board_sn, test_name, revokes, static):
             print('</tbody>')
             print('</table>')
 
+        # closes the dropdown if one needs to be created
         if i == len(test_id)-1 and len(test_id) > 1:
             print('</div>')
 

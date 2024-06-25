@@ -12,7 +12,7 @@ def parse_data(form):
         print("full_id:", full_id)
         
         # board_type is a str
-        board_type = str(serial)[3:9]
+        board_type = str(full_id)[3:9]
         print("board_type:", board_type)
         tester = cgi.escape(form.getvalue('tester'))
         print("tester:", tester)

@@ -393,13 +393,13 @@ src2.change.emit()
     data_table = DataTable(source=dt, columns=table_columns2, autosize_mode='fit_columns', width=900)
     w = [*widgets.values()]
     
-    # changes the options for the serial numbers widget based on the subtype selected
+    # changes the options for the barcodes widget based on the subtype selected
     subtypes = np.unique(ds_mp.data['Type ID'].tolist()).tolist()
-    serial_numbers = {}
+    barcodes = {}
     for s in subtypes:
-        serial_numbers[s] = np.unique(mp_temp.query('`Type ID` == @s')['Full ID'].values.tolist()).tolist()
-    update_options = CustomJS(args=dict(serial_numbers=serial_numbers, widget=w[1]), code=('''
-widget.options = serial_numbers[this.value]
+        barcodes[s] = np.unique(mp_temp.query('`Type ID` == @s')['Full ID'].values.tolist()).tolist()
+    update_options = CustomJS(args=dict(barcodes=barcodes, widget=w[1]), code=('''
+widget.options = barcodes[this.value]
 '''))
     w[0].js_on_change('value', update_options)
 
@@ -411,7 +411,7 @@ widget.options = serial_numbers[this.value]
     return plot_json
 
 
-def Gaussian2(mp_data, eo_data, view, subtypes, serial_numbers, widgets, modules, n_sigma):
+def Gaussian2(mp_data, eo_data, view, subtypes, barcodes, widgets, modules, n_sigma):
     hist_mp = {}
     hist_eo = {}
     pf_mp = {}
@@ -425,20 +425,20 @@ def Gaussian2(mp_data, eo_data, view, subtypes, serial_numbers, widgets, modules
         pf_eo[s] = ColumnDataSource(data={'pass':[], 'fail':[], 'x':['Fail', 'Pass']})
         td[s] = ColumnDataSource(data={'Serial Number':[], 'Module':[], 'Midpoint Deviation':[], 'Pass/Fail MP':[], 'Eye Opening Deviation':[], 'Pass/Fail EO':[]})
 
-    x = CustomJS(args=dict(hist_mp=hist_mp, hist_eo=hist_eo, mp_data=mp_data, eo_data=eo_data, views=view, subtypes=subtypes, serial_numbers=serial_numbers, modules=modules, n_sigma=n_sigma, pf_mp=pf_mp, pf_eo=pf_eo, td=td),code='''
+    x = CustomJS(args=dict(hist_mp=hist_mp, hist_eo=hist_eo, mp_data=mp_data, eo_data=eo_data, views=view, subtypes=subtypes, barcodes=barcodes, modules=modules, n_sigma=n_sigma, pf_mp=pf_mp, pf_eo=pf_eo, td=td),code='''
 // iterate by subtype
 for (let s = 0; s < subtypes.length; s++) {
     // create an array for the residuals at the start
     const mp_residules = [];
     const eo_residules = [];
 
-    // create a dictionary for each serial number's average deviation for each E Link
+    // create a dictionary for each board's average deviation for each E Link
     var mp_chis = {};
     var eo_chis = {};
-    // make an empty array for each serial number
-    for (let sn = 0; sn < serial_numbers[subtypes[s]].length; sn++) {
-        mp_chis[serial_numbers[subtypes[s]][sn]] = [];
-        eo_chis[serial_numbers[subtypes[s]][sn]] = [];
+    // make an empty array for each board
+    for (let sn = 0; sn < barcodes[subtypes[s]].length; sn++) {
+        mp_chis[barcodes[subtypes[s]][sn]] = [];
+        eo_chis[barcodes[subtypes[s]][sn]] = [];
     } 
     // iterate over E Links
     // each E Link will have a different midpoint, therefore need a different average for each
@@ -464,15 +464,15 @@ for (let s = 0; s < subtypes.length; s++) {
         let eo_mean = d3.mean(eo_good_data)
         let mp_std = d3.deviation(mp_good_data)
         let eo_std = d3.deviation(eo_good_data)
-        // iterate over serial numbers
-        for (let sn = 0; sn < serial_numbers[subtypes[s]].length; sn++) {
+        // iterate over barcodes
+        for (let sn = 0; sn < barcodes[subtypes[s]].length; sn++) {
             const indices = views[subtypes[s]].filters[0].compute_indices(mp_data[subtypes[s]]);
             let mask_sn = new Array(mp_data[subtypes[s]].data['Midpoint'].length).fill(false);
             [...indices].forEach((x)=>{mask_sn[x] = true;})
 
             // iterate over all valid data points
             for (let j = 0; j < mp_data[subtypes[s]].get_length(); j++) {
-                if (mask_sn[j] == true && mp_data[subtypes[s]].data['E Link'][j] == modules[subtypes[s]][k] && mp_data[subtypes[s]].data['Full ID'][j] == serial_numbers[subtypes[s]][sn]){
+                if (mask_sn[j] == true && mp_data[subtypes[s]].data['E Link'][j] == modules[subtypes[s]][k] && mp_data[subtypes[s]].data['Full ID'][j] == barcodes[subtypes[s]][sn]){
                     mask_sn[j] = true;
                     // calculate difference
                     let x1 = mp_data[subtypes[s]].data['Midpoint'][j] - mp_mean;
@@ -497,17 +497,17 @@ for (let s = 0; s < subtypes.length; s++) {
                     mask_sn[j] = false;
                 }
             }
-            // filter data for this serial number and find the average
+            // filter data for this board and find the average
             const mp_good_data_sn = mp_data[subtypes[s]].data['Midpoint'].filter((_,y)=>mask_sn[y])
             let mean_sn1 = d3.mean(mp_good_data_sn)
-            // determine how far the average for this serial number is from the overall average
+            // determine how far the average for this board is from the overall average
             let y1 = mean_sn1 - mp_mean;
             if (mp_std == 0) {
                 let chi_sn1 = 0;
-                mp_chis[serial_numbers[subtypes[s]][sn]].push(Math.abs(chi_sn1))
+                mp_chis[barcodes[subtypes[s]][sn]].push(Math.abs(chi_sn1))
             } else {
                 let chi_sn1 = y1/mp_std;
-                mp_chis[serial_numbers[subtypes[s]][sn]].push(Math.abs(chi_sn1))
+                mp_chis[barcodes[subtypes[s]][sn]].push(Math.abs(chi_sn1))
             }
 
             const eo_good_data_sn = eo_data[subtypes[s]].data['Eye Opening'].filter((_,y)=>mask_sn[y])
@@ -515,10 +515,10 @@ for (let s = 0; s < subtypes.length; s++) {
             let y2 = mean_sn2 - eo_mean;
             if (eo_std == 0) {
                 let chi_sn2 = 0;
-                eo_chis[serial_numbers[subtypes[s]][sn]].push(Math.abs(chi_sn2))
+                eo_chis[barcodes[subtypes[s]][sn]].push(Math.abs(chi_sn2))
             } else {
                 let chi_sn2 = y2/eo_std;
-                eo_chis[serial_numbers[subtypes[s]][sn]].push(Math.abs(chi_sn2))
+                eo_chis[barcodes[subtypes[s]][sn]].push(Math.abs(chi_sn2))
             }
         }
     }
@@ -560,15 +560,15 @@ for (let s = 0; s < subtypes.length; s++) {
     const eo_chi_td = [];
     const mp_pf_td = [];
     const eo_pf_td = [];
-    // iterate over serial numbers
-    for (let sn = 0; sn < serial_numbers[subtypes[s]].length; sn++) {
+    // iterate over barcodes
+    for (let sn = 0; sn < barcodes[subtypes[s]].length; sn++) {
         let mp_pass = 0;
         let mp_fail = 0;
         let eo_pass = 0;
         let eo_fail = 0;
         // iterate over the average residuals for this board
-        for (let m = 0; m < mp_chis[serial_numbers[subtypes[s]][sn]].length; m++) {
-            let chi_i_mp = mp_chis[serial_numbers[subtypes[s]][sn]][m]
+        for (let m = 0; m < mp_chis[barcodes[subtypes[s]][sn]].length; m++) {
+            let chi_i_mp = mp_chis[barcodes[subtypes[s]][sn]][m]
             // check if it passes
             if (chi_i_mp <= n_sigma.value) {
                 mp_pass = mp_pass + 1;
@@ -577,13 +577,13 @@ for (let s = 0; s < subtypes.length; s++) {
                 mp_fail = mp_fail + 1;
                 mp_pf_td.push('FAIL')
             }
-            sn_td.push(serial_numbers[subtypes[s]][sn])
+            sn_td.push(barcodes[subtypes[s]][sn])
             mod_td.push(modules[subtypes[s]][m])
             mp_chi_td.push(chi_i_mp)
         }
 
-        for (let e = 0; e < eo_chis[serial_numbers[subtypes[s]][sn]].length; e++) {
-            let chi_i = eo_chis[serial_numbers[subtypes[s]][sn]][e]
+        for (let e = 0; e < eo_chis[barcodes[subtypes[s]][sn]].length; e++) {
+            let chi_i = eo_chis[barcodes[subtypes[s]][sn]][e]
             if (chi_i <= n_sigma.value) {
                 eo_pass = eo_pass + 1;
                 eo_pf_td.push('PASS')
@@ -642,15 +642,15 @@ def Gaussian():
     subtypes = np.unique(ds_mp.data['Type ID'].tolist()).tolist()
     mp_data_sources = {}
     eo_data_sources = {}
-    serial_numbers = {}
+    barcodes = {}
     modules = {}
-    # make serial numbers dict
+    # make barcodes dict
     # make data sources for each subtype
     # sort E Links by subtype (not all have the same E Links)
     for s in subtypes:
         mp_data_sources[s] = ColumnDataSource(mp_temp.query('`Type ID` == @s'))
         eo_data_sources[s] = ColumnDataSource(eo_temp.query('`Type ID` == @s'))
-        serial_numbers[s] = np.unique(mp_temp.query('`Type ID` == @s')['Full ID'].values.tolist()).tolist()
+        barcodes[s] = np.unique(mp_temp.query('`Type ID` == @s')['Full ID'].values.tolist()).tolist()
         modules[s] = np.unique(mp_data_sources[s].data['E Link']).tolist()
 
     # widget creation is the same as before
@@ -714,7 +714,7 @@ for (let i = 0; i < subtypes.length; i++) {
     n_sigma = NumericInput(value=1, low=0.01, high=10, title='# of standard deviations for passing', mode='float')
 
     # get plotting data sources
-    mp_hist, eo_hist, td, mp_pf, eo_pf = Gaussian2(mp_data_sources, eo_data_sources, views, subtypes, serial_numbers, widgets.values(), modules, n_sigma)
+    mp_hist, eo_hist, td, mp_pf, eo_pf = Gaussian2(mp_data_sources, eo_data_sources, views, subtypes, barcodes, widgets.values(), modules, n_sigma)
 
     # create dictionaries for plots
     mp_plots = {}
@@ -776,7 +776,7 @@ for (let i = 0; i < subtypes.length; i++) {
         eo_pf_plots[s] = l
 
         table_columns = [
-                        TableColumn(field='Serial Number', title='Serial Number'),
+                        TableColumn(field='Serial Number', title='Full ID'),
                         TableColumn(field='Module', title='Module'),
                         TableColumn(field='Midpoint Deviation', title='Midpoint Deviation'),
                         TableColumn(field='Pass/Fail MP', title='Pass/Fail'),
@@ -790,8 +790,8 @@ for (let i = 0; i < subtypes.length; i++) {
 
     # custom javascript that gets run when the subtypes select widget is changed
     # displays the plots for that subtype and hides the others
-    # also changes serial number options
-    display_plot = CustomJS(args=dict(mp_plots=mp_plots, eo_plots=eo_plots, mp_pf_plots=mp_pf_plots, eo_pf_plots=eo_pf_plots, tables=data_tables, widget=w[0], serial_numbers=serial_numbers), code=('''
+    # also changes full id options
+    display_plot = CustomJS(args=dict(mp_plots=mp_plots, eo_plots=eo_plots, mp_pf_plots=mp_pf_plots, eo_pf_plots=eo_pf_plots, tables=data_tables, widget=w[0], barcodes=barcodes), code=('''
 for (let [name,plot] of Object.entries(mp_plots)){
     if (name == this.value){
         plot.visible = true
@@ -827,7 +827,7 @@ for (let [name,widget] of Object.entries(tables)){
         widget.visible = false
     }
 }
-widget.options = serial_numbers[this.value]
+widget.options = barcodes[this.value]
 '''))
     
     select = Select(title='Type ID', options=subtypes)
