@@ -22,7 +22,7 @@ def run(static):
         print('<div class="row">')
         print('<div class="col-md-5 pt-2 ps-5 mx-2 my-2">')
         print('<h2>List of All Boards</h2>' )
-        print('<b><em>(Sorted by Serial Number)</em></b>&emsp;<badge class="badge bg-primary">Successful Tests</badge>')
+        print('<b><em>(Sorted by Full ID)</em></b>&emsp;<badge class="badge bg-primary">Successful Tests</badge>')
         print('</div>')
         # this div adds spacing
         print('<div class="col-md-3"></div>')

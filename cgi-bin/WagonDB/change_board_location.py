@@ -13,7 +13,7 @@ print("Content-type: text/html\n")
 base_url = connect.get_base_url()
 
 form = cgi.FieldStorage()
-sn = cgi.escape(form.getvalue("serial_num"))
+bc = cgi.escape(form.getvalue("full_id"))
 
 base.header(title='Change Board Location')
 base.top(False)
@@ -21,10 +21,10 @@ base.top(False)
 # creates form to change board location
 # runs change_board_location2.py with the form info on submit
 print('<form action="change_board_location2.py" method="post" enctype="multipart/form-data">')
-print('<INPUT TYPE="hidden" name="serial_number" value="%s">' % (sn))
+print('<INPUT TYPE="hidden" name="full_id" value="%s">' % (bc))
 print('<div class="row">')
 print('<div class="col-md-12 pt-4 ps-5 mx-2 my-2">')
-print('<h2>Change Board Location %s</h2>' %sn)
+print('<h2>Change Board Location %s</h2>' %bc)
 print('</div>')
 print('</div>')
 print('<div class="row">')

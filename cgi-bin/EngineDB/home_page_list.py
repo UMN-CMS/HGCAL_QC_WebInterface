@@ -68,7 +68,7 @@ def add_module_form():
 
     print('<div class="row">')
     print('<div class = "col-md-3 ps-5 mx-2 my-2">')
-    print('<input type="int" name="serial_number" placeholder="Serial Number">')
+    print('<input type="int" name="full_id" placeholder="Full ID">')
     print('</div>')
     print('<div class="col-md-1 sub-card-submit">')
     print('<button type="submit" class="btn btn-dark">Submit</button>')
@@ -214,9 +214,9 @@ def allboards(static):
                     temp_col = '<a class="d-inline-flex list-group-item list-group-item-action text-decorate-none justify-content-between" href="./%(id)s_%(serial)s_module.html"> %(serial)s <span class="badge bg-success rounded-pill">%(success)s/%(total)s</span><span class="badge bg-secondary rounded-pill">%(run)s/%(total)s</span><span class="badge bg-danger rounded-pill">%(failed)s/%(total)s</span></a>' %{'serial':sn, 'id':s, 'success': num, 'total': total, 'run': r_num, 'failed': failed}
             else:
                 if num == total:
-                    temp_col = '<a class="d-inline-flex list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?board_id=%(id)s&serial_num=%(serial)s"> %(serial)s <span class="badge bg-success rounded-pill">Done</span></a>' %{'serial':sn, 'id':board_id}
+                    temp_col = '<a class="d-inline-flex list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?board_id=%(id)s&full_id=%(serial)s"> %(serial)s <span class="badge bg-success rounded-pill">Done</span></a>' %{'serial':sn, 'id':board_id}
                 else:
-                    temp_col = '<a class="d-inline-flex list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?board_id=%(id)s&serial_num=%(serial)s"> %(serial)s <span class="badge bg-success rounded-pill">%(success)s/%(total)s</span><span class="badge bg-secondary rounded-pill">%(run)s/%(total)s</span><span class="badge bg-danger rounded-pill">%(failed)s/%(total)s</span></a>' %{'serial':sn, 'id':s, 'success': num, 'total': total, 'run': r_num, 'failed': failed}
+                    temp_col = '<a class="d-inline-flex list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?board_id=%(id)s&full_id=%(serial)s"> %(serial)s <span class="badge bg-success rounded-pill">%(success)s/%(total)s</span><span class="badge bg-secondary rounded-pill">%(run)s/%(total)s</span><span class="badge bg-danger rounded-pill">%(failed)s/%(total)s</span></a>' %{'serial':sn, 'id':s, 'success': num, 'total': total, 'run': r_num, 'failed': failed}
 
             columns[s].append(temp_col)
 

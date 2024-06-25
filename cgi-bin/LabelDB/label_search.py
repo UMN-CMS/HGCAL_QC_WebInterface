@@ -12,8 +12,7 @@ print("Content-type: text/html\n")
 base.header(title='Search for Label')
 base.top()
 
-# creates form to change board location
-# runs change_board_location2.py with the form info on submit 
+# creates form to search for a label given an input
 print('<form action="label_search2.py" method="post" enctype="multipart/form-data">')
 print('<div class="row">')
 print('<div class="col-md-12 pt-4 ps-5 mx-2 my-2">')
@@ -25,6 +24,7 @@ print('<div class="col">')
 print('<div class="col-md-3 pt-2 ps-5 mx-2 my-2">')
 print('<label> Query')
 print('<select class="form-control" name="query">')
+# can search by whether it starts with, ends with, or contains a string
 print('<option value="Contains">Contains</option>')
 print('<option value="Starts with">Starts with</option>')
 print('<option value="Ends with">Ends with</option>')
@@ -32,7 +32,7 @@ print('</select>')
 print('</label>')
 print('</div>')
 print('<div class="col-md-3 pt-2 ps-5 mx-2 my-2">')
-print('<input type="text" name="serial_num" placeholder="Serial Number">')
+print('<input type="text" name="serial_num" placeholder="Full ID">')
 print('</div>')
 print('</div>')
 print('<div class="row">')

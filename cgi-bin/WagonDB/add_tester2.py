@@ -5,6 +5,9 @@ import base
 import add_test_functions
 import os
 import connect
+import sys
+sys.path.insert(0, '../EngineDB/')
+import add_test_functions as engine_add_test_functions
 
 base_url = connect.get_base_url()
 
@@ -21,6 +24,7 @@ base.top(False)
 
 
 print(person_name)
-test_id=add_test_functions.add_tester(person_name, password)
+add_test_functions.add_tester(person_name, password)
+engine_add_test_functions.add_tester(person_name, password)
 
 base.bottom(False)

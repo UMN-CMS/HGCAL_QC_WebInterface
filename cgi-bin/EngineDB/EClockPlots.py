@@ -511,7 +511,7 @@ def Gaussian():
     q.vbar(x='x', top='fail', source=pf, color=colors[3], width=0.8)
 
     table_columns = [
-                    TableColumn(field='Serial Number', title='Serial Number'),
+                    TableColumn(field='Serial Number', title='Full ID'),
                     TableColumn(field='Module', title='Clock'),
                     TableColumn(field='Deviation', title='# of Standard Deviations'),
                     TableColumn(field='Pass/Fail', title='Pass/Fail'),

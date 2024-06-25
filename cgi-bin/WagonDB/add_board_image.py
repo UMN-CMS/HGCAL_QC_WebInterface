@@ -13,17 +13,17 @@ print("Content-type: text/html\n")
 base_url = connect.get_base_url()
 
 form = cgi.FieldStorage()
-sn = cgi.escape(form.getvalue("serial_num"))
+full_id = cgi.escape(form.getvalue("full_id"))
 
 base.header(title='Add Board Image')
 base.top(False)
 
 # calls the form that uploads the image on submit
 print('<form action="add_board_image_upload.py" method="post" enctype="multipart/form-data">')
-print('<INPUT TYPE="hidden" name="serial_number" value="%s">' % (sn))
+print('<INPUT TYPE="hidden" name="full_id" value="%s">' % (full_id))
 print('<div class="row">')
 print('<div class="col-md-12 pt-4 ps-5 mx-2 my-2">')
-print('<h2>Add Image for Board %s</h2>' %sn)
+print('<h2>Add Image for Board %s</h2>' %full_id)
 print('</div>')
 print('</div>')
 print('<div class="row">')

@@ -15,7 +15,7 @@ print("Content-type: text/html\n")
 form = cgi.FieldStorage()
 person_id = base.cleanCGInumber(form.getvalue("person_id"))
 test_type = base.cleanCGInumber(form.getvalue("test_type"))
-serial_num = cgi.escape(form.getvalue("serial_number"))
+bc = cgi.escape(form.getvalue("full_id"))
 success = base.cleanCGInumber(form.getvalue("success"))
 comments = form.getvalue("comments")
 
@@ -26,7 +26,7 @@ base.header(title='Add Test')
 base.top(False)
 
 # adds the test and returns the test id
-test_id=add_test_functions.add_test(person_id, test_type, serial_num, success, comments)
+test_id=add_test_functions.add_test(person_id, test_type, bc, success, comments)
 
 # decodes attached file and sends it to the Attachments table
 for itest in [1]:

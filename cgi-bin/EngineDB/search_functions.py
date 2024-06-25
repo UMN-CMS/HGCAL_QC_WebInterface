@@ -230,9 +230,18 @@ Attach
 '''
     link = HTMLTemplateFormatter(template=link_template)
 
+    module_template = '''
+<div style="font-size: 150%">
+<a href="module.py?full_id=<%= value %>"target="_blank">
+<%= value %>
+</a>
+</div> 
+'''
+    board = HTMLTemplateFormatter(template=module_template)
+
     table_columns = [
                     TableColumn(field='Type ID', title='Type ID', formatter=bigger_font),
-                    TableColumn(field='Full ID', title='Full ID', formatter=bigger_font),
+                    TableColumn(field='Full ID', title='Full ID', formatter=board),
                     TableColumn(field='Test Type', title='Test Type', formatter=bigger_font),
                     TableColumn(field='Person Name', title='Person Name', formatter=bigger_font),
                     TableColumn(field='Date', title='Date', formatter=bigger_font),

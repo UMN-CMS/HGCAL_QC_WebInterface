@@ -97,7 +97,7 @@ def run(static):
                     if static:
                         print('<td> <a href="./%(id)s_%(sn)s_module.html"> %(sn)s </a></td>' %{'id':s, 'sn':sn})
                     else:
-                        print('<td> <a href="module.py?board_id=%(id)s&serial_num=%(sn)s"> %(sn)s </a></td>' %{'id':b, 'sn':sn})
+                        print('<td> <a href="module.py?board_id=%(id)s&full_id=%(sn)s"> %(sn)s </a></td>' %{'id':b, 'sn':sn})
                     print('<td>')
                     print('<ul>')
                     # gets test names and prints them

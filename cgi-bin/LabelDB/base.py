@@ -13,13 +13,9 @@ def header(title=''):
     if len(sys.argv) == 1:
         print('<meta charset="utf-8">')
         print('<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">')
-        #print('<link  rel="stylesheet" href="../static/css/bootstrap.min.css">')
-        #print('<link  rel="stylesheet" href="../static/css/style.css">')
     else:
         print('<meta charset="utf-8">')
         print('<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">')
-        #print('<link  rel="stylesheet" href="bootstrap.min.css">')
-        #print('<link  rel="stylesheet" href="style.css">')
     print('<title> %s </title>' %title)
     print('''
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.3.3.min.js"
@@ -30,10 +26,6 @@ def header(title=''):
         crossorigin="anonymous"></script>
 <script src="https://d3js.org/d3.v7.min.js"></script>
     ''')
-    #print('''
-#<script src="https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-2.3.3.min.js"
-        #crossorigin="anonymous"></script>
-    #''')
     print('</head>')
 
 def top():

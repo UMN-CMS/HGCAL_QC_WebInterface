@@ -517,7 +517,7 @@ def Gaussian():
         pf_plots[m] = q
 
         table_columns = [
-                        TableColumn(field='Serial Number', title='Serial Number'),
+                        TableColumn(field='Serial Number', title='Full ID'),
                         TableColumn(field='Module', title='Clock'),
                         TableColumn(field='Deviation', title='# of Standard Deviations'),
                         TableColumn(field='Pass/Fail', title='Pass/Fail'),

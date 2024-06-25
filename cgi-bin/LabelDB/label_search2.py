@@ -29,6 +29,7 @@ print('<h2>Search Results for %s</h2>' % serial_num)
 print('</div>')
 print('</div>')
 
+# gets labels that match the search parameters
 if how == 'Contains':
     query = 'select full_label from Label where full_label like "%{}%" order by full_label'.format(serial_num)
 
@@ -40,6 +41,7 @@ if how == 'Ends with':
 
 cur.execute(query)
 labels = cur.fetchall()
+#prints out all labels
 print('''
 <div class="row">
     <div class="col-md-10 pt-4 ps-5 mx-2 my-2">
