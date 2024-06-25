@@ -16,10 +16,9 @@ print("Content-type: text/html\n")
 
 # grabs the information from the form and calls board_checkout() to enter info into the DB
 form = cgi.FieldStorage()
-print(form)
 try:
-    sn = form.getvalue('serial_number')
-    cur.execute('select board_id from Board where full_id="%s"' % sn)
+    full = form.getvalue('full_id')
+    cur.execute('select board_id from Board where full_id="%s"' % full)
     board_id = cur.fetchall()[0][0]
 except:
     board_id = base.cleanCGInumber(form.getvalue("board_id"))

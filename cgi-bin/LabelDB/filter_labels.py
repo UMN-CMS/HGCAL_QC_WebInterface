@@ -6,6 +6,7 @@ import base
 import sys
 from search_functions import Filter
 
+# filters labels by major type, sub type, and creation date
 def run(static):
     base.header(title='Filter Labels')
     base.top()

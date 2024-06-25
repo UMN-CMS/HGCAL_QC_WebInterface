@@ -89,15 +89,18 @@ def run():
         mod1 = []
         mod2 = []
         for i in range(len(Attach_Data)):
-            mod9999.append(Attach_Data[i]['num_iic_checks_mod9999'])
+            try:
+                mod9999.append(Attach_Data[i]['num_iic_checks_mod9999'])
+            except KeyError:
+                mod9999.append(Attach_Data[i]['num_iic_checks_mod0'])
             mod0.append(Attach_Data[i]['num_iic_correct_mod0'])
             try:
                 mod1.append(Attach_Data[i]['num_iic_correct_mod1'])
-            except KeyError as e:
+            except KeyError:
                 mod1.append(-1)
             try:
                 mod2.append(Attach_Data[i]['num_iic_correct_mod2'])
-            except KeyError as e:
+            except KeyError:
                 mod2.append(-1)
 
         writer.writeheader()

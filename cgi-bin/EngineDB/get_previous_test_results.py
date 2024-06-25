@@ -13,10 +13,10 @@ base.top(False)
 
 form = cgi.FieldStorage()
 
-if form.getvalue('serial_number'):
-    serial_number = cgi.escape(form.getvalue('serial_number'))
+if form.getvalue('full_id'):
+    full_id = cgi.escape(form.getvalue('full_id'))
 
-    add_test_functions.get_previous_test_results(serial_number)
+    add_test_functions.get_previous_test_results(full_id)
 
 else:
     print('No serial number sent.')

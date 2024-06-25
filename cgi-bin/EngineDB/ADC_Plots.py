@@ -613,7 +613,7 @@ src4.change.emit()
         p_3.legend.click_policy='hide'
         p_3.legend.label_text_font_size = '8pt' 
     table_columns_resist = [
-                    TableColumn(field='Serial Number', title='Serial Number'),
+                    TableColumn(field='Serial Number', title='Full ID'),
                     TableColumn(field='E Link', title='E link'),
                     TableColumn(field='Resistance', title='Resistance'),
                     TableColumn(field='Outcome', title='Outcome'),
@@ -621,7 +621,7 @@ src4.change.emit()
     data_table_1 = DataTable(source=td['resist'], columns=table_columns_resist, autosize_mode='fit_columns')
 
     table_columns_volt = [
-                    TableColumn(field='Serial Number', title='Serial Number'),
+                    TableColumn(field='Serial Number', title='Full ID'),
                     TableColumn(field='ADC', title='ADC'),
                     TableColumn(field='Voltage', title='Voltage'),
                     TableColumn(field='Outcome', title='Outcome'),
@@ -629,7 +629,7 @@ src4.change.emit()
     data_table_2 = DataTable(source=td['volt'], columns=table_columns_volt, autosize_mode='fit_columns')
 
     table_columns_temp = [
-                    TableColumn(field='Serial Number', title='Serial Number'),
+                    TableColumn(field='Serial Number', title='Full ID'),
                     TableColumn(field='Chip', title='Chip'),
                     TableColumn(field='Temperature', title='Temperature'),
                     TableColumn(field='Outcome', title='Outcome'),
@@ -637,7 +637,7 @@ src4.change.emit()
     data_table_3 = DataTable(source=td['temp'], columns=table_columns_temp, autosize_mode='fit_columns')
 
     table_columns_adc = [
-                    TableColumn(field='Serial Number', title='Serial Number'),
+                    TableColumn(field='Serial Number', title='Full ID'),
                     TableColumn(field='ADC', title='ADC'),
                     TableColumn(field='Slope', title='Slope'),
                     TableColumn(field='Intercept', title='Intercept'),
@@ -1480,7 +1480,7 @@ src4.change.emit()
     p_plots = {'Slope': p_1, 'Intercept': p_2, 'R Squared': p_3, 'Resistance': p_4, 'Voltage': p_5, 'Temperature': p_6}
 
     table_columns = [
-                    TableColumn(field='Serial Number', title='Serial Number'),
+                    TableColumn(field='Serial Number', title='Full ID'),
                     TableColumn(field='Module', title='Module'),
                     TableColumn(field='Deviation', title='Deviation'),
                     TableColumn(field='Pass/Fail', title='Pass/Fail'),

@@ -47,6 +47,7 @@ def looped_pages():
     scripts = {'Serial Numbers': ['module.py'],
                 'Subtypes': ['summary_board.py'],
                 'People': ['tester_summary2.py'],
+                'Attachments': ['get_attach.py'],
              }
     return scripts
 

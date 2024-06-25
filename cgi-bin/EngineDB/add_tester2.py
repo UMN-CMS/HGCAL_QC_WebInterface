@@ -5,6 +5,9 @@ import base
 import add_test_functions
 import os
 import connect
+import sys
+sys.path.insert(0, '../WagonDB/')
+import add_test_functions as wagon_add_test_functions
 
 base_url = connect.get_base_url()
 
@@ -19,7 +22,9 @@ password = cgi.escape(form.getvalue("password"))
 base.header(title='Add Tester')
 base.top(False)
 
+
 print(person_name)
-test_id=add_test_functions.add_tester(person_name, password)
+add_test_functions.add_tester(person_name, password)
+wagon_add_test_functions.add_tester(person_name, password)
 
 base.bottom(False)

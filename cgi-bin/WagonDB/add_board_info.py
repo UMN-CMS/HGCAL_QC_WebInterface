@@ -9,14 +9,14 @@ print("Content-type: text/html\n")
 
 # gets board info
 form = cgi.FieldStorage()
-serial_num = cgi.escape(form.getvalue('serial_num'))
+full_id = cgi.escape(form.getvalue('full_id'))
 board_id = base.cleanCGInumber(form.getvalue('board_id'))
 
 base.header(title='Add extra information about board')
 base.top(False)
 
 # sends board info here
-home_page_list.add_board_info_form(serial_num, board_id)
+home_page_list.add_board_info_form(full_id, board_id)
 
 base.bottom(False)
 

@@ -68,7 +68,7 @@ def add_module_form():
 
     print('<div class="row">')
     print('<div class = "col-md-3 ps-5 mx-2 my-2">')
-    print('<input type="int" name="serial_number" placeholder="Serial Number">')
+    print('<input type="int" name="full_id" placeholder="Full ID">')
     print('</div>')
     print('<div class="col-md-1 sub-card-submit">')
     print('<button type="submit" class="btn btn-dark">Submit</button>')
@@ -79,7 +79,7 @@ def add_module_form():
 
     print('<hr>')
 
-def add_board_info_form(sn, board_id):
+def add_board_info_form(full_id, board_id):
     
     # creates a form for board info and calls add_board_info2.py to submit it
     print('<form method="post" class="sub-card-form" action="add_board_info2.py">')
@@ -89,7 +89,7 @@ def add_board_info_form(sn, board_id):
     print('</div>')
     print('</div>')
 
-    print('<input type="hidden" name="serial_number" value="%s">' % sn)
+    print('<input type="hidden" name="full_id" value="%s">' % full_id)
     print('<input type="hidden" name="board_id" value="%s">' % board_id)
     print('<div class="row">')
     print('<div class = "col-md-5 ps-5 pt-2 mx-2 my-2">')
@@ -146,11 +146,14 @@ def add_module(serial_number):
             #print '<div> INSERT INTO Card set sn = %s; </div>' %(serial_number)
             db.commit()
             db.close()
+            return 'Board entered successfully!'
         else:
             print("<h3>Serial number already exists!<h3>")
+            return 'Board already exists!'
     except mysql.connector.Error as err:
         print("<h3>Serial number already exists!</h3>")
         print(err)
+        return 'Failed to enter Board'
     
 def allboards(static):
     # sorts all the boards by subtype and puts all the serial numbers in a dictionary under their subtype
@@ -215,9 +218,9 @@ def allboards(static):
                     temp_col = '<a class="d-inline-flex list-group-item list-group-item-action text-decorate-none justify-content-between" href="./%(id)s_%(serial)s_module.html"> %(serial)s <span class="badge bg-success rounded-pill">%(success)s/%(total)s</span><span class="badge bg-danger rounded-pill">%(run)s/%(total)s</span><span class="badge bg-secondary rounded-pill">%(failed)s/%(total)s</span></a>' %{'serial':sn, 'id':s, 'success': num, 'total': total, 'run': r_num, 'failed': failed}
             else:
                 if num == total:
-                    temp_col = '<a class="d-inline-flex list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?board_id=%(id)s&serial_num=%(serial)s"> %(serial)s <span class="badge bg-success rounded-pill">Done</span></a>' %{'serial':sn, 'id':board_id}
+                    temp_col = '<a class="d-inline-flex list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?board_id=%(id)s&full_id=%(serial)s"> %(serial)s <span class="badge bg-success rounded-pill">Done</span></a>' %{'serial':sn, 'id':board_id}
                 else:
-                    temp_col = '<a class="d-inline-flex list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?board_id=%(id)s&serial_num=%(serial)s"> %(serial)s <span class="badge bg-success rounded-pill">%(success)s/%(total)s</span><span class="badge bg-danger rounded-pill">%(run)s/%(total)s</span><span class="badge bg-secondary rounded-pill">%(failed)s/%(total)s</span></a>' %{'serial':sn, 'id':s, 'success': num, 'total': total, 'run': r_num, 'failed': failed}
+                    temp_col = '<a class="d-inline-flex list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?board_id=%(id)s&full_id=%(serial)s"> %(serial)s <span class="badge bg-success rounded-pill">%(success)s/%(total)s</span><span class="badge bg-danger rounded-pill">%(run)s/%(total)s</span><span class="badge bg-secondary rounded-pill">%(failed)s/%(total)s</span></a>' %{'serial':sn, 'id':s, 'success': num, 'total': total, 'run': r_num, 'failed': failed}
 
             columns[s].append(temp_col)
 

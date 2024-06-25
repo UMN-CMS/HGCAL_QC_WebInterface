@@ -9,7 +9,7 @@ import base
 print("Content-type: text/html\n")
 
 form = cgi.FieldStorage()
-sn = cgi.escape(form.getvalue("serial_number"))
+full_id = cgi.escape(form.getvalue("full_id"))
 fileitems = [form['top_view'], form['bottom_view']]
 
 base.header(title='Add Image')
@@ -22,7 +22,7 @@ for idx,item in enumerate(fileitems):
     if idx == 1:
         view = 'Bottom'
     try:
-        module_functions.add_board_image(str(sn), item, view)
+        module_functions.add_board_image(str(full_id), item, view)
     except Exception as e:
         print("Issue uploading")
         print(e)

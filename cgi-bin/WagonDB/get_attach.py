@@ -6,9 +6,11 @@ from connect import connect
 import settings
 import os.path
 import sys
+import json
 
 db=connect(0)
 cur=db.cursor()
+
 
 if __name__ == "__main__": 
     form = cgi.FieldStorage()
@@ -40,8 +42,17 @@ if __name__ == "__main__":
             base.bottom(False)        
         else:
             # decodes the attachment and displays it
-            print('Content-type: %s \n\n' % (thevals[0][1]))
-            print(f.decode("utf-8"))
+            try:
+                print('Content-type: %s \n\n' % (thevals[0][1]))
+                print(json.dumps(json.loads(f.decode("utf-8")), indent=1))
+            except json.decoder.JSONDecodeError:
+                print("Content-type: text/html\n")
+                base.header("Attachment Request Error")
+                base.top(False)
+                print('<div class="col-md-6 ps-4 pt-4 mx-2 my-2">')
+                print('Error: Test data length exceeds 65535 characters.')
+                print('</div>')
+                base.bottom(False)        
         
     cur.close()
 
@@ -83,7 +94,9 @@ def run(attach_id):
             print('<title> Attachment </title>')
             print('</head>')
             print('<body>')
-            print(f.decode("utf-8"))
+            print('<pre>')
+            print(json.dumps(json.loads(f.decode("utf-8")), indent=1))
+            print('</pre>')
             print('</body>')
             print('</html>')
 
@@ -105,3 +118,4 @@ def save(attach_id):
             statinfo = os.stat(attpath)
             sys.stdout.write(file(attpath,"rb").read() )
     cur.close()
+

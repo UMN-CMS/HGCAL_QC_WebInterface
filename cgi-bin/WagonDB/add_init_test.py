@@ -14,7 +14,7 @@ database_entry = base.cleanCGInumber(form.getvalue("database_entry"))
 label_legibility = base.cleanCGInumber(form.getvalue("label_legibility"))
 power_cycle = base.cleanCGInumber(form.getvalue("power_cycle"))
 tester = cgi.escape(form.getvalue("tester"))
-serial_num = cgi.escape(form.getvalue("serial_num"))
+bc = cgi.escape(form.getvalue("full_id"))
 comments = form.getvalue("comments")
 
 test_results = {"Label Applied": label_applied, "Database Entry": database_entry, "Label Legibility": label_legibility, "Power Cycle": power_cycle}
@@ -25,7 +25,7 @@ if comments:
 base.header(title='Add Test')
 base.top(False)
 
-test_id=add_test_functions.add_init_tests(serial_num, tester, test_results, comments)
+test_id=add_test_functions.add_init_tests(bc, tester, test_results, comments)
 
 base.bottom(False)
 
