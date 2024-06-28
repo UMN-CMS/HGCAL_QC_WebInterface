@@ -3,7 +3,6 @@
 import sys
 import pandas as pd
 import csv
-import cgitb
 import numpy as np
 from datetime import datetime as dt
 import datetime
@@ -28,12 +27,11 @@ from bokeh.embed import json_item
 from bokeh.palettes import d3, brewer
 from bokeh.layouts import column, row
 import json
+import makeTestingData as mTD
 
-cgitb.enable()
-
-TestData = pd.read_csv('./static/files/Test.csv', parse_dates=['Time'])
-BoardData = pd.read_csv('./static/files/Board.csv')
-PeopleData = pd.read_csv('./static/files/People.csv')
+TestData = pd.read_csv(mTD.get_test(), parse_dates=['Time'])
+BoardData = pd.read_csv(mTD.get_board())
+PeopleData = pd.read_csv(mTD.get_people())
 mergetemp = TestData.merge(BoardData, on='Board ID', how='left')
 AllData = mergetemp.merge(PeopleData, on='Person ID', how='left')
 AllData = AllData.rename(columns={'Successful':'Outcome'})

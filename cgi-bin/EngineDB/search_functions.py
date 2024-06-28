@@ -21,12 +21,12 @@ import pandas as pd
 import json
 from datetime import datetime as dt
 import datetime
+import makeTestingData as mTD
 
-
-TestData = pd.read_csv('./static/files/Test.csv', parse_dates=['Time'])
-BoardData = pd.read_csv('./static/files/Board.csv')
-PeopleData = pd.read_csv('./static/files/People.csv')
-TestTypeData = pd.read_csv('./static/files/Test_Types.csv')
+TestData = pd.read_csv(mTD.get_test(), parse_dates=['Time'])
+BoardData = pd.read_csv(mTD.get_board())
+PeopleData = pd.read_csv(mTD.get_people())
+TestTypeData = pd.read_csv(mTD.get_test_types())
 TestTypeData = TestTypeData.rename(columns={'Name':'Test Name'})
 mergetemp = TestData.merge(BoardData, on='Board ID', how='left')
 AllData = mergetemp.merge(PeopleData, on='Person ID', how='left')
@@ -34,7 +34,7 @@ AllData = AllData.rename(columns={'Successful':'Outcome'})
 AllData['Outcome'] = AllData['Outcome'].replace(0, 'Unsuccessful')
 AllData['Outcome'] = AllData['Outcome'].replace(1, 'Successful')
 AllData = AllData.merge(TestTypeData, on='Test Type ID', how='left')
-AttachData = pd.read_csv('./static/files/Attachments.csv')
+AttachData = pd.read_csv(mTD.get_attachments())
 AllData = AllData.merge(AttachData, on='Test ID', how='left')
 AllData.dropna()
 
