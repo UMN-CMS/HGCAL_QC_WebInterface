@@ -3,14 +3,13 @@
 import mysql.connector
 
 # connects to the database, 1 is for inserting and 0 is for reading
-# TODO change usernames and passwords for production database
 def connect( num ):
     if(num==1):
 
         connection = mysql.connector.connect(
-            host = 'localhost',
-            user='WagonDBInserter',
-            password='HGCALrocks',
+            host = '',
+            user='',
+            password='',
             database=get_db_name(),
             #cursorclass=mysql.connector.cursors.DictCursor
         )
@@ -18,9 +17,9 @@ def connect( num ):
     if(num==0):
 
         connection = mysql.connector.connect(
-            host = 'localhost',
-            user='WagonDBReadUser',
-            password='HGCALrocks',
+            host = '',
+            user='',
+            password='',
             database=get_db_name(),
             #cursorclass=mysql.connector.cursors.DictCursor
         )
@@ -32,8 +31,8 @@ def connect_admin(passwd):
 
     try:
         connection = mysql.connector.connect(
-            host = 'localhost',
-            user='WagonDBAdmin',
+            host = '',
+            user='',
             password=passwd,
             database=get_db_name(),
             #cursorclass=mysql.connector.cursors.DictCursor
@@ -45,9 +44,8 @@ def connect_admin(passwd):
         return None
 
 # holds the directory location
-# TODO change to production database url
 def get_base_url():
-    base = "http://cmslab3.spa.umn.edu/~cros0400/cgi-bin/WagonDB"
+    base = "http://cmslab1.spa.umn.edu/Factory/WagonDB/"
     return base
 
 # holds the database name

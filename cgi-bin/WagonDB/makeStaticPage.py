@@ -2,7 +2,6 @@ import sys
 import publish_config
 from connect import connect
 import os
-import makeTestingData
 import numpy as np
 
 db = connect(0)
@@ -15,8 +14,6 @@ paths = publish_config.get_paths()
 for p in paths:
     if not os.path.isdir(p):
         os.makedirs(p)
-
-makeTestingData.run()
 
 db_name = publish_config.get_db_name()
 db_lower = db_name.lower()
@@ -45,7 +42,7 @@ for b in board_id:
         pass
 
 #copies over the goldy cms logo 
-with open('{}/../../static/files/goldy2.png'.format(local_path), 'rb') as tmp:
+with open('{}/static/files/goldy2.png'.format(local_path), 'rb') as tmp:
     img_str = tmp.read()
 with open('{}/../../static_html/files/goldy2.png'.format(local_path), 'wb') as f:
     f.write(img_str)

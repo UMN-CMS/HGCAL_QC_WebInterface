@@ -3,7 +3,6 @@
 import sys
 import pandas as pd
 import csv
-import cgitb
 import numpy as np
 from datetime import datetime as dt
 import datetime
@@ -29,12 +28,11 @@ from bokeh.embed import json_item
 from bokeh.palettes import d3, brewer
 from bokeh.layouts import column, row
 import json
+import makeTestingData as mTD
 
-cgitb.enable()
-
-TestData = pd.read_csv('./static/files/Test.csv', parse_dates=['Time'])
-BoardData = pd.read_csv('./static/files/Board.csv')
-PeopleData = pd.read_csv('./static/files/People.csv')
+TestData = pd.read_csv(mTD.get_test(), parse_dates=['Time'])
+BoardData = pd.read_csv(mTD.get_board())
+PeopleData = pd.read_csv(mTD.get_people())
 mergetemp = TestData.merge(BoardData, on='Board ID', how='left')
 AllData = mergetemp.merge(PeopleData, on='Person ID', how='left')
 AllData = AllData.rename(columns={'Successful':'Outcome'})
@@ -42,13 +40,15 @@ AllData['Outcome'] = AllData['Outcome'].replace(0, 'Unsuccessful')
 AllData['Outcome'] = AllData['Outcome'].replace(1, 'Successful')
 
 # each value has its own data frame
-temp = pd.read_csv('./static/files/ADC_functionality_resistance.csv')
+csv_file_resist, csv_file_volt, csv_file_temp, csv_file_adc = mTD.get_adc_functionality()
+
+temp = pd.read_csv(csv_file_resist)
 ADC_resist = temp.dropna()
-temp = pd.read_csv('./static/files/ADC_functionality_voltage.csv')
+temp = pd.read_csv(csv_file_volt)
 ADC_voltage = temp.dropna()
-temp = pd.read_csv('./static/files/ADC_functionality_temp.csv')
+temp = pd.read_csv(csv_file_temp)
 ADC_temp = temp.dropna()
-temp = pd.read_csv('./static/files/ADC_main.csv')
+temp = pd.read_csv(csv_file_adc)
 ADC_main = temp.dropna()
 
 filter_code=('''

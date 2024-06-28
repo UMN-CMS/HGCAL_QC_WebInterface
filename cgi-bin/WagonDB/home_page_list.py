@@ -133,25 +133,28 @@ def add_module(serial_number):
         cur = db.cursor()
         
         # grabs correct sections of the full id to add it to the database
-        sn = serial_number[9:15]
-        type_id = serial_number[3:9]
+        if len(serial_number) == 15:
+            sn = serial_number[9:15]
+            type_id = serial_number[3:9]
 
-        # makes sure serial number doesn't already exist
-        cur.execute("SELECT board_id FROM Board WHERE Board.full_id = '%s'" % (serial_number))
+            # makes sure serial number doesn't already exist
+            cur.execute("SELECT board_id FROM Board WHERE Board.full_id = '%s'" % (serial_number))
 
-        rows = cur.fetchall()
+            rows = cur.fetchall()
 
-        if not rows:
-            cur.execute("INSERT INTO Board (sn, full_id, type_id) VALUES (%s, '%s', '%s'); " % (sn, serial_number, type_id)) 
-            #print '<div> INSERT INTO Card set sn = %s; </div>' %(serial_number)
-            db.commit()
-            db.close()
-            return 'Board entered successfully!'
+            if not rows:
+                cur.execute("INSERT INTO Board (sn, full_id, type_id) VALUES (%s, '%s', '%s'); " % (sn, serial_number, type_id)) 
+                #print '<div> INSERT INTO Card set sn = %s; </div>' %(serial_number)
+                db.commit()
+                db.close()
+                return 'Board entered successfully!'
+            else:
+                print("<h3>Board already exists!<h3>")
+                return 'Board already exists!'
         else:
-            print("<h3>Serial number already exists!<h3>")
-            return 'Board already exists!'
+            return 'Barcode is not the correct length.'
     except mysql.connector.Error as err:
-        print("<h3>Serial number already exists!</h3>")
+        print("<h3>Board already exists!</h3>")
         print(err)
         return 'Failed to enter Board'
     
