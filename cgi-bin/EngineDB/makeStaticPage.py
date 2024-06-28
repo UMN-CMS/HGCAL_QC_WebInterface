@@ -44,7 +44,7 @@ for b in board_id:
         pass
 
     
-with open('{}/../../static/files/goldy2.png'.format(local_path), 'rb') as tmp:
+with open('{}/static/files/goldy2.png'.format(local_path), 'rb') as tmp:
     img_str = tmp.read()
 with open('{}/../../static_html/files/goldy2.png'.format(local_path), 'wb') as f:
     f.write(img_str)

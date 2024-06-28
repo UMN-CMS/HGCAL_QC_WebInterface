@@ -4,7 +4,6 @@
 import sys
 import pandas as pd
 import csv
-import cgitb
 import numpy as np
 from datetime import datetime as dt
 import datetime
@@ -29,20 +28,19 @@ from bokeh.embed import json_item
 from bokeh.palettes import d3, brewer
 from bokeh.layouts import column, row
 import json
-
-cgitb.enable()
+import makeTestingData as mTD
 
 #import all data from csv files and set it up properly
-TestData = pd.read_csv('./static/files/Test.csv', parse_dates=['Time'])
-BoardData = pd.read_csv('./static/files/Board.csv')
-PeopleData = pd.read_csv('./static/files/People.csv')
+TestData = pd.read_csv(mTD.get_test(), parse_dates=['Time'])
+BoardData = pd.read_csv(mTD.get_board())
+PeopleData = pd.read_csv(mTD.get_people())
 mergetemp = TestData.merge(BoardData, on='Board ID', how='left')
 AllData = mergetemp.merge(PeopleData, on='Person ID', how='left')
 AllData = AllData.rename(columns={'Successful':'Outcome'})
 AllData['Outcome'] = AllData['Outcome'].replace(0, 'Unsuccessful')
 AllData['Outcome'] = AllData['Outcome'].replace(1, 'Successful')
 
-tempIDR = pd.read_csv('./static/files/ID_Resistor_Test_Data.csv')
+tempIDR = pd.read_csv(mTD.get_id_res())
 IDR = tempIDR.dropna()
 
 filter_code=('''

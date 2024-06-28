@@ -77,10 +77,10 @@ def run(static):
                 else:
                     print('<td> <a href=module.py?board_id=%(id)s&full_id=%(full_id)s> %(full_id)s </a></td>' %{'full_id':sn, 'id':board_id})
                     print('<td colspan=2>')
-                    print('<a href="../../static/files/wagondb/%(img)s"><img src="../../static/files/wagondb/%(img)s" width=400 height=auto></a>' % {'img':name_top})
+                    print('<a href="/home/ePortage/wagondb/%(img)s"><img src="/home/ePortage/wagondb/%(img)s" width=400 height=auto></a>' % {'img':name_top})
                     print('</td>') 
                     print('<td colspan=2>')
-                    print('<a href="../../static/files/wagondb/%(img)s"><img src="../../static/files/wagondb/%(img)s" width=400 height=auto></a>' % {'img':name_bottom})
+                    print('<a href="/home/ePortage/wagondb/%(img)s"><img src="/home/ePortage/wagondb/%(img)s" width=400 height=auto></a>' % {'img':name_bottom})
                     print('</td>') 
                 print('</tr>')
             except:
