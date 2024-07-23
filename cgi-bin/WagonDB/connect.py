@@ -49,7 +49,7 @@ def connect_admin(passwd):
 # holds the directory location
 def get_base_url():
     base = "http://cmslab1.spa.umn.edu/Factory/WagonDB/"
-    base = "http://cmslab3.spa.umn.edu/cgi-bin/WagonDB/"
+    #base = "http://cmslab3.spa.umn.edu/cgi-bin/WagonDB/"
     return base
 
 # holds the database name
