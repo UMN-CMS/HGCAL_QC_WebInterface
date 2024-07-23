@@ -23,11 +23,11 @@ def get_test():
 
     csv_file = io.StringIO()
 
-    columns = ['Test ID', 'Test Type ID', 'Board ID', 'Person ID', 'Time', 'Successful','comments']
+    columns = ['Test ID', 'Test Type ID', 'Board ID', 'Person ID', 'Time', 'Successful']
     writer = csv.writer(csv_file)
     writer.writerow(columns)
 
-    cur.execute('select * from Test')
+    cur.execute('select test_id, test_type_id, board_id, person_id, day, successful from Test')
     Test_Data = cur.fetchall()
     writer.writerows(Test_Data)
 
@@ -36,7 +36,7 @@ def get_test():
 
     return csv_file
 
-def get_ID_res():
+def get_id_res():
     csv_file = io.StringIO()
 
     # some data requires decoding first
@@ -302,28 +302,18 @@ def get_bert():
 def get_board(): 
     csv_file = io.StringIO()
 
-    header = ['Full ID', 'Board ID', 'Type ID', 'Location', 'Color']
+    header = ['Full ID', 'Board ID', 'Sub Type', 'Location', 'Major Type']
     writer = csv.writer(csv_file)
     writer.writerow(header)
     
     cur.execute('select full_id,board_id,type_id,location from Board')
-    Board_Data = cur.fetchall()
-    # assigns a color for each of the board based on the serial number position
-    # TODO this will be removed later for the production stage
-    for b in range(len(Board_Data)):
-        line = list(Board_Data[b])
-        try:
-            if line[0][12] == '0':
-                line.append('Red')
-            if line[0][12] == '1':
-                line.append('Green')
-            else:
-                line = []
-        except:
-            line = []
-             
-        line = tuple(line)
-        Board_Data[b] = line
+    Temp_Data = cur.fetchall()
+    Board_Data = []
+    for line in Temp_Data:
+        if line[0][4] == 'H':
+            Board_Data.append(line + ('HD',))
+        else:
+            Board_Data.append(line + ('LD',))
     writer.writerows(Board_Data)
 
     csv_file.seek(0)

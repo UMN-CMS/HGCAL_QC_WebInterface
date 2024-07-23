@@ -205,12 +205,12 @@ def Filter():
     ds = ColumnDataSource(df_temp)
     # create subtypes array and serial numbers dictionary
     # each subtype has its own data source
-    subtypes = np.unique(ds.data['Type ID'].tolist()).tolist()
+    subtypes = np.unique(ds.data['Sub Type'].tolist()).tolist()
     data_sources = {}
     serial_numbers = {}
     for s in subtypes:
-        data_sources[s] = ColumnDataSource(df_temp.query('`Type ID` == @s'))
-        serial_numbers[s] = np.unique(df_temp.query('`Type ID` == @s')['Full ID'].values.tolist()).tolist()
+        data_sources[s] = ColumnDataSource(df_temp.query('`Sub Type` == @s'))
+        serial_numbers[s] = np.unique(df_temp.query('`Sub Type` == @s')['Full ID'].values.tolist()).tolist()
 
     mc_widgets = {}
     dr_widgets = {}

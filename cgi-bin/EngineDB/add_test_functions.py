@@ -188,9 +188,26 @@ def get_previous_test_results(serial_num):
 
     print('End3')
 
+def set_daq_chip_id(sn, test_id):
+
+    db = connect(0)
+    cur = db.cursor()
+
+    cur.execute('select Attach from Attachments where test_id=%s' % test_id)
+    try:
+        attach = cur.fetchall()[0][0]['test_data']
+    except KeyError:
+        attach = cur.fetchall()[0][0]
+    attach = json.loads(attach)
+    if sn[3:5] == 'EL':
+        daq_chip_id = attach['DAQ'][-1]
+    if sn[3:5] == 'EH':
+        daq_chip_id = attach['DAQ1'][-1]
+    cur.execute('update Board set daq_chip_id="%s" where full_id="%s"' % (daq_chip_id, sn))
+    db.commit()
 
 
-def add_test(person_id, test_type, serial_num, success, comments):
+def add_test(person_id, test_type, serial_num, success, comments, config_id):
     if success:
         success = 1
     else:
@@ -211,15 +228,26 @@ def add_test(person_id, test_type, serial_num, success, comments):
         print("The Card_ID=", row[0])
         card_id = row[0]
         
-        sql="INSERT INTO Test (person_id, test_type_id, board_id, successful, comments, day) VALUES (%s,%s,%s,%s,%s,NOW())"
-        # This is safer because Python takes care of escaping any illegal/invalid text
-        items=(person_id,test_type_id,card_id,success,comments)
-        cur.execute(sql,items)
-        test_id = cur.lastrowid
+        if config_id:
+            sql="INSERT INTO Test (person_id, test_type_id, board_id, successful, comments, day, config_id) VALUES (%s,%s,%s,%s,%s,NOW(),%s)"
+            # This is safer because Python takes care of escaping any illegal/invalid text
+            items=(person_id,test_type_id,card_id,success,comments,config_id)
+            cur.execute(sql,items)
+            test_id = cur.lastrowid
 
-        print(test_id)
+            print(test_id)
 
-        db.commit()
+            db.commit()
+        else:
+            sql="INSERT INTO Test (person_id, test_type_id, board_id, successful, comments, day) VALUES (%s,%s,%s,%s,%s,NOW())"
+            # This is safer because Python takes care of escaping any illegal/invalid text
+            items=(person_id,test_type_id,card_id,success,comments)
+            cur.execute(sql,items)
+            test_id = cur.lastrowid
+
+            print(test_id)
+
+            db.commit()
 
         return test_id
 
@@ -334,11 +362,6 @@ def add_test_attachment(test_id, afile, desc, comments):
                     (test_id,f,afile.type,desc,comments,originalname));
         att_id=cur.lastrowid
         db.commit()
-        #ofn=settings.getAttachmentPathFor(int(test_id),int(att_id));
-        #sub_path = os.path.dirname(ofn)
-        #if not os.path.exists(sub_path):
-        #    os.mkdir(sub_path)
-        #open(ofn,'wb').write(afile.file.read())
         print('<div> The file %s was uploaded successfully. </div>' % (originalname))
     
 def add_test_template(serial_number, suggested_test):

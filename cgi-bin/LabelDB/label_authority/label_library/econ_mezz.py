@@ -1,64 +1,51 @@
-import itertools as it 
+import itertools as it
+from itertools import product
 
-from label_authority.registry import register  
-from label_authority.serial_schema import (MappingField, NumericField,
-                                           SerialSchema)
+from label_authority.registry import register
+from label_authority.serial_schema import MappingField, NumericField, SerialSchema
 
 from .types import Subtype
 
-econ_subtypes = (["1F11", "1F12", "1F21", "1F22", "1F90", "1RT0", "2F00", "2RT0", "2LB0", "25R0", "25L0"])
+dig1 = ["1", "2", "3"]
+dig23 = ["F0", "SR", "HT", "SL", "HB", "5R", "5L"]
+dig4 = ["B", "D", "T"]
 
-econ_fields = SerialSchema(
-    NumericField("SerialNumber", "Serial number", 6)
-)
+econ_list = list(product(dig1, dig23, dig4))
+
+econ_subtypes = ["".join(hex) for hex in econ_list]
+
+econ_fields = SerialSchema(NumericField("SerialNumber", "Serial number", 6))
+
 
 def econSubtypeByCode(major_type, code):
     if code not in econ_subtypes:
         raise KeyError
-    if code[0] == "1":  #PROTOTYPES
-        long_name = "Prototype "
-        if code[1] == "F":
-            name = "CM Full"
-            long_name = long_name + "Full, ECON-T"
-            if code[2] == "1":
-                name = name + ", ECON-T"
-                long_name = long_name + " only,"
-                if code[3] == "1":
-                    name = name + " COB"
-                    long_name = long_name + " Chip-on-board"
-                else:
-                    long_name = long_name + " packaged board"
-            elif code[2] == "2":
-                long_name = long_name + " ECON-D"
-                if code[3] == "1":
-                    name = name + ", ECON-D COB"
-                    long_name = long_name + " COB"
-            else:
-                name = "CM dummy"
-                long_name = "Full, mechanical dummy"
-        else:
-            name = "Partial, RT, ECON-T + ECON-D"
-            long_name = long_name + "Partial, Semit-Right/Half-Top, ECON-T + ECON-D"
-    else:      #PRODUCTION
-        pre = "Production"
-        n = "Partial "
-        if code[2] == "0":
-            name = "Full, ECON-D + ECON-T"
-            long_name = pre + name
-        elif code[2] == "T":
-            name = n + "RT"
-            long_name = pre + " Partial Semi-Right/Half-Top"
-        elif code[2] == "B":
-            name = n + "LB"
-            long_name = pre + " Partial Semi-Left/Half-Top"
-        elif code[2] == "R":
-            name = n + "5R"
-            long_name = pre + "Five-Right"
-        else:
-            name = n + "5L"
-            long_name = pre + "Five-Left"
 
-    nc = code
+    modDict = {"1": "Prototype", "2": "Prototype", "3": "(pre)Prodeuction"}
+    CMDict = {
+        "F0": "Full",
+        "SR": "Semi-Right",
+        "HT": "Half-Top",
+        "SL": " Semi-Left",
+        "HB": "Half Bottom",
+        "5R": "Five Right",
+        "5L": "Five Left",
+    }
+    boardDict = {"B": "Bare board", "D": "ECON-D only", "T": "ECON-D and ECON-T"}
+
+    numBoardDict = {"B": "0", "D": "1", "T": "2"}
+    nameBoardDict = {"B": "Bare", "D": "D", "T": "D+T"}
+
+    if code[1] == "F":
+        name = "CM"
+        front = ""
+    else:
+        name = "PCM"
+        front = "Partial"
+    name = f"{name} {CMDict[code[1:3]]} {nameBoardDict[code[3]]}"
+    long_name = f"{modDict[code[0]]} {front} {CMDict[code[1:3]]} {boardDict[code[3]]}"
+
+    nc = code[:3] + numBoardDict[code[3]]
 
     return Subtype(major_type, name, long_name, code, nc, econ_fields)
 

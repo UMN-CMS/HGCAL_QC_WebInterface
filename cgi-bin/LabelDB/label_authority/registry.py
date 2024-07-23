@@ -10,7 +10,6 @@ def checkValidClass(cls):
         raise InvalidSchema(f"Argument to register must be a callable.")
 
     to_test = cls()
-        
 
     for attr in needs_attrs:
         if not hasattr(to_test, attr):
@@ -25,8 +24,7 @@ def checkValidClass(cls):
 
 
 def register(cls):
-    """Registry
-    """
+    """Registry"""
     checkValidClass(cls)
 
     def __str__(self):
@@ -57,7 +55,5 @@ def getMajorType(code):
 
 
 def getAllMajorTypes():
-    """Get a dictionary containing all major types known to the library.
-
-    """
+    """Get a dictionary containing all major types known to the library."""
     return major_type_registry

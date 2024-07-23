@@ -17,7 +17,7 @@ class Subtype:
     :type code: str
     :param numeric_code: Integer code for this subtype
     :type numeric_code: int
-    :param serial_schema: 
+    :param serial_schema:
     :type serial_schema: :py:class:`label_authority.serial_schema.SerialSchema`
     :param complete_long_name: If provided, use this name as the complete long name (including major type)
     :type complete_long_name: Optional[str]
@@ -47,9 +47,6 @@ class Subtype:
         self.serial_schema = serial_schema
         self._complete_long_name = complete_long_name
         self._complete_short_name = complete_short_name
-
-
-        
 
     def __str__(self) -> str:
         return f"Subtype({self.name}, {self.code})"

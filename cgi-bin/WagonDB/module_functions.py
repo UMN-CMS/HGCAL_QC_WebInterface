@@ -14,6 +14,9 @@ import uuid
 import cgi
 import json
 
+sys.path.append('{}/../LabelDB'.format(os.getcwd()))
+import label_authority as la
+
 #SERVER_NAME
 
 db = connect(0)
@@ -77,12 +80,34 @@ def Portage_fetch_attach(test_id):
     cur.execute('select attach_id, attachmime, attachdesc, originalname from Attachments where test_id=%s order by attach_id' % test_id)
     return cur.fetchall()
 
-def add_test_tab(f_id, board_id, static):
+def add_test_tab(barcode, board_id, static):
 
     # adds header
     print('<div class="row">')
     print('<div class="col-md-5 pt-4 ps-5 mx-2 my-2">')
-    print('<h2>Wagon Test Info for %s</h2>' %f_id)
+    print('<h2>Wagon Test Info for %s</h2>' % barcode)
+    print('</div>')
+    print('</div>')
+    
+    decoded = la.decode(barcode)
+    major = la.getMajorType(decoded.major_type_code)
+    sub = major.getSubtypeByCode(decoded.subtype_code)
+    sn = decoded.field_values['SerialNumber'].value
+    print('<div class="row">')
+    print('<div class="col-md-3 pt-4 ps-5 mx-2 my-2">')
+    print('<h4>')
+    print('Major Type: %s' % major.name)
+    print('</h4>')
+    print('</div>')
+    print('<div class="col-md-3 pt-4 ps-5 mx-2 my-2">')
+    print('<h4>')
+    print('Sub Type: %s' % sub.name)
+    print('</h4>')
+    print('</div>')
+    print('<div class="col-md-3 pt-4 ps-5 mx-2 my-2">')
+    print('<h4>')
+    print('Serial Number: %s' % sn)
+    print('</h4>')
     print('</div>')
     print('</div>')
     if static: 
@@ -91,32 +116,32 @@ def add_test_tab(f_id, board_id, static):
         # adds buttons
         print('<div class="row">')
         print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="add_test.py?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':f_id, 'id':board_id})
+        print('<a href="add_test.py?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':barcode, 'id':board_id})
         print('<button class="btn btn-dark"> Add a New Test </button>')
         print('</a>')
         print('</div>')
         print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="add_board_info.py?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':f_id, 'id':board_id})
+        print('<a href="add_board_info.py?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':barcode, 'id':board_id})
         print('<button class="btn btn-dark"> Add Board Info </button>')
         print('</a>')
         print('</div>')
         print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="board_checkout.py?full_id=%(full_id)s">' %{'full_id':f_id})
+        print('<a href="board_checkout.py?full_id=%(full_id)s">' %{'full_id':barcode})
         print('<button class="btn btn-dark"> Checkout Board </button>')
         print('</a>')
         print('</div>')
         print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="board_checkin.py?full_id=%(full_id)s">' %{'full_id':f_id})
+        print('<a href="board_checkin.py?full_id=%(full_id)s">' %{'full_id':barcode})
         print('<button class="btn btn-dark"> Checkin Board </button>')
         print('</a>')
         print('</div>')
         print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="add_board_image.py?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':f_id, 'id':board_id})
+        print('<a href="add_board_image.py?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':barcode, 'id':board_id})
         print('<button class="btn btn-dark"> Add Board Image </button>')
         print('</a>')
         print('</div>')
         print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="change_board_location.py?board_id=?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':f_id, 'id':board_id})
+        print('<a href="change_board_location.py?board_id=?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':barcode, 'id':board_id})
         print('<button class="btn btn-dark"> Update Location </button>')
         print('</a>')
         print('</div>')
@@ -270,23 +295,28 @@ def board_info(sn, static):
         info_com = 'None'
 
     # does the same thing as the home page to determine how many tests have passed
-    cur.execute('select name from Test_Type')
+    cur.execute('select type_id from Board where board_id=%s' % board_id)
+    type_sn = cur.fetchall()[0][0]
+    cur.execute('select type_id from Board_type where type_sn="%s"' % type_sn)
+    type_id = cur.fetchall()[0][0]
+    cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
     names = cur.fetchall()
     outcomes = []
-    for i in range(len(names)):
-        outcomes.append(False)
 
     cur.execute('select test_type_id, successful, day from Test where board_id=%s order by day desc' % board_id)
     temp = cur.fetchall()
     ids = []
+    run = []
     for t in temp:
         if t[0] not in ids:
             if t[1] == 1:
-                outcomes[t[0]] = True
+                outcomes.append(True)
+            else:
+                outcomes.append(False)
         ids.append(t[0])
 
     num = outcomes.count(True)
-    total = len(outcomes)
+    total = len(names)
  
     # adds info
     print('<div class="col-md-11 pt-2 px-4 mx-2 my-2">')
@@ -303,7 +333,7 @@ def board_info(sn, static):
     if num == total:
         print('<td colspan=2><span class="badge bg-success rounded-pill">Done</span></td>')
     else:
-        print('<td colspan=2><span class="badge bg-primary rounded-pill">%(success)s/%(total)s</span></td>' %{'success': num, 'total': total})
+        print('<td colspan=2><span class="badge bg-dark rounded-pill">%(success)s/%(total)s</span></td>' %{'success': num, 'total': total})
         
     # gets id of boards that have been checked out
     cur.execute('select board_id from Check_Out')
@@ -378,7 +408,7 @@ def board_info(sn, static):
     print('</div>')
 
 
-def add_board_info(board_id, sn, location, daqid, trig1id, trig2id, info):
+def add_board_info(board_id, sn, info):
     db = connect(1)
     cur = db.cursor()
 
@@ -399,7 +429,7 @@ def add_board_info(board_id, sn, location, daqid, trig1id, trig2id, info):
             print(err)
 
     try:
-        cur.execute('INSERT INTO Board_Info (board_id, info_type, info, daq_chip_id, trigger_chip_1_id, trigger_chip_2_id, location) VALUES (%i, %i, "%s", "%s", "%s", "%s", "%s");' % (board_id, 0, info, daqid, trig1id, trig2id, location))
+        cur.execute('update Board set comments="%s" where board_id=%s' % (info, board_id))
 
         db.commit()
         db.close()

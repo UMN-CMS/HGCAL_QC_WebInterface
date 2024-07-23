@@ -49,11 +49,17 @@ codes_dict = {}
 # this is nice because sometimes there are multiple codes that all mean the same thing
 for s in subtypes:
     sub = major.getSubtypeByCode(s)
-    codes_dict[sub.name] = []
+    if sub.name == '':
+        codes_dict[major.name] = []
+    else:
+        codes_dict[sub.name] = []
 
 for s in subtypes:
     sub = major.getSubtypeByCode(s)
-    codes_dict[sub.name].append(s)
+    if sub.name == '':
+        codes_dict[major.name].append(s)
+    else:
+        codes_dict[sub.name].append(s)
 
 for name,codes in codes_dict.items():
 

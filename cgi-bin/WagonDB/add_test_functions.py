@@ -174,7 +174,7 @@ def get_previous_test_results(barcode):
 
 
 # adds a test into the Test table
-def add_test(person_id, test_type, barcode, success, comments):
+def add_test(person_id, test_type, barcode, success, comments, config_id):
     if success:
         success = 1
     else:
@@ -195,15 +195,27 @@ def add_test(person_id, test_type, barcode, success, comments):
         print("The Card_ID=", row[0])
         card_id = row[0]
         
-        sql="INSERT INTO Test (person_id, test_type_id, board_id, successful, comments, day) VALUES (%s,%s,%s,%s,%s,NOW())"
-        # This is safer because Python takes care of escaping any illegal/invalid text
-        items=(person_id,test_type_id,card_id,success,comments)
-        cur.execute(sql,items)
-        test_id = cur.lastrowid
+        if config_id:
+            sql="INSERT INTO Test (person_id, test_type_id, board_id, successful, comments, day, config_id) VALUES (%s,%s,%s,%s,%s,NOW(),%s)"
+            # This is safer because Python takes care of escaping any illegal/invalid text
+            items=(person_id,test_type_id,card_id,success,comments,config_id)
+            cur.execute(sql,items)
+            test_id = cur.lastrowid
 
-        print(test_id)
+            print(test_id)
 
-        db.commit()
+            db.commit()
+        else:
+            sql="INSERT INTO Test (person_id, test_type_id, board_id, successful, comments, day) VALUES (%s,%s,%s,%s,%s,NOW())"
+            # This is safer because Python takes care of escaping any illegal/invalid text
+            items=(person_id,test_type_id,card_id,success,comments)
+            cur.execute(sql,items)
+            test_id = cur.lastrowid
+
+            print(test_id)
+
+            db.commit()
+            
 
         return test_id
 

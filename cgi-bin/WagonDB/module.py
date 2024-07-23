@@ -22,6 +22,11 @@ if __name__ == '__main__':
     cur = db.cursor()
     cur.execute('select board_id from Board where full_id="%s"' % serial_num)
     board_id = cur.fetchall()[0][0]
+    cur.execute('select type_id from Board where full_id="%s"' % serial_num)
+    type_sn = cur.fetchall()[0][0]
+    cur.execute('select type_id from Board_type where type_sn="%s"' % type_sn)
+    type_id = cur.fetchall()[0][0]
+    
     # adds the top row with header and buttons
     module_functions.add_test_tab(serial_num, board_id, False)
 
@@ -35,9 +40,16 @@ if __name__ == '__main__':
     # gets all test types
     cur.execute('select test_type, name from Test_Type where required = 1 order by relative_order ASC')
     test_types = cur.fetchall()
+    cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
+    temp = cur.fetchall()
+    stitch_types = []
+    for test in temp:
+        stitch_types.append(test[0])
+
     # iterates over test types and displays each test done on the board sorted by test
     for t in test_types:
-        module_functions.ePortageTest(t[0], serial_num, t[1], revokes, False)
+        if t[0] in stitch_types:
+            module_functions.ePortageTest(t[0], serial_num, t[1], revokes, False)
 
     base.bottom(False)
 
@@ -45,6 +57,11 @@ def run(serial_num, board_id):
     # gets serial number and board_id
     base.header(title='Wagon DB')
     base.top(True)
+
+    cur.execute('select type_id from Board where full_id="%s"' % serial_num)
+    type_sn = cur.fetchall()[0][0]
+    cur.execute('select type_id from Board_type where type_sn="%s"' % type_sn)
+    type_id = cur.fetchall()[0][0]
 
     # adds the top row with header and buttons
     module_functions.add_test_tab(serial_num, board_id, True)
@@ -61,8 +78,15 @@ def run(serial_num, board_id):
     # gets all test types
     cur.execute('select test_type, name from Test_Type where required = 1 order by relative_order ASC')
     test_types = cur.fetchall()
+    cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
+    temp = cur.fetchall()
+    stitch_types = []
+    for test in temp:
+        stitch_types.append(test[0])
+
     # iterates over test types and displays each test done on the board sorted by test
     for t in test_types:
-        module_functions.ePortageTest(t[0], serial_num, t[1], revokes, True)
+        if t[0] in stitch_types:
+            module_functions.ePortageTest(t[0], serial_num, t[1], revokes, False)
 
     base.bottom(True)

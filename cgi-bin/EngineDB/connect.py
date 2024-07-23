@@ -6,9 +6,9 @@ def connect( num ):
     if(num==1):
 
         connection = mysql.connector.connect(
-            host = '',
-            user='',
-            password='',
+            host = 'localhost',
+            user='EngineDBInserter',
+            password='HGCALrocks',
             database=get_db_name(),
             #cursorclass=mysql.connector.cursors.DictCursor
         )
@@ -16,9 +16,9 @@ def connect( num ):
     if(num==0):
 
         connection = mysql.connector.connect(
-            host = '',
-            user='',
-            password='',
+            host = 'localhost',
+            user='EngineDBReadUser',
+            password='HGCALrocks',
             database=get_db_name(),
             #cursorclass=mysql.connector.cursors.DictCursor
         )
@@ -30,8 +30,8 @@ def connect_admin(passwd):
 
     try:
         connection = mysql.connector.connect(
-            host = '',
-            user='',
+            host = 'localhost',
+            user='EngineDBAdmin',
             password=passwd,
             database=get_db_name(),
             #cursorclass=mysql.connector.cursors.DictCursor
@@ -43,7 +43,7 @@ def connect_admin(passwd):
         return None
 
 def get_base_url():
-    base = "http://cmslab1.spa.umn.edu/Factory/EngineDB/"
+    base = "http://cmslab3.spa.umn.edu/~cros0400/cgi-bin/EngineDB"
     return base
 
 def get_db_name():

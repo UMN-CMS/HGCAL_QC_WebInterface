@@ -92,24 +92,6 @@ def add_board_info_form(full_id, board_id):
     print('<input type="hidden" name="full_id" value="%s">' % full_id)
     print('<input type="hidden" name="board_id" value="%s">' % board_id)
     print('<div class="row">')
-    print('<div class = "col-md-5 ps-5 pt-2 mx-2 my-2">')
-    print('<input type="text" name="location" placeholder="Location">')
-    print('</div>')
-    print('</div>')
-    print('<div class="row">')
-    print('<div class = "col-md-5 ps-5 pt-2 mx-2 my-2">')
-    print('<input type="text" name="daq_chip_id" placeholder="DAQ Chip ID">')
-    print('</div>')
-    print('</div>')
-    print('<div class="row">')
-    print('<div class = "col-md-5 ps-5 pt-2 mx-2 my-2">')
-    print('<input type="text" name="trigger_chip_1_id" placeholder="Trigger Chip 1 ID">')
-    print('</div>')
-    print('<div class="row">')
-    print('<div class = "col-md-5 ps-5 pt-2 mx-2 my-2">')
-    print('<input type="text" name="trigger_chip_2_id" placeholder="Trigger Chip 2 ID">')
-    print('</div>')
-    print('<div class="row">')
     print('<div class = "col-md-10 ps-5 pt-2 mx-2 my-2">')
     print('<input type="text" name="comments" placeholder="Comments">')
     print('</div>')
@@ -158,10 +140,13 @@ def add_module(serial_number):
         print(err)
         return 'Failed to enter Board'
     
-def allboards(static):
+def allboards(static, major):
     # sorts all the boards by subtype and puts all the serial numbers in a dictionary under their subtype
     subtypes = []
-    cur.execute('select board_id from Board')
+    if major == 'LD':
+        cur.execute('select board_id from Board where full_id like "%WW%" or full_id like "%WE%"')
+    if major == 'HD':
+        cur.execute('select board_id from Board where full_id like "%WH%"')
     temp = cur.fetchall()
     for t in temp:
         cur.execute('select type_id from Board where board_id="%s"' % t[0])
@@ -180,38 +165,37 @@ def allboards(static):
     # creates all of the lists
     columns={}
     for s in subtypes:
-        # subtype header
-        columns[s] = ['<a class="d-inline-flex list-group-item list-group-item-action text-decorate-none justify-content-between"><b>%(id)s</b></a>' %{'id':s}]
+        columns[s] = []
+        cur.execute('select type_id from Board_type where type_sn="%s"' % s)
+        type_id = cur.fetchall()[0][0]
         for sn in serial_numbers[s]:
             # determines how many tests there are and which ones have passed
-            cur.execute('select name from Test_Type')
+            cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
             temp = cur.fetchall()
-            names = []
-            outcomes = []
-            run = []
-            # makes an array of falses the length of the number of tests
+            outcomes = {}
+            run = {}
             for t in temp:
-                names.append(t[0])
-                outcomes.append(False)
-                run.append(False)
+                # makes an array of falses the length of the number of tests
+                outcomes[t[0]] = False
+                run[t[0]] = False
 
             cur.execute('select board_id from Board where full_id="%s"' % sn)
             board_id = cur.fetchall()[0][0]
             cur.execute('select test_type_id, successful, day from Test where board_id=%s order by day desc' % board_id)
             temp = cur.fetchall()
-            ids = []
+            prev_ids = []
             for t in temp:
                 # only uses the most recent of all the tests
-                if t[0] not in ids:
+                if t[0] not in prev_ids:
                     if t[1] == 1:
                         outcomes[t[0]] = True
                     else:
                         run[t[0]] = True
-                ids.append(t[0])
+                prev_ids.append(t[0])
 
-            num = outcomes.count(True)
-            total = len(outcomes)
-            r_num = run.count(True)
+            num = list(outcomes.values()).count(True)
+            total = len(outcomes.values())
+            r_num = list(run.values()).count(True)
             failed = total - num - r_num
             
             if static:
@@ -227,12 +211,24 @@ def allboards(static):
 
             columns[s].append(temp_col)
 
+    counter = 0
     print('<div class="row">')
     for s in subtypes:
+        counter += 1
         print('<div class="col mx-1">')
+        print('<div class="list-group">')
+        # subtype header
+        print('<a class="d-inline-flex list-group-item list-group-item-action text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#boards%(id)s"><b>%(id)s</b></a>' %{'id':s})
+        print('</div>')
+        print('<div class="collapse" id="boards%s">' % s)
         print('<div class="list-group">')
         for c in columns[s]:
             print(c)
+        print('</div>')
         print('</div></div>')
+        if counter == 5:
+            counter = 0
+            print('</div>')
+            print('<div class="row">')
     print('</div>')
 

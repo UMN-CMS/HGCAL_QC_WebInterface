@@ -48,43 +48,53 @@ if __name__ == '__main__':
         li.append(l[0])
     serial_numbers = np.unique(li).tolist()
 
+    cur.execute('select type_id from Board_type where type_sn="%s"' % s)
+    type_id = cur.fetchall()[0][0]
+
     for sn in serial_numbers:
         # same structure as home page, now with a variable to see if that test has been run
-        cur.execute('select name from Test_Type')
-        temp = cur.fetchall()
+        cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
+
         names = []
-        outcomes = []
-        run = []
-        for t in temp:
-            names.append(t[0])
-            outcomes.append(False)
-            run.append(False)
+        outcomes = {}
+        run = {}
+        ids = {}
+        for t in cur.fetchall():
+            cur.execute('select name from Test_Type where test_type=%s' % t[0])
+            n = cur.fetchall()[0][0]
+            names.append(n)
+            ids[n] = t[0]
+            outcomes[n] = False
+            run[n] = False
+
         print('<tr>')
         cur.execute('select board_id from Board where full_id="%s"' % sn)
         board_id = cur.fetchall()[0][0]
-        cur.execute('select test_type_id, successful,day from Test where board_id=%s order by day desc' % board_id)
+        cur.execute('select test_type_id, successful, day from Test where board_id=%s order by day desc' % board_id)
         temp = cur.fetchall()
-        ids = []
+        prev_ids = []
         for t in temp:
-            if t[0] not in ids:
-                run[t[0]] = True
+            if t[0] not in prev_ids:
+                cur.execute('select name from Test_Type where test_type=%s' % t[0])
+                name = cur.fetchall()[0][0]
                 if t[1] == 1:
-                    outcomes[t[0]] = True
-            ids.append(t[0])
+                    outcomes[name] = True
+                run[name] = True
+            prev_ids.append(t[0])
         
         # only difference is that all tests are printed out
         print('<td> <a href=module.py?board_id=%(id)s&full_id=%(serial)s> %(serial)s </a></td>' %{'serial':sn, 'id':s})
         print('<td><ul>')
-        for idx,o in enumerate(outcomes): 
+        for n in names: 
             # if the test was successful it's printed green 
-            if o == True and run[idx] == True:
-                print('<li class="list-group-item-success">%s' %names[idx])
+            if outcomes[n] == True and run[n] == True:
+                print('<li class="list-group-item-success">%s' % n)
             # if test was done and didn't pass, red with a link to add a test of that type
-            elif o == False and run[idx] == True:
-                print('<li class="list-group-item-danger"> <a href="add_test.py?full_id=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':idx, 'name':names[idx]})
+            elif outcomes[n] == False and run[n] == True:
+                print('<li class="list-group-item-danger"> <a href="add_test.py?full_id=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':ids[n], 'name':n})
             # if no test has been run, gray with a link
             else:
-                print('<li class="list-group-item-dark"> <a href="add_test.py?full_id=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':idx, 'name':names[idx]})
+                print('<li class="list-group-item-dark"> <a href="add_test.py?full_id=%(serial_num)s&board_id=%(board_id)s&suggested=%(test_type_id)s">%(name)s</a>' %{'board_id':s, 'serial_num':sn, 'test_type_id':ids[n], 'name':n})
         
         print('</ul></td>') 
 

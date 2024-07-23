@@ -298,4 +298,4 @@ def decode_label(label):
     sub = major.getSubtypeByCode(decoded.subtype_code)
     sn = decoded.field_values['SerialNumber']
     
-    return [major.name, sub.name, sn]
+    return [major.name, sub.name, sn.value]

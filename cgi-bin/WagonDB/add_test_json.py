@@ -31,6 +31,11 @@ def parse_data(form):
             print(e)
             print("Data could not be retrieved from the JSON")
 
+        try:
+            config_id = form.getvalue('config_id')
+        except:
+            config_id = None
+
     except KeyError: 
         print('Json must contain at least the following entries:\nserial\nboard_type\ntester\ntest\nsucessful\ncomments\n\nPlease double check your json file for these fields')
     
@@ -55,7 +60,7 @@ def parse_data(form):
 
 
     # Creates output
-    test_dict = {'full_id': full_id, 'board_type': board_type, 'tester': tester, 'person_id': person_id, 'test': test_name, 'successful': successful, 'comments': comments}
+    test_dict = {'full_id': full_id, 'board_type': board_type, 'tester': tester, 'person_id': person_id, 'test': test_name, 'successful': successful, 'comments': comments, 'config_id': config_id}
 
 
     print("          RETURNING TEST_DICT            ")
@@ -81,7 +86,7 @@ base.top(False)
 form = cgi.FieldStorage()
 test_dict = parse_data(form)
 
-test_id = add_test_functions.add_test(test_dict['person_id'], test_dict['test'], test_dict['full_id'], test_dict['successful'], test_dict['comments'])
+test_id = add_test_functions.add_test(test_dict['person_id'], test_dict['test'], test_dict['full_id'], test_dict['successful'], test_dict['comments'], test_dict['config_id'])
 
 
 for itest in range(1,4):
