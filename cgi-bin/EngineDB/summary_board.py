@@ -48,29 +48,36 @@ if __name__ == '__main__':
         li.append(l[0])
     serial_numbers = np.unique(li).tolist()
 
+    cur.execute('select type_id from Board_type where type_sn="%s"' % s)
+    type_id = cur.fetchall()[0][0]
+
     for sn in serial_numbers:
         # same structure as home page, now with a variable to see if that test has been run
-        cur.execute('select name,test_type from Test_Type')
+        cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
+
         outcomes = {}
         run = {}
         ids = {}
         names = []
-        for n in cur.fetchall():
-            names.append(n[0])
-            ids[n[0]] = n[1]
-            outcomes[n[0]] = False
-            run[n[0]] = False
+        for t in cur.fetchall():
+            cur.execute('select name from Test_Type where test_type=%s' % t[0])
+            n = cur.fetchall()[0][0]
+            names.append(n)
+            ids[n] = t[0]
+            outcomes[n] = False
+            run[n] = False
+
         print('<tr>')
         cur.execute('select board_id from Board where full_id="%s"' % sn)
         board_id = cur.fetchall()[0][0]
-        cur.execute('select test_type_id, successful,day from Test where board_id=%s order by day desc' % board_id)
+        cur.execute('select test_type_id, successful, day from Test where board_id=%s order by day desc' % board_id)
         temp = cur.fetchall()
         prev_ids = []
         for t in temp:
             if t[0] not in prev_ids:
                 cur.execute('select name from Test_Type where test_type=%s' % t[0])
                 name = cur.fetchall()[0][0]
-                if t[1] == True:    
+                if t[1] == 1:    
                     outcomes[name] = True
                 run[name] = True
             prev_ids.append(t[0])

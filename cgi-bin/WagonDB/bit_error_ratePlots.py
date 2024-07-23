@@ -141,7 +141,7 @@ def Histogram(mp_data, eo_data, view, widgets, modules, slider):
         hist_data_eo[i] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
 
     std = ColumnDataSource(data={'columns':[], 'Midpoint Mean':[], 'Midpoint std':[], 'std':[]})
-    dt = ColumnDataSource(data={'Type ID':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'Outcome':[], 'E Link':[], 'Midpoint':[], 'Eye Opening':[], 'Midpoint Errors':[]})
+    dt = ColumnDataSource(data={'Sub Type':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'Outcome':[], 'E Link':[], 'Midpoint':[], 'Eye Opening':[], 'Midpoint Errors':[]})
     # custom javascript to be run to actually create the plotted data on the website
     # all done in javascript so it runs on the website and can update without refreshing the page
     x = CustomJS(args=dict(hist_mp=hist_data_mp, hist_eo=hist_data_eo, mp_data=mp_data, eo_data=eo_data, view=view, modules=modules, slider=slider, std=std, dt=dt),code='''
@@ -179,7 +179,7 @@ for (let i = 0; i < modules.length; i++) {
     for (let j = 0; j < mp_data.length; j++) {
         if (mp_data.data['E Link'][j] == modules[i] && mp_mask[j] == true){
             mp_mask[j] = true;
-            type_ids.push(mp_data.data['Type ID'][j])
+            type_ids.push(mp_data.data['Sub Type'][j])
             full_ids.push(mp_data.data['Full ID'][j])
             names.push(mp_data.data['Person Name'][j])
             dates.push(mp_data.data['Time'][j])
@@ -246,7 +246,7 @@ std.data['Midpoint Mean'] = means;
 std.data['Midpoint std'] = std_2;
 std.data['std'] = std_ar;
 std.change.emit()
-dt.data['Type ID'] = type_ids;
+dt.data['Sub Type'] = type_ids;
 dt.data['Full ID'] = full_ids;
 dt.data['Person Name'] = names;
 dt.data['Time'] = dates;
@@ -290,11 +290,11 @@ def Filter():
 
     # information for constructing widgets
     # column name has to be the name of the column in the data source that you're filtering with this widget
-    columns = ['Type ID', 'Full ID', 'Person Name', 'Outcome', 'Start Date', 'End Date', 'Color']
+    columns = ['Major Type', 'Sub Type', 'Full ID', 'Person Name', 'Outcome', 'Start Date', 'End Date']
     # values that you want to choose from in the widget
-    data = [ds_mp.data['Type ID'].tolist(), ds_mp.data['Full ID'].tolist(), ds_mp.data['Person Name'].tolist(), ds_mp.data['Outcome'], date_range, date_range, ds_mp.data['Color']]
+    data = [ds_mp.data['Major Type'].tolist(), ds_mp.data['Sub Type'].tolist(), ds_mp.data['Full ID'].tolist(), ds_mp.data['Person Name'].tolist(), ds_mp.data['Outcome'], date_range, date_range]
     # type of widget
-    t = [multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date, multi_choice]
+    t = [multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
 
     # create the widgets
     for i in range(len(columns)):
@@ -378,7 +378,7 @@ src2.change.emit()
                     ]
     table = DataTable(source=std, columns=table_columns, autosize_mode='fit_columns')
     table_columns2 = [
-                    TableColumn(field='Type ID', title='Type ID'),
+                    TableColumn(field='Sub Type', title='Sub Type'),
                     TableColumn(field='Full ID', title='Full ID'),
                     TableColumn(field='Person Name', title='Person Name'),
                     TableColumn(field='Time', title='Date', formatter=DateFormatter()),
@@ -392,20 +392,28 @@ src2.change.emit()
     w = [*widgets.values()]
     
     # changes the options for the barcodes widget based on the subtype selected
-    subtypes = np.unique(ds_mp.data['Type ID'].tolist()).tolist()
-    barcodes = {}
-    for s in subtypes:
-        barcodes[s] = np.unique(mp_temp.query('`Type ID` == @s')['Full ID'].values.tolist()).tolist()
-    update_options = CustomJS(args=dict(barcodes=barcodes, widget=w[1]), code=('''
-widget.options = barcodes[this.value]
+    subtypes = {}
+    for major in np.unique(ds_mp.data['Major Type'].tolist()).tolist():
+        subtypes[major] = np.unique(mp_temp.query('`Major Type` == @major')['Full ID'].values.tolist()).tolist()
+    serial_numbers = {}
+    for s in np.unique(ds_mp.data['Sub Type'].tolist()).tolist():
+        serial_numbers[s] = np.unique(mp_temp.query('`Sub Type` == @s')['Full ID'].values.tolist()).tolist()
+
+    update_options = CustomJS(args=dict(subtypes=subtypes, widget=w[1]), code=('''
+widget.options = subtypes[this.value]
 '''))
     w[0].js_on_change('value', update_options)
+    
+    update_options_2 = CustomJS(args=dict(serial_numbers=serial_numbers, widget=w[2]), code=('''
+widget.options = serial_numbers[this.value]
+'''))
+    w[1].js_on_change('value', update_options_2)
 
     # gets the second half of the webpage with the residual plots
     # by having it in it's own function with it's own widgets it can be controlled separately
     layout = Gaussian()
     # turns all the bokeh items into json and returns them
-    plot_json = json.dumps(json_item(row(column(row(w[0:3]), row([w[3]] + w[5:7]), w[4], slider, p, q, table, data_table), layout)))
+    plot_json = json.dumps(json_item(row(column(row(w[0:3]), row(w[3:5]), row(w[5:]), slider, p, q, table, data_table), layout)))
     return plot_json
 
 
@@ -637,7 +645,7 @@ def Gaussian():
     ds_eo = ColumnDataSource(eo_temp)
 
     # get subtypes list
-    subtypes = np.unique(ds_mp.data['Type ID'].tolist()).tolist()
+    subtypes = np.unique(ds_mp.data['Sub Type'].tolist()).tolist()
     mp_data_sources = {}
     eo_data_sources = {}
     barcodes = {}
@@ -646,9 +654,9 @@ def Gaussian():
     # make data sources for each subtype
     # sort E Links by subtype (not all have the same E Links)
     for s in subtypes:
-        mp_data_sources[s] = ColumnDataSource(mp_temp.query('`Type ID` == @s'))
-        eo_data_sources[s] = ColumnDataSource(eo_temp.query('`Type ID` == @s'))
-        barcodes[s] = np.unique(mp_temp.query('`Type ID` == @s')['Full ID'].values.tolist()).tolist()
+        mp_data_sources[s] = ColumnDataSource(mp_temp.query('`Sub Type` == @s'))
+        eo_data_sources[s] = ColumnDataSource(eo_temp.query('`Sub Type` == @s'))
+        barcodes[s] = np.unique(mp_temp.query('`Sub Type` == @s')['Full ID'].values.tolist()).tolist()
         modules[s] = np.unique(mp_data_sources[s].data['E Link']).tolist()
 
     # widget creation is the same as before
@@ -828,7 +836,7 @@ for (let [name,widget] of Object.entries(tables)){
 widget.options = barcodes[this.value]
 '''))
     
-    select = Select(title='Type ID', options=subtypes)
+    select = Select(title='Sub Type', options=subtypes)
     select.js_on_change('value', display_plot)
 
     # create and return layout

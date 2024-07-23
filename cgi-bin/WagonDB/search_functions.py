@@ -113,7 +113,7 @@ return indices;
 ''')
 
 def makeTable(ds, widgets, view):
-    td = ColumnDataSource({'Type ID':[], 'Full ID':[], 'Person Name':[], 'Test Type':[], 'Date':[], 'Outcome':[], 'Raw Time':[], 'Location':[], 'Color':[], 'Attachment':[]})
+    td = ColumnDataSource({'Sub Type':[], 'Full ID':[], 'Person Name':[], 'Test Type':[], 'Date':[], 'Outcome':[], 'Raw Time':[], 'Location':[], 'Attachment':[]})
 
     x = CustomJS(args=dict(td=td, data=ds, view=view),code='''
 const type_ids=[];
@@ -124,7 +124,6 @@ const times=[];
 const outcomes=[];
 const raw_time=[];
 const locations=[];
-const colors=[];
 const attachments=[];
 
 const indices = view.filters[0].compute_indices(data);
@@ -132,7 +131,7 @@ let mask = new Array(data.data['Full ID'].length).fill(false);
 [...indices].forEach((x)=>{mask[x] = true;})
 for (let j = 0; j < data.get_length(); j++) {
     if (mask[j] == true){
-        type_ids.push(data.data['Type ID'][j])
+        type_ids.push(data.data['Sub Type'][j])
         full_ids.push(data.data['Full ID'][j])
         people.push(data.data['Person Name'][j])
         tests.push(data.data['Test Name'][j])
@@ -145,11 +144,10 @@ for (let j = 0; j < data.get_length(); j++) {
 
         outcomes.push(data.data['Outcome'][j])
         locations.push(data.data['Location'][j])
-        colors.push(data.data['Color'][j])
         attachments.push(data.data['Attach ID'][j])
     }
 }
-td.data['Type ID'] = type_ids;
+td.data['Sub Type'] = type_ids;
 td.data['Full ID'] = full_ids;
 td.data['Person Name'] = people;
 td.data['Test Type'] = tests;
@@ -157,7 +155,6 @@ td.data['Date'] = times;
 td.data['Outcome'] = outcomes;
 td.data['Raw Time'] = raw_time;
 td.data['Location'] = locations;
-td.data['Color'] = colors;
 td.data['Attachment'] = attachments;
 td.change.emit()
 ''')
@@ -184,8 +181,8 @@ def Filter():
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
     # widget titles and data for those widgets has to be manually entered, as well as the type
-    columns = ['Type ID', 'Full ID', 'Test Name', 'Location', 'Color', 'Person Name', 'Outcome', 'Start Date', 'End Date']
-    data = [ds.data['Type ID'].tolist(), ds.data['Full ID'].tolist(), ds.data['Test Name'].tolist(), ds.data['Location'].tolist(), ds.data['Color'].tolist(), ds.data['Person Name'].tolist(), ds.data['Outcome'], date_range, date_range]
+    columns = ['Major Type', 'Sub Type', 'Full ID', 'Test Name', 'Location', 'Person Name', 'Outcome', 'Start Date', 'End Date']
+    data = [ds.data['Major Type'].tolist(), ds.data['Sub Type'], ds.data['Full ID'].tolist(), ds.data['Test Name'].tolist(), ds.data['Location'].tolist(), ds.data['Person Name'].tolist(), ds.data['Outcome'], date_range, date_range]
     t = [multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
 
     # constructs the widgets
@@ -247,7 +244,7 @@ Attach
     board = HTMLTemplateFormatter(template=module_template)
 
     table_columns = [
-                    TableColumn(field='Type ID', title='Type ID', formatter=bigger_font),
+                    TableColumn(field='Sub Type', title='Sub Type', formatter=bigger_font),
                     TableColumn(field='Full ID', title='Full ID', formatter=board),
                     TableColumn(field='Test Type', title='Test Type', formatter=bigger_font),
                     TableColumn(field='Person Name', title='Person Name', formatter=bigger_font),
@@ -255,21 +252,29 @@ Attach
                     TableColumn(field='Raw Time', title='Raw Time', formatter=bigger_font),
                     TableColumn(field='Location', title='Location', formatter=bigger_font),
                     TableColumn(field='Outcome', title='Outcome', formatter=bigger_font),
-                    TableColumn(field='Color', title='Color', formatter=bigger_font),
                     TableColumn(field='Attachment', title='Attachment', formatter=link),
                     ]
 
     data_table = DataTable(source=td, columns=table_columns, row_height = 40, autosize_mode='fit_columns', width_policy = 'fit', height=600)
 
     w = [*widgets.values()]
-    subtypes = np.unique(ds.data['Type ID'].tolist()).tolist()
+
+    subtypes = {}
+    for major in np.unique(ds.data['Major Type'].tolist()).tolist():
+        subtypes[major] = np.unique(AllData.query('`Major Type` == @major')['Full ID'].values.tolist()).tolist()
     serial_numbers = {}
-    for s in subtypes:
-        serial_numbers[s] = np.unique(AllData.query('`Type ID` == @s')['Full ID'].values.tolist()).tolist()
-    update_options = CustomJS(args=dict(serial_numbers=serial_numbers, widget=w[1]), code=('''
-widget.options = serial_numbers[this.value]
+    for s in np.unique(ds.data['Sub Type'].tolist()).tolist():
+        serial_numbers[s] = np.unique(AllData.query('`Sub Type` == @s')['Full ID'].values.tolist()).tolist()
+
+    update_options = CustomJS(args=dict(subtypes=subtypes, widget=w[1]), code=('''
+widget.options = subtypes[this.value]
 '''))
     w[0].js_on_change('value', update_options)
+    
+    update_options_2 = CustomJS(args=dict(serial_numbers=serial_numbers, widget=w[2]), code=('''
+widget.options = serial_numbers[this.value]
+'''))
+    w[1].js_on_change('value', update_options_2)
 
     return json.dumps(json_item(row(column(row(w[0:5]), row(w[5:]), data_table))))
 

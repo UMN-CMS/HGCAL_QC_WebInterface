@@ -1,19 +1,42 @@
-import itertools as it  #type to start with: engines
+import itertools as it  # type to start with: engines
 
-from label_authority.registry import register    #in every file
-from label_authority.serial_schema import (MappingField, NumericField,  #H: field types are defined, mapping->pts to something else  and numerical -> just numbers 
-                                           SerialSchema)
+from label_authority.registry import register  # in every file
+from label_authority.serial_schema import (
+    MappingField,
+    NumericField,  # H: field types are defined, mapping->pts to something else  and numerical -> just numbers
+    SerialSchema,
+)
 
 from .types import Subtype
 
-dc_subtype = (["TST1"])
+dc_subtype = ["TST1"]
 
-zipper_subtypes = (["AR00", "BR00", "CR00", "BS00", "AL00"])  #NOTE: THIS IS WRONG, SHOULD BE AL0
+zipper_subtypes = [
+    "AR00",
+    "BR00",
+    "CR00",
+    "BS00",
+    "AL00",
+]  # NOTE: THIS IS WRONG, SHOULD BE AL0
 
-tester_subtypes = (["0001", "0002", "0011", "0012", "0021", "0031", "0032", "0033", "0034", "0400", "0410", "0420", "0430"])
+tester_subtypes = [
+    "0001",
+    "0002",
+    "0011",
+    "0012",
+    "0021",
+    "0031",
+    "0032",
+    "0033",
+    "0034",
+    "0400",
+    "0410",
+    "0420",
+    "0430",
+]
 
-dc_zip_fields = SerialSchema(
-    NumericField("SerialNumber", "Serial number", 6))
+dc_zip_fields = SerialSchema(NumericField("SerialNumber", "Serial number", 6))
+
 
 def dcGetSubtype(major_type, code):
     if code not in dc_subtype:
@@ -41,8 +64,9 @@ def zipperGetSubtype(major_type, code):
     nc = code
     return Subtype(major_type, name, long_name, code, nc, dc_zip_fields)
 
+
 def testerGetSubtype(major_type, code):
-    if code not in zipper_subtypes:
+    if code not in tester_subtypes:
         raise KeyError
     if code[1] == "4":
         name = "Eng"
@@ -90,7 +114,8 @@ def testerGetSubtype(major_type, code):
                 name = name + code[3]
                 long_name = long_name + " V2"
     nc = code
-    return Subtype(major_type, name, long_name, code, nc, dc_zip_fields)        
+    return Subtype(major_type, name, long_name, code, nc, dc_zip_fields)
+
 
 @register
 class DCDCBoard:
@@ -108,6 +133,7 @@ class DCDCBoard:
     def getSubtypeByCode(code):
         return dcGetSubtype(DCDCBoard, code)
 
+
 @register
 class ZipperBoard:
     name = "Zipper Board"
@@ -118,8 +144,25 @@ class ZipperBoard:
 
     @staticmethod
     def getAllSubtypes():
-        return zipper_subtypes 
+        return zipper_subtypes
 
     @staticmethod
     def getSubtypeByCode(code):
         return zipperGetSubtype(ZipperBoard, code)
+
+
+@register
+class Testers:
+    name = "Testers"
+    long_name = "Testers"
+    code = "TS"
+    numeric_code = 90
+    num_subtype_chars = 4
+
+    @staticmethod
+    def getAllSubtypes():
+        return tester_subtypes
+
+    @staticmethod
+    def getSubtypeByCode(code):
+        return testerGetSubtype(Testers, code)

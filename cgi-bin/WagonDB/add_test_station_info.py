@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import cgi
+import cgitb
 import base
 from connect import connect
 
@@ -10,6 +11,8 @@ cur = db.cursor()
 #cgi header
 print("Content-type: text/html\n")
 
+cgitb.enable()
+
 base.header(title='Add information about the tester equipment')
 base.top(False)
 
@@ -17,7 +20,7 @@ form = cgi.FieldStorage()
 
 kria = form.getvalue('kria')
 tester = form.getvalue('tester')
-interposter = form.getvalue('interposer')
+interposer = form.getvalue('interposer')
 int_type = form.getvalue('interposer_type')
 test_stand = form.getvalue('test_stand')
 
@@ -39,7 +42,7 @@ test_stand_id = cur.fetchall()
 if test_stand_id:
     test_stand_id = test_stand_id[0][0]
 else:
-    cur.execute('insert into Teststand (name) values (%s)' % test_stand)
+    cur.execute('insert into Teststand (name) values ("%s")' % test_stand)
     db.commit()
     cur.execute('select teststand_id from Teststand where name="%s"' % test_stand)
     test_stand_id = cur.fetchall()[0][0]
@@ -80,7 +83,7 @@ info_dict = {kria_id: kria,
             wheel_2_id: wheel_2,
             wheel_3_id: wheel_3,
             wheel_4_id: wheel_4,
- }
+}
 
 for k,v in info_dict.items():
     if v:
@@ -89,7 +92,7 @@ for k,v in info_dict.items():
         if component:
             pass
         else:
-            cur.execute('insert into Tester_Component (full_id) values (%s)' % v)
+            cur.execute('insert into Tester_Component (full_id) values ("%s")' % v)
             db.commit()
         
 for k,v in info_dict.items():
@@ -97,9 +100,11 @@ for k,v in info_dict.items():
         cur.execute('select component_id from Tester_Component where full_id="%s"' % v)
         component = cur.fetchall()
         info_dict[k] = component[0][0]
-
-cur.execute('select config_id from Tester_Configuration order by config_id desc')
-config_id = cur.fetchall()[0][0] + 1
+try:
+    cur.execute('select config_id from Tester_Configuration order by config_id desc')
+    config_id = cur.fetchall()[0][0] + 1
+except:
+    config_id = 0
 
 found_config = []
 

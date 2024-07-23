@@ -5,13 +5,14 @@ from label_authority.serial_schema import MappingField, NumericField, SerialSche
 
 from .types import Subtype
 
-w_m_subtypes = (["MBD", "WFH", "WBH"])
+w_m_subtypes = ["MBD", "WFH", "WBH"]
 
 w_m_fields = SerialSchema(
     NumericField("VersionNumber", "Version Number of the board", 1),
     NumericField("BatchNumber", "Batch number in which the board was produced", 2),
     NumericField("SerialNumber", "Serial number within batch", 4),
 )
+
 
 @register
 class WMBoards:
@@ -45,7 +46,3 @@ class WMBoards:
             long_name = "BH/LD Wingboard"
 
         return Subtype(major_type, name, long_name, sub_code, nc, w_m_fields)
-
-
-
-

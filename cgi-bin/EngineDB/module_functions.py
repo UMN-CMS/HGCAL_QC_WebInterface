@@ -14,6 +14,9 @@ import uuid
 import cgi
 import json
 
+sys.path.append('{}/../LabelDB'.format(os.getcwd()))
+import label_authority as la
+
 #SERVER_NAME
 
 db = connect(0)
@@ -77,12 +80,34 @@ def Portage_fetch_attach(test_id):
     cur.execute('select attach_id, attachmime, attachdesc, originalname from Attachments where test_id=%s order by attach_id' % test_id)
     return cur.fetchall()
 
-def add_test_tab(sn, board_id, static):
+def add_test_tab(barcode, board_id, static):
 
     # adds header
     print('<div class="row">')
     print('<div class="col-md-5 pt-4 ps-5 mx-2 my-2">')
-    print('<h2>Engine Test Info for %s</h2>' %sn)
+    print('<h2>Engine Test Info for %s</h2>' %barcode)
+    print('</div>')
+    print('</div>')
+
+    decoded = la.decode(barcode)
+    major = la.getMajorType(decoded.major_type_code)
+    sub = major.getSubtypeByCode(decoded.subtype_code)
+    sn = decoded.field_values['SerialNumber'].value
+    print('<div class="row">')
+    print('<div class="col-md-3 pt-4 ps-5 mx-2 my-2">')
+    print('<h4>')
+    print('Major Type: %s' % major.name)
+    print('</h4>')
+    print('</div>')
+    print('<div class="col-md-3 pt-4 ps-5 mx-2 my-2">')
+    print('<h4>')
+    print('Sub Type: %s' % sub.name)
+    print('</h4>')
+    print('</div>')
+    print('<div class="col-md-3 pt-4 ps-5 mx-2 my-2">')
+    print('<h4>')
+    print('Serial Number: %s' % sn)
+    print('</h4>')
     print('</div>')
     print('</div>')
     if static: 
@@ -91,32 +116,32 @@ def add_test_tab(sn, board_id, static):
         # adds buttons
         print('<div class="row">')
         print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="add_test.py?board_id=%(id)d&full_id=%(serial)s">' %{'serial':sn, 'id':board_id})
+        print('<a href="add_test.py?board_id=%(id)d&full_id=%(serial)s">' %{'serial':barcode, 'id':board_id})
         print('<button class="btn btn-dark"> Add a New Test </button>')
         print('</a>')
         print('</div>')
         print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="add_board_info.py?board_id=%(id)d&full_id=%(serial)s">' %{'serial':sn, 'id':board_id})
+        print('<a href="add_board_info.py?board_id=%(id)d&full_id=%(serial)s">' %{'serial':barcode, 'id':board_id})
         print('<button class="btn btn-dark"> Add Board Info </button>')
         print('</a>')
         print('</div>')
         print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="board_checkout.py?full_id=%(serial)s">' %{'serial':sn})
+        print('<a href="board_checkout.py?full_id=%(serial)s">' %{'serial':barcode})
         print('<button class="btn btn-dark"> Checkout Board </button>')
         print('</a>')
         print('</div>')
         print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="board_checkin.py?full_id=%(serial)s">' %{'serial':sn})
+        print('<a href="board_checkin.py?full_id=%(serial)s">' %{'serial':barcode})
         print('<button class="btn btn-dark"> Checkin Board </button>')
         print('</a>')
         print('</div>')
         print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="add_board_image.py?board_id=%(id)d&full_id=%(serial)s">' %{'serial':sn, 'id':board_id})
+        print('<a href="add_board_image.py?board_id=%(id)d&full_id=%(serial)s">' %{'serial':barcode, 'id':board_id})
         print('<button class="btn btn-dark"> Add Board Image </button>')
         print('</a>')
         print('</div>')
         print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="change_board_location.py?board_id=?board_id=%(id)d&full_id=%(serial)s">' %{'serial':sn, 'id':board_id})
+        print('<a href="change_board_location.py?board_id=?board_id=%(id)d&full_id=%(serial)s">' %{'serial':barcode, 'id':board_id})
         print('<button class="btn btn-dark"> Update Location </button>')
         print('</a>')
         print('</div>')
@@ -246,16 +271,17 @@ def board_info(sn, static):
     # gets location info
     cur.execute('select location from Board where board_id=%s' % board_id)
     location = cur.fetchall()[0][0]
+
     # attempts to get the Chip IDs for this Board
     try:
         cur.execute('select test_id,day from Test where test_type_id=22 and board_id=%s order by day desc' % board_id) 
         test_id = cur.fetchall()[0][0]
         cur.execute('select Attach from Attachments where test_id=%s' % test_id)
+        attach = cur.fetchall()[0][0]
         try:
-            attach = cur.fetchall()[0][0]['test_data']
+            attach = json.loads(attach)['test_data']
         except KeyError:
-            attach = cur.fetchall()[0][0]
-        attach = json.loads(attach)
+            attach = json.loads(attach)
         if sn[3:5] == 'EL':
             daq_chip_id = attach['DAQ'][-1]
             east_chip_id = attach['E'][-1]
@@ -267,7 +293,7 @@ def board_info(sn, static):
             trig2_chip_id = attach['TRG2'][-1]
             trig3_chip_id = attach['TRG3'][-1]
             trig4_chip_id = attach['TRG4'][-1]
-    except:
+    except Exception as e:
         test_id = 'No tests run'
         attach = 'none'
         if sn[3:5] == 'EL':
@@ -289,7 +315,11 @@ def board_info(sn, static):
         info_com = 'None'
 
     # does the same thing as the home page to determine how many tests have passed
-    cur.execute('select name from Test_Type')
+    cur.execute('select type_id from Board where board_id=%s' % board_id)
+    type_sn = cur.fetchall()[0][0]
+    cur.execute('select type_id from Board_type where type_sn="%s"' % type_sn)
+    type_id = cur.fetchall()[0][0]
+    cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
     names = cur.fetchall()
     outcomes = []
 
@@ -339,7 +369,7 @@ def board_info(sn, static):
     if num == total:
         print('<td colspan=1><span class="badge bg-success rounded-pill">Done</span></td>')
     else:
-        print('<td colspan=1><span class="badge bg-primary rounded-pill">%(success)s/%(total)s</span></td>' %{'success': num, 'total': total})
+        print('<td colspan=1><span class="badge bg-dark rounded-pill">%(success)s/%(total)s</span></td>' %{'success': num, 'total': total})
         
     # gets id of boards that have been checked out
     cur.execute('select board_id from Check_Out')
@@ -445,7 +475,7 @@ def add_board_info(board_id, sn, location, daqid, trig1id, trig2id, info):
             print(err)
 
     try:
-        cur.execute('INSERT INTO Board_Info (board_id, info_type, info, daq_chip_id, trigger_chip_1_id, trigger_chip_2_id, location) VALUES (%i, %i, "%s", "%s", "%s", "%s", "%s");' % (board_id, 0, info, daqid, trig1id, trig2id, location))
+        cur.execute('update Board set comments="%s" where board_id=%s' % (info, board_id))
 
         db.commit()
         db.close()

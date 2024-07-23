@@ -462,10 +462,6 @@ def Filter():
     df_temp = AllData.merge(ADC_voltage, on='Test ID', how='left')
     df_temp = df_temp.dropna()
     ds_volt = ColumnDataSource(df_temp)
-    subtypes = np.unique(ds_volt.data['Type ID'].tolist()).tolist()
-    serial_numbers = {}
-    for s in subtypes:
-        serial_numbers[s] = np.unique(df_temp.query('`Type ID` == @s')['Full ID'].values.tolist()).tolist()
 
     df_temp = AllData.merge(ADC_resist, on='Test ID', how='left')
     df_temp = df_temp.dropna()
@@ -490,9 +486,9 @@ def Filter():
     while min_date <= today:
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
-    columns = ['Type ID', 'Full ID', 'Person Name', 'Outcome', 'Start Date', 'End Date']
-    data = [ds_adc.data['Type ID'].tolist(), ds_adc.data['Full ID'].tolist(), ds_adc.data['Person Name'].tolist(), ds_adc.data['Outcome'], date_range, date_range]
-    t = [multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
+    columns = ['Major Type', 'Sub Type', 'Full ID', 'Person Name', 'Outcome', 'Start Date', 'End Date']
+    data = [ds_adc.data['Major Type'].tolist(), ds_adc.data['Sub Type'].tolist(), ds_adc.data['Full ID'].tolist(), ds_adc.data['Person Name'].tolist(), ds_adc.data['Outcome'], date_range, date_range]
+    t = [multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
 
     for i in range(len(columns)):
         widget_constructor, trigger = t[i]
@@ -657,15 +653,29 @@ src4.change.emit()
             
     w = [*widgets.values()]
 
-    update_options = CustomJS(args=dict(serial_numbers=serial_numbers, widget=w[1]), code=('''
-widget.options = serial_numbers[this.value]
+    subtypes = {}
+    for major in np.unique(ds_adc.data['Major Type'].tolist()).tolist():
+        subtypes[major] = np.unique(df_temp.query('`Major Type` == @major')['Full ID'].values.tolist()).tolist()
+    serial_numbers = {}
+    for s in np.unique(ds_adc.data['Sub Type'].tolist()).tolist():
+        serial_numbers[s] = np.unique(df_temp.query('`Sub Type` == @s')['Full ID'].values.tolist()).tolist()
+
+    update_options = CustomJS(args=dict(subtypes=subtypes, widget=w[1]), code=('''
+widget.options = subtypes[this.value]
 '''))
     w[0].js_on_change('value', update_options)
+    
+    update_options_2 = CustomJS(args=dict(serial_numbers=serial_numbers, widget=w[2]), code=('''
+widget.options = serial_numbers[this.value]
+'''))
+    w[1].js_on_change('value', update_options_2)
+
     
     L = ADC_Gaussian()
 
     layout = row(column(row(w[0:3]),
-                    row(w[3:6]), 
+                    row(w[3:5]), 
+                    row(w[5:]), 
                     slider, 
                     q_1, q_2, q_3,
                     p_1, p_2, p_3,
@@ -1250,11 +1260,8 @@ def ADC_Gaussian():
     df_temp = AllData.merge(ADC_voltage, on='Test ID', how='left')
     df_temp = df_temp.dropna()
     ds_volt = ColumnDataSource(df_temp)
+
     serial_numbers = np.unique(ds_volt.data['Full ID'].tolist()).tolist()
-    subtypes = np.unique(ds_volt.data['Type ID'].tolist()).tolist()
-    serial_numbers_2 = {}
-    for s in subtypes:
-        serial_numbers_2[s] = np.unique(df_temp.query('`Type ID` == @s')['Full ID'].values.tolist()).tolist()
 
     df_temp = AllData.merge(ADC_resist, on='Test ID', how='left')
     df_temp = df_temp.dropna()
@@ -1279,9 +1286,9 @@ def ADC_Gaussian():
     while min_date <= today:
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
-    columns = ['Type ID', 'Full ID', 'Outcome', 'Start Date', 'End Date']
-    data = [ds_adc.data['Type ID'].tolist(), ds_adc.data['Full ID'], ds_adc.data['Outcome'], date_range, date_range]
-    t = [multi_choice, multi_choice, multi_choice, start_date, end_date]
+    columns = ['Major Type', 'Sub Type', 'Full ID', 'Outcome', 'Start Date', 'End Date']
+    data = [ds_adc.data['Major Type'].tolist(), ds_adc.data['Sub Type'].tolist(), ds_adc.data['Full ID'], ds_adc.data['Outcome'], date_range, date_range]
+    t = [multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
 
     for i in range(len(columns)):
         widget_constructor, trigger = t[i]
@@ -1501,10 +1508,23 @@ src4.change.emit()
     tables = {'Slope': d_1, 'Intercept': d_2, 'R Squared': d_3, 'Resistance': d_4, 'Voltage': d_5, 'Temperature': d_6}
 
     w = [*widgets.values()]
-    update_options = CustomJS(args=dict(serial_numbers=serial_numbers_2, widget=w[1]), code=('''
-widget.options = serial_numbers[this.value]
+
+    subtypes = {}
+    for major in np.unique(ds_adc.data['Major Type'].tolist()).tolist():
+        subtypes[major] = np.unique(df_temp.query('`Major Type` == @major')['Full ID'].values.tolist()).tolist()
+    serial_numbers = {}
+    for s in np.unique(ds_adc.data['Sub Type'].tolist()).tolist():
+        serial_numbers[s] = np.unique(df_temp.query('`Sub Type` == @s')['Full ID'].values.tolist()).tolist()
+
+    update_options = CustomJS(args=dict(subtypes=subtypes, widget=w[1]), code=('''
+widget.options = subtypes[this.value]
 '''))
     w[0].js_on_change('value', update_options)
+    
+    update_options_2 = CustomJS(args=dict(serial_numbers=serial_numbers, widget=w[2]), code=('''
+widget.options = serial_numbers[this.value]
+'''))
+    w[1].js_on_change('value', update_options_2)
 
     # this allows you to select which value you're seeing residuals for
     display_plot = CustomJS(args=dict(p_plots=p_plots, q_plots=q_plots, tables=tables), code=('''
@@ -1536,8 +1556,8 @@ for (let [name,widget] of Object.entries(tables)){
         
     # column and row objects only take it lists, need to make arguments lists
     layout = column(row(w[0:2] + [select]),
-                    row(w[2:5]),
-                    row([n_sigma]), 
+                    row(w[2:4] + [n_sigma]),
+                    row(w[4:]),
                     column(list(q_plots.values())),
                     column(list(p_plots.values())),
                     column(list(tables.values())))

@@ -14,11 +14,11 @@ cur = db.cursor()
 def get_test():
     csv_file = io.StringIO()
 
-    columns = ['Test ID', 'Test Type ID', 'Board ID', 'Person ID', 'Time', 'Successful','comments']
+    columns = ['Test ID', 'Test Type ID', 'Board ID', 'Person ID', 'Time', 'Successful']
     writer = csv.writer(csv_file)
     writer.writerow(columns)
 
-    cur.execute('select * from Test')
+    cur.execute('select test_id, test_type_id, board_id, person_id, day, successful from Test')
     Test_Data = cur.fetchall()
     writer.writerows(Test_Data)
 
@@ -26,15 +26,21 @@ def get_test():
 
     return csv_file
      
-def get_board():
+def get_board(): 
     csv_file = io.StringIO()
 
-    header = ['Full ID', 'Board ID', 'Type ID', 'Location']
+    header = ['Full ID', 'Board ID', 'Sub Type', 'Location', 'Major Type']
     writer = csv.writer(csv_file)
     writer.writerow(header)
     
     cur.execute('select full_id,board_id,type_id,location from Board')
-    Board_Data = cur.fetchall()
+    Temp_Data = cur.fetchall()
+    Board_Data = []
+    for line in Temp_Data:
+        if line[0][4] == 'H':
+            Board_Data.append(line + ('HD',))
+        else:
+            Board_Data.append(line + ('LD',))
     writer.writerows(Board_Data)
 
     csv_file.seek(0)
@@ -107,7 +113,7 @@ def get_adc_functionality():
     Attach_Data = []
     for i in Attach:
         try:
-            Attach_Data.append(json.loads(i[0]['test_data']))
+            Attach_Data.append(json.loads(i[0])['test_data'])
         except:
             Attach_Data.append(json.loads(i[0]))
 
@@ -162,9 +168,15 @@ def get_adc_functionality():
             writer_3.writerow({'Test ID': TestIDs[n][0], 'Chip': v, 'Temperature': Temp})
 
         for i in adc_keys:
-            slope = Attach_Data[n]['walk_engine_read_adc'][i][1]['slope']
-            intercept = Attach_Data[n]['walk_engine_read_adc'][i][1]['intercept']
-            r2 = Attach_Data[n]['walk_engine_read_adc'][i][1]['rsquared']
+            try:
+                slope = Attach_Data[n]['walk_engine_read_adc'][i][1]['slope']
+                intercept = Attach_Data[n]['walk_engine_read_adc'][i][1]['intercept']
+                r2 = Attach_Data[n]['walk_engine_read_adc'][i][1]['rsquared']
+            except KeyError:
+                slope = Attach_Data[n]['walk_engine_read_adc'][i]['slope']
+                intercept = Attach_Data[n]['walk_engine_read_adc'][i]['intercept']
+                r2 = Attach_Data[n]['walk_engine_read_adc'][i]['rsquared']
+
             writer_4.writerow({'Test ID': TestIDs[n][0], 'ADC': i, 'slope': slope, 'intercept': intercept, 'rsquared': r2})
 
     csv_file_resist.seek(0)
@@ -197,8 +209,8 @@ def get_eclock_rates():
     Attach_Data = []
     for i in Attach:
         try:
-            Attach_Data.append(json.loads(i[0]['test_data']))
-        except:
+            Attach_Data.append(json.loads(i[0])['test_data'])
+        except Exception as e:
             Attach_Data.append(json.loads(i[0]))
 
     writer.writeheader()
@@ -240,7 +252,7 @@ def get_xpwr():
     Attach_Data = []
     for i in Attach:
         try:
-            Attach_Data.append(json.loads(i[0]['test_data']))
+            Attach_Data.append(json.loads(i[0])['test_data'])
         except:
             Attach_Data.append(json.loads(i[0]))
 
@@ -275,7 +287,7 @@ def get_elink_quality():
     Attach_Data = []
     for i in Attach:
         try:
-            Attach_Data.append(json.loads(i[0]['test_data']))
+            Attach_Data.append(json.loads(i[0])['test_data'])
         except:
             Attach_Data.append(json.loads(i[0]))
 
@@ -313,7 +325,7 @@ def get_fast_command():
     Attach_Data = []
     for i in Attach:
         try:
-            Attach_Data.append(json.loads(i[0]['test_data']))
+            Attach_Data.append(json.loads(i[0])['test_data'])
         except:
             Attach_Data.append(json.loads(i[0]))
 
@@ -354,7 +366,7 @@ def get_uplink_quality():
     Attach_Data = []
     for i in Attach:
         try:
-            Attach_Data.append(json.loads(i[0]['test_data']))
+            Attach_Data.append(json.loads(i[0])['test_data'])
         except:
             Attach_Data.append(json.loads(i[0]))
 
@@ -390,7 +402,7 @@ def get_i2c():
     Attach_Data = []
     for i in Attach:
         try:
-            Attach_Data.append(json.loads(i[0]['test_data']))
+            Attach_Data.append(json.loads(i[0])['test_data'])
         except:
             Attach_Data.append(json.loads(i[0]))
 
@@ -432,7 +444,10 @@ def get_gpio_functionality():
 
     for i in range(len(Attach)):
         try:
-            data = json.loads(Attach[i][0])
+            try:
+                data = json.loads(Attach[i][0])['test_data']
+            except:
+                data = json.loads(Attach[i][0])
 
             try:
                 read_data = data['walked_read']
