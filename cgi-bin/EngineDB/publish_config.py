@@ -4,7 +4,6 @@ local_path = os.path.dirname(os.path.abspath(__file__))
 
 def get_pages():
     scripts = ['home_page.py',
-                'testers.py',
                 'checkin_summary.py',
                 'checkout_summary.py',
                 'summary.py',

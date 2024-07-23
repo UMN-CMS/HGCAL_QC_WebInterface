@@ -1,36 +1,35 @@
-import itertools as it 
+import itertools as it
 
-from label_authority.registry import register  
-from label_authority.serial_schema import (MappingField, NumericField,
-                                           SerialSchema)
+from label_authority.registry import register
+from label_authority.serial_schema import MappingField, NumericField, SerialSchema
 
 from .types import Subtype
 
-ld_ws = (["10A1", "20A1", "30A1", "30A3", "10Z1"])
+ld_ws = ["10A1", "20A1", "30A1", "30A3", "10Z1"]
 lde_wagon_subtypes = ld_ws + (["20B1"])
 ldw_wagon_subtypes = ld_ws + (["30A2", "11A1"])
-       
-hd_sub_base = (["A1", "AB", "B1", "BB", "CB", "C1", "D1", "DB"])
-front_sub = (["30", "31", "21", "20"])
-hd_subtypes = (["30A0", "30C0"])
+
+hd_sub_base = ["A1", "AB", "B1", "BB", "CB", "C1", "D1", "DB"]
+front_sub = ["30", "31", "21", "20"]
+hd_subtypes = ["30A0", "30C0"]
 for i in range(4):
     if len(hd_sub_base) == 6:
-        hd_sub_base = hd_sub_base[:len(hd_sub_base) - 1]
-    insert = ([front_sub[i] + item for item in hd_sub_base])
+        hd_sub_base = hd_sub_base[: len(hd_sub_base) - 1]
+    insert = [front_sub[i] + item for item in hd_sub_base]
 
     if len(hd_sub_base) == 5:
-        hd_sub_base = hd_sub_base[:len(hd_sub_base) - 1]
+        hd_sub_base = hd_sub_base[: len(hd_sub_base) - 1]
     else:
-        hd_sub_base = hd_sub_base[:len(hd_sub_base) - 2]
+        hd_sub_base = hd_sub_base[: len(hd_sub_base) - 2]
     hd_subtypes.extend(insert)
 
-wagon_fields = SerialSchema(
-    NumericField("SerialNumber", "Serial number of wagon", 6))
+wagon_fields = SerialSchema(NumericField("SerialNumber", "Serial number of wagon", 6))
+
 
 def ld_wagonSubtypeByCode(major_type, code):
     name = major_type.name[9:]
     long_name = major_type.name
-    
+
     name = name + " " + code[0] + code[2]
     if code[2] == "Z":
         name = major_type.name[9:] + " 1 Debug"
@@ -39,7 +38,7 @@ def ld_wagonSubtypeByCode(major_type, code):
         long_name = name + ", Straight shape"
     elif code[3] == "2":
         name = "Lefty Python"
-        long_name = long_name  + ", Python shape"
+        long_name = long_name + ", Python shape"
     else:
         name = major_type.name[9:] + " T"
         long_name = long_name + ", T shape"
@@ -57,8 +56,9 @@ def ld_wagonSubtypeByCode(major_type, code):
 
     if code not in lde_wagon_subtypes and code not in ldw_wagon_subtypes:
         raise KeyError
-    
+
     return Subtype(major_type, name, long_name, code, nc, wagon_fields)
+
 
 @register
 class LDWagonWest:
@@ -75,7 +75,8 @@ class LDWagonWest:
     @staticmethod
     def getSubtypeByCode(code):
         return ld_wagonSubtypeByCode(LDWagonWest, code)
-    
+
+
 @register
 class LDWagonEast:
     name = "LD-Wagon-East"
@@ -98,8 +99,8 @@ def hd_wagonSubtypeByCode(major_type, code):
         raise KeyError
     name = "HD Wagon"
     long_name = "HD Wagon"
-    
-    if code[3] == "1":        #PRODUCTION
+
+    if code[3] == "1":  # PRODUCTION
         long_name = "Production " + long_name
         if code[2] == "C" or code[2] == "D":
             long_name = long_name + " with a shape of Triangle 3, HDEF, link topology"
@@ -119,7 +120,7 @@ def hd_wagonSubtypeByCode(major_type, code):
                 long_name = long_name + ", HDEF"
             else:
                 long_name = long_name + ", HDEH"
-    elif code[3] == "B":    #PRODUCTION BARE PCB
+    elif code[3] == "B":  # PRODUCTION BARE PCB
         long_name = "Production Bare PCB " + long_name
         if code[0] == "3":
             long_name = long_name + " with a shape of Straight " + code[0]
@@ -145,12 +146,13 @@ def hd_wagonSubtypeByCode(major_type, code):
                 long_name = long_name + " + Bottom"
                 if code[2] == "B":
                     long_name = long_name + " for Half"
-    else:   #PROTOTYPES
+    else:  # PROTOTYPES
         long_name = "Prototype " + long_name
-        
+
     nc = code
 
     return Subtype(major_type, name, long_name, code, nc, wagon_fields)
+
 
 @register
 class HDWagon:

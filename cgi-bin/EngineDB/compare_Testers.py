@@ -32,11 +32,14 @@ import makeTestingData as mTD
 TestData = pd.read_csv(mTD.get_test(), parse_dates=['Time'])
 BoardData = pd.read_csv(mTD.get_board())
 PeopleData = pd.read_csv(mTD.get_people())
+TestTypeData = pd.read_csv(mTD.get_test_types())
+TestTypeData = TestTypeData.rename(columns={'Name':'Test Name'})
 mergetemp = TestData.merge(BoardData, on='Board ID', how='left')
 AllData = mergetemp.merge(PeopleData, on='Person ID', how='left')
 AllData = AllData.rename(columns={'Successful':'Outcome'})
 AllData['Outcome'] = AllData['Outcome'].replace(0, 'Unsuccessful')
 AllData['Outcome'] = AllData['Outcome'].replace(1, 'Successful')
+AllData = AllData.merge(TestTypeData, on='Test Type ID', how='left')
 
 filter_code=('''
 const is_selected_map = new Map([
@@ -189,9 +192,9 @@ def Filter():
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
     modules = np.unique(ds.data['Person Name'].tolist())
-    columns = ['Type ID', 'Full ID', 'Outcome','Start Date', 'End Date']
-    data = [ds.data['Type ID'].tolist(), ds.data['Full ID'].tolist(), ds.data['Outcome'].tolist(), date_range, date_range]
-    t = [multi_choice, multi_choice, multi_choice, start_date, end_date]
+    columns = ['Major Type', 'Sub Type', 'Full ID', 'Test Name', 'Outcome','Start Date', 'End Date']
+    data = [ds.data['Major Type'].tolist(), ds.data['Sub Type'].tolist(), ds.data['Full ID'].tolist(), ds.data['Test Name'].tolist(), ds.data['Outcome'].tolist(), date_range, date_range]
+    t = [multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
 
     p = figure(
         title='Total Tests Over Time',
@@ -240,6 +243,24 @@ def Filter():
     p.legend.label_text_font_size = '8pt'
     p.legend.location = 'top_left'
     w = [*widgets.values()]
-    plot_json = json.dumps(json_item(column(row(w[0:3]), row(w[3:5]), p, data_table)))
+
+    subtypes = {}
+    for major in np.unique(ds.data['Major Type'].tolist()).tolist():
+        subtypes[major] = np.unique(df_temp.query('`Major Type` == @major')['Full ID'].values.tolist()).tolist()
+    serial_numbers = {}
+    for s in np.unique(ds.data['Sub Type'].tolist()).tolist():
+        serial_numbers[s] = np.unique(df_temp.query('`Sub Type` == @s')['Full ID'].values.tolist()).tolist()
+
+    update_options = CustomJS(args=dict(subtypes=subtypes, widget=w[1]), code=('''
+widget.options = subtypes[this.value]
+'''))
+    w[0].js_on_change('value', update_options)
+    
+    update_options_2 = CustomJS(args=dict(serial_numbers=serial_numbers, widget=w[2]), code=('''
+widget.options = serial_numbers[this.value]
+'''))
+    w[1].js_on_change('value', update_options_2)
+
+    plot_json = json.dumps(json_item(column(row(w[0:3]), row(w[3:5]), row(w[5:]), p, data_table)))
     return plot_json
 

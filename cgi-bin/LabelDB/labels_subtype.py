@@ -24,12 +24,16 @@ sub_name = sub_name.replace('_', ' ')
 
 # gets the inputted major type and subtype
 major = la.getMajorType(m)
+
 temp_subtypes = major.getAllSubtypes()
 subtypes = []
 for st in temp_subtypes:
     temp = major.getSubtypeByCode(st)
-    if temp.name == sub_name:
+    if sub_name == major.name:
         subtypes.append(temp)
+    else:
+        if temp.name == sub_name:
+            subtypes.append(temp)
 
 
 cur.execute('select major_type_id from Major_Type where major_code="%s"' % m)
@@ -62,15 +66,17 @@ schema = subtypes[0].serial_schema
 
 print('<div class="row">')
 print('<div class="col-md-10 mx-2 my-2 pt-4 ps-5"><h4>Serial Schema</h4><table class="table table-bordered table-hover table-active">')
-print('<tr><th> Field Name <th> Characters <th> Possible Values</tr>')
+print('<tr><th> Field Name <th> Description <th> Characters <th> Possible Values</tr>')
 names = []
 widths = []
+descs = []
 vals = {}
 for field in schema.parts:
     # checks whether the part of the serial schema is a mapping field or a numeric field
     if isinstance(field,la.serial_schema.MappingField):
         names.append(field.name)
         widths.append(field.width)
+        descs.append(field.description)
         values = field.getValueOptions()
         temp = []
         keys = []
@@ -98,14 +104,14 @@ for field in schema.parts:
             for o in options:
                 temp = []
                 for v in values:
-                    if o in v:
-                        temp.append(v.split('(')[1][0])
+                    if o in v.value:
+                        temp.append(v.value.split('(')[1][0])
                 opt_dict[o] = temp[0] + '-' + temp[-1]
 
             for d in opt_dict:
                 text += d + ': ' + opt_dict[d]
                 if d is not list(opt_dict)[-1]:
-                    text += ', '
+                    text += '<br>'
 
         # otherwise just lists the character that corresponds to the value
         else:
@@ -113,7 +119,7 @@ for field in schema.parts:
             for i in range(len(options)):
                 text += options[i] + ': ' + keys[i]
                 if i != len(options)-1:
-                    text += ', '
+                    text += '<br>'
                 
                     
         vals[field.name] = text
@@ -121,15 +127,16 @@ for field in schema.parts:
     if isinstance(field,la.serial_schema.NumericField):
         names.append(field.name)
         widths.append(field.width)
+        descs.append(field.description)
         values = field.getValueOptions()
                 
         # gets range of values that the numeric field could take on
-        vals[field.name] = str(values[0]) + '-' + str(values[-1])
+        vals[field.name] = str(0) + '-' + str(len(values)-1)
         
 
 for i in range(len(names)):
     print('<tr>')
-    print(f"<td>{names[i]}</td><td>{widths[i]}</td><td>{vals[names[i]]}</td>")
+    print(f"<td>{names[i]}</td><td>{descs[i]}</td><td>{widths[i]}</td><td>{vals[names[i]]}</td>")
     print('</tr>')
 
 print('</table>')
@@ -145,7 +152,7 @@ id_string += '<a style="color:black;">320</a>'
 id_string += '<a style="color:maroon;">%s</a>' % m
 id_string += '<a style="color:green;">%s</a>' % subtypes[0].code
 
-colors = ('purple', '#e67e22', 'teal')
+colors = ('purple', '#e67e22', 'teal', 'navy')
 
 for i in range(len(names)):
     print('<a style="color:%s;">%s</a>' % (colors[i], names[i]))

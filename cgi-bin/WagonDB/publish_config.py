@@ -5,7 +5,6 @@ local_path = os.path.dirname(os.path.abspath(__file__))
 # input all scripts that are to be converted to html
 def get_pages():
     scripts = ['home_page.py',
-                'testers.py',
                 'checkin_summary.py',
                 'checkout_summary.py',
                 'summary.py',
