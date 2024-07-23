@@ -39,6 +39,9 @@ AllData = mergetemp.merge(PeopleData, on='Person ID', how='left')
 AllData = AllData.rename(columns={'Successful':'Outcome'})
 AllData['Outcome'] = AllData['Outcome'].replace(0, 'Unsuccessful')
 AllData['Outcome'] = AllData['Outcome'].replace(1, 'Successful')
+TestTypeData = pd.read_csv(mTD.get_test_types())
+TestTypeData = TestTypeData.rename(columns={'Name':'Test Name'})
+AllData = AllData.merge(TestTypeData, on='Test Type ID', how='left')
 
 filter_code=('''
 const is_selected_map = new Map([
@@ -211,16 +214,16 @@ def Filter():
         min_date += datetime.timedelta(days=1)
     # testers are being compared so the modules to iterate over are the people
     modules = np.unique(ds.data['Person Name'].tolist())
-    columns = ['Type ID', 'Full ID', 'Outcome','Start Date', 'End Date']
-    data = [ds.data['Type ID'].tolist(), ds.data['Full ID'].tolist(), ds.data['Outcome'].tolist(), date_range, date_range]
-    t = [multi_choice, multi_choice, multi_choice, start_date, end_date]
+    columns = ['Major Type', 'Sub Type', 'Full ID', 'Test Name', 'Outcome','Start Date', 'End Date']
+    data = [ds.data['Major Type'].tolist(), ds.data['Sub Type'].tolist(), ds.data['Full ID'].tolist(), ds.data['Test Name'].tolist(), ds.data['Outcome'].tolist(), date_range, date_range]
+    t = [multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
 
     p = figure(
         title='Total Tests Over Time',
         x_axis_label='Date',
         y_axis_label='Number of Tests',
         tools='pan,wheel_zoom,box_zoom,reset,save',
-        width = 925,
+        width = 1200,
         x_axis_type='datetime',
         )
 
@@ -263,6 +266,6 @@ def Filter():
     p.legend.label_text_font_size = '8pt'
     p.legend.location = 'top_left'
     w = [*widgets.values()]
-    plot_json = json.dumps(json_item(column(row(w[0:3]), row(w[3:5]), p, data_table)))
+    plot_json = json.dumps(json_item(column(row(w[0:3]), row(w[3:]), p, data_table)))
     return plot_json
 

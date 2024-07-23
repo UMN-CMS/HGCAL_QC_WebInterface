@@ -75,10 +75,7 @@ def top(static):
           <a class="nav-link active" aria-current="page" href="home_page.html">Home</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="testers.html">Testers</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="search.html">Search</a>
+          <a class="nav-link" href="search.html">Search Tests</a>
         </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -94,7 +91,7 @@ def top(static):
             Summary
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <li><a class="dropdown-item" href="summary.html">Summary</a></li>
+            <li><a class="dropdown-item" href="summary.html">Board Summary</a></li>
             <li><a class="dropdown-item" href="tester_summary.html">Tester Summary</a></li>
             <li><a class="dropdown-item" href="board_images.html">Photo Repository</a></li>
           </ul>
@@ -135,10 +132,7 @@ def top(static):
           <a class="nav-link active" aria-current="page" href="home_page.py">Home</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="testers.py">Testers</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="search.py">Search</a>
+          <a class="nav-link" href="search.py">Search Tests</a>
         </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -156,7 +150,7 @@ def top(static):
             Summary
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <li><a class="dropdown-item" href="summary.py">Summary</a></li>
+            <li><a class="dropdown-item" href="summary.py">Board Summary</a></li>
             <li><a class="dropdown-item" href="tester_summary.py">Tester Summary</a></li>
             <li><a class="dropdown-item" href="board_images.py">Photo Repository</a></li>
           </ul>
@@ -186,6 +180,9 @@ def top(static):
             <li><a class="dropdown-item" href="I2CData.py">I2C</a></li>
             <li><a class="dropdown-item" href="GPIO_functionality.py">GPIO Functionality</a></li>
           </ul>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="teststand_debug.py">Test Stand Debug</a>
         </li>
       </ul>
     </div>
@@ -222,12 +219,9 @@ def bottom(static):
             <a href="home_page.html" class="text-light text-decoration-none">Home</a>
           </li>
           <li>
-            <a href="testers.html" class="text-light text-decoration-none">Testers</a>
-          </li>
-          <li>
             <span class="text-light">Summary</a>
             <ul class="list">
-                <li><a class="text-light text-decoration-none" href="summary.html">\tSummary</a></li>
+                <li><a class="text-light text-decoration-none" href="summary.html">\tBoard Summary</a></li>
                 <li><a class="text-light text-decoration-none" href="tester_summary.html">\tTester Summary</a></li>
                 <li><a class="text-light text-decoration-none" href="board_images.html">\tPhoto Repository</a></li>
             </ul>
@@ -267,12 +261,9 @@ def bottom(static):
             <a href="index.html" class="text-light text-decoration-none">Home</a>
           </li>
           <li>
-            <a href="testers.html" class="text-light text-decoration-none">Testers</a>
-          </li>
-          <li>
             <span class="text-light">Summary</a>
             <ul class="list">
-                <li><a class="text-light text-decoration-none" href="summary.py">\tSummary</a></li>
+                <li><a class="text-light text-decoration-none" href="summary.py">\tBoard Summary</a></li>
                 <li><a class="text-light text-decoration-none" href="tester_summary.py">\tTester Summary</a></li>
                 <li><a class="text-light text-decoration-none" href="board_images.py">\tPhoto Repository</a></li>
             </ul>

@@ -195,9 +195,9 @@ def Filter():
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
     modules = ['Module 1', 'Module 2', 'Module 3']
-    columns = ['Type ID', 'Full ID', 'Person Name', 'Outcome', 'Start Date', 'End Date']
-    data = [ds.data['Type ID'].tolist(), ds.data['Full ID'].tolist(), ds.data['Person Name'].tolist(), ds.data['Outcome'], date_range, date_range]
-    t = [multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
+    columns = ['Major Type', 'Sub Type', 'Full ID', 'Person Name', 'Outcome', 'Start Date', 'End Date']
+    data = [ds.data['Major Type'].tolist(), ds.data['Sub Type'].tolist(), ds.data['Full ID'].tolist(), ds.data['Person Name'].tolist(), ds.data['Outcome'], date_range, date_range]
+    t = [multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
 
     for i in range(len(columns)):
         widget_constructor, trigger = t[i]
@@ -242,16 +242,24 @@ def Filter():
     w = [*widgets.values()]
 
     # update options for serial numbers upon selecting a subtype
-    subtypes = np.unique(ds.data['Type ID'].tolist()).tolist()
+    subtypes = {}
+    for major in np.unique(ds.data['Major Type'].tolist()).tolist():
+        subtypes[major] = np.unique(df_temp.query('`Major Type` == @major')['Full ID'].values.tolist()).tolist()
     serial_numbers = {}
-    for s in subtypes:
-        serial_numbers[s] = np.unique(df_temp.query('`Type ID` == @s')['Full ID'].values.tolist()).tolist()
-    update_options = CustomJS(args=dict(serial_numbers=serial_numbers, widget=w[1]), code=('''
-widget.options = serial_numbers[this.value]
+    for s in np.unique(ds.data['Sub Type'].tolist()).tolist():
+        serial_numbers[s] = np.unique(df_temp.query('`Sub Type` == @s')['Full ID'].values.tolist()).tolist()
+
+    update_options = CustomJS(args=dict(subtypes=subtypes, widget=w[1]), code=('''
+widget.options = subtypes[this.value]
 '''))
     w[0].js_on_change('value', update_options)
+    
+    update_options_2 = CustomJS(args=dict(serial_numbers=serial_numbers, widget=w[2]), code=('''
+widget.options = serial_numbers[this.value]
+'''))
+    w[1].js_on_change('value', update_options_2)
 
-    plot_json = json.dumps(json_item(column(row(w[0:3]), row(w[3:6]), p)))
+    plot_json = json.dumps(json_item(column(row(w[0:3]), row(w[3:5]), row(w[5:]), p)))
     return plot_json
     
 

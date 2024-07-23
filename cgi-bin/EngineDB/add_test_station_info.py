@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import cgi
+import cgitb
 import base
 from connect import connect
 
@@ -10,14 +11,16 @@ cur = db.cursor()
 #cgi header
 print("Content-type: text/html\n")
 
+cgitb.enable()
+
 base.header(title='Add information about the tester equipment')
 base.top(False)
 
 form = cgi.FieldStorage()
 
 zcu = form.getvalue('ZCU')
-east_interposter = form.getvalue('east_interposer')
-west_interposter = form.getvalue('west_interposer')
+east_interposer = form.getvalue('east_interposer')
+west_interposer = form.getvalue('west_interposer')
 test_stand = form.getvalue('test_stand')
 
 cur.execute('select role_id from Tester_Roles where description="ZCU"')
@@ -34,7 +37,7 @@ test_stand_id = cur.fetchall()
 if test_stand_id:
     test_stand_id = test_stand_id[0][0]
 else:
-    cur.execute('insert into Teststand (name) values (%s)' % test_stand)
+    cur.execute('insert into Teststand (name) values ("%s")' % test_stand)
     db.commit()
     cur.execute('select teststand_id from Teststand where name="%s"' % test_stand)
     test_stand_id = cur.fetchall()[0][0]
@@ -62,7 +65,7 @@ for k,v in info_dict.items():
     if component:
         pass
     else:
-        cur.execute('insert into Tester_Component (full_id) values (%s)' % v)
+        cur.execute('insert into Tester_Component (full_id) values ("%s")' % v)
         db.commit()
         
 for k,v in info_dict.items():
@@ -71,7 +74,10 @@ for k,v in info_dict.items():
     info_dict[k] = component[0][0]
 
 cur.execute('select config_id from Tester_Configuration order by config_id desc')
-config_id = cur.fetchall()[0][0] + 1
+try:
+    config_id = cur.fetchall()[0][0] + 1
+except:
+    config_id = 0
 
 found_config = []
 

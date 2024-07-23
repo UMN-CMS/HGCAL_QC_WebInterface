@@ -7,9 +7,9 @@ def connect( num ):
     if(num==1):
 
         connection = mysql.connector.connect(
-            host = '',
-            user='',
-            password='',
+            host = 'localhost',
+            user='WagonDBInserter',
+            password='HGCALrocks',
             database=get_db_name(),
             #cursorclass=mysql.connector.cursors.DictCursor
         )
@@ -17,9 +17,9 @@ def connect( num ):
     if(num==0):
 
         connection = mysql.connector.connect(
-            host = '',
-            user='',
-            password='',
+            host = 'localhost',
+            user='WagonDBReadUser',
+            password='HGCALrocks',
             database=get_db_name(),
             #cursorclass=mysql.connector.cursors.DictCursor
         )
@@ -31,8 +31,8 @@ def connect_admin(passwd):
 
     try:
         connection = mysql.connector.connect(
-            host = '',
-            user='',
+            host = 'localhost',
+            user='WagonDBAdmin',
             password=passwd,
             database=get_db_name(),
             #cursorclass=mysql.connector.cursors.DictCursor
@@ -46,6 +46,7 @@ def connect_admin(passwd):
 # holds the directory location
 def get_base_url():
     base = "http://cmslab1.spa.umn.edu/Factory/WagonDB/"
+    base = "http://cmslab3.spa.umn.edu/cgi-bin/WagonDB/"
     return base
 
 # holds the database name

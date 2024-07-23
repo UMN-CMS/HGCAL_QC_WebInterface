@@ -34,11 +34,14 @@ import makeTestingData as mTD
 TestData = pd.read_csv(mTD.get_test(), parse_dates=['Time'])
 BoardData = pd.read_csv(mTD.get_board())
 PeopleData = pd.read_csv(mTD.get_people())
+TestTypeData = pd.read_csv(mTD.get_test_types())
+TestTypeData = TestTypeData.rename(columns={'Name':'Test Name'})
 mergetemp = TestData.merge(BoardData, on='Board ID', how='left')
 AllData = mergetemp.merge(PeopleData, on='Person ID', how='left')
 AllData = AllData.rename(columns={'Successful':'Outcome'})
 AllData['Outcome'] = AllData['Outcome'].replace(0, 'Unsuccessful')
 AllData['Outcome'] = AllData['Outcome'].replace(1, 'Successful')
+AllData = AllData.merge(TestTypeData, on='Test Type ID', how='left')
 
 filter_code=('''
 const is_selected_map = new Map([
@@ -124,6 +127,7 @@ def TotalPlot(data, view, widgets, date_range, modules):
     dt = ColumnDataSource(data={'dates':[], 'total_counts':[], 'suc_counts':[], 'unc_counts':[]})
     x = CustomJS(args=dict(tsd_total=time_series_data_total, tsd_suc=time_series_data_suc, tsd_unc=time_series_data_unc, data=data, view=view, date_range=date_range, modules=modules, dt=dt),code='''
 // goes through the modules case by case
+console.log(data.data)
 for (let t = 0; t < modules.length; t++) {
     if (modules[t] == 'Total') {
         const indices = view.filters[0].compute_indices(data);
@@ -266,7 +270,7 @@ def Filter():
     mc_widgets = {}
     dr_widgets = {}
     multi_choice = (lambda x,y: MultiChoice(options=x, value=[], title=y), 'value')
-    start_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value='2023-03-14', title=z), 'value')
+    start_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value=x, title=z), 'value')
     today = datetime.date.today()
     end_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value=today, title=z), 'value')
     min_date = pd.Timestamp((min(ds.data['Time']))).date()
@@ -275,16 +279,16 @@ def Filter():
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
     modules = ['Total', 'Successful', 'Unsuccessful']
-    columns = ['Type ID', 'Full ID', 'Person Name', 'Start Date', 'End Date']
-    data = [ds.data['Type ID'].tolist(), ds.data['Full ID'].tolist(), ds.data['Person Name'].tolist(),  date_range, date_range]
-    t = [multi_choice, multi_choice, multi_choice, start_date, end_date]
+    columns = ['Major Type', 'Sub Type', 'Full ID', 'Person Name', 'Test Name', 'Start Date', 'End Date']
+    data = [ds.data['Major Type'].tolist(), ds.data['Sub Type'].tolist(), ds.data['Full ID'].tolist(), ds.data['Person Name'].tolist(), ds.data['Test Name'].tolist(), date_range, date_range]
+    t = [multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
 
     p = figure(
         title='Total Tests Over Time',
         x_axis_label='Date',
         y_axis_label='Number of Tests',
         tools='pan,wheel_zoom,box_zoom,reset,save',
-        width = 925,
+        width = 1200,
         x_axis_type='datetime',
         )
 
@@ -329,7 +333,7 @@ def Filter():
     p.legend.label_text_font_size = '8pt'
     p.legend.location = 'top_left'
     w = [*widgets.values()]
-    plot_json = json.dumps(json_item(column(row(w[0:3]), row(w[3:5]), p, data_table)))
+    plot_json = json.dumps(json_item(column(row(w[0:3]), row(w[3:]), p, data_table)))
     return plot_json
 
 

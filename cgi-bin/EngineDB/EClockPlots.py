@@ -133,7 +133,7 @@ def Histogram(columns, data, view, widgets, modules, slider):
         hist_data[i] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
     
     # creates a dictionary for the filtered data to be put in data tables
-    dt = ColumnDataSource(data={'Type ID':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'Outcome':[], 'level_1':[], 'Rate':[]})
+    dt = ColumnDataSource(data={'Sub Type':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'Outcome':[], 'level_1':[], 'Rate':[]})
     std = ColumnDataSource(data={'clock':[],'std':[], 'mean':[]})
     # custom javascript to be run to actually create the plotted data client side
     # all done in javascript so it runs on the website and can update without refreshing the page
@@ -159,7 +159,7 @@ for (let i = 0; i < modules.length; i++) {
     for (let j = 0; j < data.get_length(); j++) {
         if (data.data['level_1'][j] == modules[i] && mask[j] == true){
             mask[j] = true;
-            type_ids.push(data.data['Type ID'][j])
+            type_ids.push(data.data['Sub Type'][j])
             full_ids.push(data.data['Full ID'][j])
             people.push(data.data['Person Name'][j])
             times.push(data.data['Time'][j])
@@ -189,7 +189,7 @@ for (let i = 0; i < modules.length; i++) {
     devs.push(d3.deviation(good_data))
     pathways_2.push(modules[i])
 }
-dt.data['Type ID'] = type_ids;
+dt.data['Sub Type'] = type_ids;
 dt.data['Full ID'] = full_ids;
 dt.data['Person Name'] = people;
 dt.data['Time'] = times;
@@ -228,9 +228,9 @@ def Filter():
         min_date += datetime.timedelta(days=1)
     modules = np.unique(ds.data['level_1']).tolist()
     # widget titles and data for those widgets has to be manually entered, as well as the type
-    columns = ['Type ID', 'Full ID', 'Person Name', 'Outcome', 'Start Date', 'End Date']
-    data = [ds.data['Type ID'].tolist(), ds.data['Full ID'].tolist(), ds.data['Person Name'].tolist(), ds.data['Outcome'], date_range, date_range]
-    t = [multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
+    columns = ['Major Type', 'Sub Type', 'Full ID', 'Person Name', 'Outcome', 'Start Date', 'End Date']
+    data = [ds.data['Major Type'].tolist(), ds.data['Sub Type'].tolist(), ds.data['Full ID'].tolist(), ds.data['Person Name'].tolist(), ds.data['Outcome'], date_range, date_range]
+    t = [multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
     
     # creates the figure object
     p = figure(
@@ -279,7 +279,7 @@ def Filter():
 
     # creates data tables
     table_columns = [
-                    TableColumn(field='Type ID', title='Type ID'),
+                    TableColumn(field='Sub Type', title='Sub Type'),
                     TableColumn(field='Full ID', title='Full ID'),
                     TableColumn(field='Person Name', title='Person Name'),
                     TableColumn(field='Time', title='Date', formatter=DateFormatter()),
@@ -297,19 +297,29 @@ def Filter():
     p.legend.click_policy='hide'
     p.legend.label_text_font_size = '8pt'
     w = [*widgets.values()]
-    subtypes = np.unique(ds.data['Type ID'].tolist()).tolist()
+
+    subtypes = {}
+    for major in np.unique(ds.data['Major Type'].tolist()).tolist():
+        subtypes[major] = np.unique(df_temp.query('`Major Type` == @major')['Full ID'].values.tolist()).tolist()
     serial_numbers = {}
-    for s in subtypes:
-        serial_numbers[s] = np.unique(df_temp.query('`Type ID` == @s')['Full ID'].values.tolist()).tolist()
-    update_options = CustomJS(args=dict(serial_numbers=serial_numbers, widget=w[1]), code=('''
-widget.options = serial_numbers[this.value]
+    for s in np.unique(ds.data['Sub Type'].tolist()).tolist():
+        serial_numbers[s] = np.unique(df_temp.query('`Sub Type` == @s')['Full ID'].values.tolist()).tolist()
+
+    update_options = CustomJS(args=dict(subtypes=subtypes, widget=w[1]), code=('''
+widget.options = subtypes[this.value]
 '''))
     w[0].js_on_change('value', update_options)
+    
+    update_options_2 = CustomJS(args=dict(serial_numbers=serial_numbers, widget=w[2]), code=('''
+widget.options = serial_numbers[this.value]
+'''))
+    w[1].js_on_change('value', update_options_2)
+
     # gets the second half of the webpage where the residuals are displayed
     # since it's a separate function, the data can be filtered separately
     layout = Gaussian()
     #converts the bokeh items to json and sends them to the webpage
-    plot_json = json.dumps(json_item(row(column(row(w[0:3]), row(w[3:6]), slider, p, data_table, data_table_2), layout)))
+    plot_json = json.dumps(json_item(row(column(row(w[0:3]), row(w[3:5]), row(w[5:]), slider, p, data_table, data_table_2), layout)))
     return plot_json
 
 
@@ -447,9 +457,9 @@ def Gaussian():
     while min_date <= today:
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
-    columns = ['Type ID', 'Full ID', 'Outcome', 'Start Date', 'End Date']
-    data = [ds.data['Type ID'].tolist(), ds.data['Full ID'].tolist(), ds.data['Outcome'], date_range, date_range]
-    t = [multi_choice, multi_choice, multi_choice, start_date, end_date]
+    columns = ['Major Type', 'Sub Type', 'Full ID', 'Outcome', 'Start Date', 'End Date']
+    data = [ds.data['Major Type'].tolist(), ds.data['Sub Type'].tolist(), ds.data['Full ID'].tolist(), ds.data['Outcome'], date_range, date_range]
+    t = [multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
 
     for i in range(len(columns)):
         widget_constructor, trigger = t[i]
@@ -516,16 +526,24 @@ def Gaussian():
     data_tables = DataTable(source=td, columns=table_columns, autosize_mode='fit_columns')
             
     w = [*widgets.values()]
-    subtypes = np.unique(ds.data['Type ID'].tolist()).tolist()
+    subtypes = {}
+    for major in np.unique(ds.data['Major Type'].tolist()).tolist():
+        subtypes[major] = np.unique(df_temp.query('`Major Type` == @major')['Full ID'].values.tolist()).tolist()
     serial_numbers = {}
-    for s in subtypes:
-        serial_numbers[s] = np.unique(df_temp.query('`Type ID` == @s')['Full ID'].values.tolist()).tolist()
-    update_options = CustomJS(args=dict(serial_numbers=serial_numbers, widget=w[1]), code=('''
-widget.options = serial_numbers[this.value]
+    for s in np.unique(ds.data['Sub Type'].tolist()).tolist():
+        serial_numbers[s] = np.unique(df_temp.query('`Sub Type` == @s')['Full ID'].values.tolist()).tolist()
+
+    update_options = CustomJS(args=dict(subtypes=subtypes, widget=w[1]), code=('''
+widget.options = subtypes[this.value]
 '''))
     w[0].js_on_change('value', update_options)
+    
+    update_options_2 = CustomJS(args=dict(serial_numbers=serial_numbers, widget=w[2]), code=('''
+widget.options = serial_numbers[this.value]
+'''))
+    w[1].js_on_change('value', update_options_2)
 
-    layout = column(row(w[0:3]), row(w[3:5] + [n_sigma]), p, q, data_tables)
+    layout = column(row(w[0:3]), row([w[3]] + [n_sigma]), row(w[4:]), p, q, data_tables)
     return layout
 
 
