@@ -8,7 +8,7 @@ import connect
 
 base_url = connect.get_base_url()
 
-print("Location: %s/summary.py\n\n" % base_url)
+print("Location: summary.py\n\n")
 #cgi header
 print("Content-type: text/html\n")
 
