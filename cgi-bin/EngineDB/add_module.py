@@ -19,7 +19,5 @@ print('<b><em>(Sorted by Full ID)</em></b>&emsp;<badge class="badge bg-primary">
 print('</div>')
 print('</div>')
 
-home_page_list.render_list_module()
-
 base.bottom(False)
 
