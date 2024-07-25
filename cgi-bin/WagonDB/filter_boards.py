@@ -23,21 +23,7 @@ from datetime import datetime as dt
 import datetime
 import makeTestingData as mTD
 
-
-TestData = pd.read_csv(mTD.get_test(), parse_dates=['Time'])
-BoardData = pd.read_csv(mTD.get_board())
-PeopleData = pd.read_csv(mTD.get_people())
-TestTypeData = pd.read_csv(mTD.get_test_types())
-TestTypeData = TestTypeData.rename(columns={'Name':'Test Name'})
-mergetemp = TestData.merge(BoardData, on='Board ID', how='left')
-AllData = mergetemp.merge(PeopleData, on='Person ID', how='left')
-AllData = AllData.rename(columns={'Successful':'Outcome'})
-AllData['Outcome'] = AllData['Outcome'].replace(0, 'Unsuccessful')
-AllData['Outcome'] = AllData['Outcome'].replace(1, 'Successful')
-AllData = AllData.merge(TestTypeData, on='Test Type ID', how='left')
-AttachData = pd.read_csv(mTD.get_attachments())
-AllData = AllData.merge(AttachData, on='Test ID', how='left')
-AllData.dropna()
+df = pd.read_csv(mTD.get_board_for_filter(), parse_dates=['Date Completed'])
 
 filter_code=('''
 const is_selected_map = new Map([
@@ -102,7 +88,7 @@ for (let i = 0; i < d_keys.length; i++) {
     }
 }
 for (let i = 0; i < source.get_length(); i++) {
-    if (source.data['Time'][i] >= start_date && source.data['Time'][i] <= end_date && indices[i] == true) {
+    if (source.data['Date Completed'][i] >= start_date && source.data['Date Completed'][i] <= end_date && indices[i] == true) {
         indices[i] = true;
     } else {
         indices[i] = false;
@@ -112,61 +98,142 @@ return indices;
 
 ''')
 
-def makeTable(ds, widgets, view):
-    td = ColumnDataSource({'Sub Type':[], 'Full ID':[], 'Person Name':[], 'Test Type':[], 'Date':[], 'Outcome':[], 'Raw Time':[], 'Location':[], 'Attachment':[]})
+def makeTable(ds, widgets, view, test_names, serial_numbers, passed_widget, failed_widget, not_tested_widget):
+    data_dict = {'Sub Type':[], 'Full ID':[], 'Location':[]}
+    for name in test_names:
+        data_dict[name] = []
 
-    x = CustomJS(args=dict(td=td, data=ds, view=view),code='''
-const type_ids=[];
-const full_ids=[];
-const people=[];
-const tests=[];
-const times=[];
-const outcomes=[];
-const raw_time=[];
-const locations=[];
-const attachments=[];
+    td = ColumnDataSource(data_dict)
+
+    x = CustomJS(args=dict(td=td, data=ds, view=view, test_names=test_names, serial_numbers=serial_numbers, passed_widget=passed_widget, failed_widget=failed_widget, not_tested_widget=not_tested_widget),code='''
+const type_ids = []
+const full_ids = []
+const locations = []
+const test_dict = {}
+for (let t = 0; t < test_names.length; t++) {
+    test_dict[test_names[t]] = []
+}
+
+function check_all_true(el) {
+    return el
+}
 
 const indices = view.filters[0].compute_indices(data);
 let mask = new Array(data.data['Full ID'].length).fill(false);
 [...indices].forEach((x)=>{mask[x] = true;})
 
-for (let j = 0; j < data.get_length(); j++) {
-    if (mask[j] == true){
-        type_ids.push(data.data['Sub Type'][j])
-        full_ids.push(data.data['Full ID'][j])
-        people.push(data.data['Person Name'][j])
-        tests.push(data.data['Test Name'][j])
+for (let sn = 0; sn < serial_numbers.length; sn++) {
+    let pass_mask = false
+    let pass_all_mask = false
+    let passed_vals = passed_widget.value
+    let failed_vals = failed_widget.value
+    let not_run_vals = not_tested_widget.value
+    const passed_array = []
+    const failed_array = []
+    const not_run_array = []
     
-        // converts date to a readable format
-        let temp_date = new Date(data.data['Time'][j]);
-        let date = temp_date.toString().slice(4, 24)
-        times.push(date)
-        raw_time.push(temp_date.valueOf())
+    let location = ''
+    let subtype = ''
 
-        outcomes.push(data.data['Outcome'][j])
-        locations.push(data.data['Location'][j])
-        attachments.push(data.data['Attach ID'][j])
+    for (let j = 0; j < data.get_length(); j++) {
+        if (mask[j] == true && data.data['Full ID'][j] == serial_numbers[sn]){
+            pass_mask = true
+            location = data.data['Location'][j]
+            subtype = data.data['Sub Type'][j]
+        }
+    }
+
+    if (passed_vals.length != 0) {
+        for (let i = 0; i < passed_vals.length; i++) {
+            let passed_this = false
+
+            for (let j = 0; j < data.get_length(); j++) {
+                if (mask[j] == true && data.data['Full ID'][j] == serial_numbers[sn]){
+                    if (data.data['Test Name'][j] == passed_vals[i] && data.data['Status'][j] == 'Passed') {
+                        passed_this = true
+                    }
+                }
+            }
+            passed_array.push(passed_this)
+        }
+    } else {
+        passed_array.push(true)
+    }
+
+    if (failed_vals.length != 0) {
+        for (let i = 0; i < failed_vals.length; i++) {
+            let passed_this = false
+
+            for (let j = 0; j < data.get_length(); j++) {
+                if (mask[j] == true && data.data['Full ID'][j] == serial_numbers[sn]){
+                    if (data.data['Test Name'][j] == failed_vals[i] && data.data['Status'][j] == 'Failed') {
+                        passed_this = true
+                    }
+                }
+            }
+            failed_array.push(passed_this)
+        }
+    } else {
+        failed_array.push(true)
+    }
+
+    if (not_run_vals.length != 0) {
+        for (let i = 0; i < not_run_vals.length; i++) {
+            let passed_this = false
+
+            for (let j = 0; j < data.get_length(); j++) {
+                if (mask[j] == true && data.data['Full ID'][j] == serial_numbers[sn]){
+                    if (data.data['Test Name'][j] == not_run_vals[i] && data.data['Status'][j] == 'Not Run') {
+                        passed_this = true
+                    }
+                }
+            }
+            not_run_array.push(passed_this)
+        }
+    } else {
+        not_run_array.push(true)
+    }
+
+    if (pass_mask == true) {
+        if (passed_array.every(check_all_true) == true && failed_array.every(check_all_true) == true && not_run_array.every(check_all_true) == true) {
+            type_ids.push(subtype)
+            locations.push(location)
+            full_ids.push(serial_numbers[sn])
+
+            for (let j = 0; j < data.get_length(); j++) {
+                if (mask[j] == true && data.data['Full ID'][j] == serial_numbers[sn]){
+                    test_dict[data.data['Test Name'][j]].push(data.data['Status'][j])
+                }
+            }
+
+            for (let t = 0; t < test_names.length; t++) {
+                if (test_dict[test_names[t]].length != full_ids.length) {
+                    test_dict[test_names[t]].push('Not Run')
+                }
+            }
+        }
     }
 }
 td.data['Sub Type'] = type_ids;
 td.data['Full ID'] = full_ids;
-td.data['Person Name'] = people;
-td.data['Test Type'] = tests;
-td.data['Date'] = times;
-td.data['Outcome'] = outcomes;
-td.data['Raw Time'] = raw_time;
 td.data['Location'] = locations;
-td.data['Attachment'] = attachments;
+for (let t = 0; t < test_names.length; t++) {
+    td.data[test_names[t]] = test_dict[test_names[t]];
+}
 td.change.emit()
 ''')
 
     for widget in widgets.values():
         widget.js_on_change('value', x)
 
+    passed_widget.js_on_change('value', x)
+    failed_widget.js_on_change('value', x)
+    not_tested_widget.js_on_change('value', x)
+
     return td
 
 def Filter():
-    ds = ColumnDataSource(AllData)
+    ds = ColumnDataSource(df)
 
     # create the widgets to be used
     mc_widgets = {}
@@ -176,15 +243,15 @@ def Filter():
     today = datetime.date.today()
     today_plus_one = today + datetime.timedelta(days=1)
     end_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value=today_plus_one, title=z), 'value')
-    min_date = pd.Timestamp((min(ds.data['Time']))).date()
+    min_date = pd.Timestamp((min(ds.data['Real Dates']))).date()
     date_range = []
     while min_date <= today_plus_one:
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
     # widget titles and data for those widgets has to be manually entered, as well as the type
-    columns = ['Major Type', 'Sub Type', 'Full ID', 'Test Name', 'Location', 'Person Name', 'Outcome', 'Start Date', 'End Date']
-    data = [ds.data['Major Type'].tolist(), ds.data['Sub Type'], ds.data['Full ID'].tolist(), ds.data['Test Name'].tolist(), ds.data['Location'].tolist(), ds.data['Person Name'].tolist(), ds.data['Outcome'], date_range, date_range]
-    t = [multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
+    columns = ['Major Type', 'Sub Type', 'Full ID', 'Location', 'Start Date', 'End Date']
+    data = [ds.data['Major Type'].tolist(), ds.data['Sub Type'], ds.data['Full ID'].tolist(), ds.data['Location'].tolist(), date_range, date_range]
+    t = [multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
 
     # constructs the widgets
     for i in range(len(columns)):
@@ -216,7 +283,14 @@ def Filter():
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
 
-    td = makeTable(ds, widgets, view)
+    test_names = np.unique(ds.data['Test Name'].tolist()).tolist()
+    serial_numbers = np.unique(ds.data['Full ID'].tolist()).tolist()
+
+    passed_widget = MultiChoice(options=test_names, value=[], title='Passed Test')
+    failed_widget = MultiChoice(options=test_names, value=[], title='Failed Test')
+    not_tested_widget = MultiChoice(options=test_names, value=[], title='Has not run Test')
+
+    td = makeTable(ds, widgets, view, test_names, serial_numbers, passed_widget, failed_widget, not_tested_widget)
     
     # html template formatter can be used to apply typical html code to bokeh elements
     template = '''
@@ -225,15 +299,6 @@ def Filter():
 </div> 
 '''
     bigger_font = HTMLTemplateFormatter(template=template)
-
-    link_template = '''
-<div style="font-size: 150%">
-<a href="get_attach.py?attach_id=<%= value %>"target="_blank">
-Attach
-</a>
-</div> 
-'''
-    link = HTMLTemplateFormatter(template=link_template)
 
     module_template = '''
 <div style="font-size: 150%">
@@ -244,17 +309,30 @@ Attach
 '''
     board = HTMLTemplateFormatter(template=module_template)
 
+    color_template = '''
+<div style="font-size: 150%; background:<%=
+    (function color() {
+        if (value == 'Passed'){
+            return('#d1e7dd')}
+        else if (value == 'Failed'){
+            return('#f8d7da')}
+        else if (value == 'Not Run'){
+            return('#d3d3d4')}
+        }())%>;">
+<%= value %>
+</div> 
+'''
+
+    color_status = HTMLTemplateFormatter(template=color_template)
+
     table_columns = [
                     TableColumn(field='Sub Type', title='Sub Type', formatter=bigger_font),
                     TableColumn(field='Full ID', title='Full ID', formatter=board),
-                    TableColumn(field='Test Type', title='Test Type', formatter=bigger_font),
-                    TableColumn(field='Person Name', title='Person Name', formatter=bigger_font),
-                    TableColumn(field='Date', title='Time', formatter=bigger_font),
-                    TableColumn(field='Raw Time', title='Raw Time', formatter=bigger_font),
                     TableColumn(field='Location', title='Location', formatter=bigger_font),
-                    TableColumn(field='Outcome', title='Outcome', formatter=bigger_font),
-                    TableColumn(field='Attachment', title='Attachment', formatter=link),
                     ]
+
+    for name in test_names:
+        table_columns.append(TableColumn(field=name, title=name, formatter=color_status))
 
     data_table = DataTable(source=td, columns=table_columns, row_height = 40, autosize_mode='fit_columns', width_policy = 'fit', height=600)
 
@@ -288,5 +366,5 @@ if (this.value.length != 0) {
 '''))
     w[1].js_on_change('value', update_options_2)
 
-    return json.dumps(json_item(row(column(row(w[0:5]), row(w[5:]), data_table))))
+    return json.dumps(json_item(row(column(row(w), row([passed_widget,failed_widget,not_tested_widget]), data_table))))
 

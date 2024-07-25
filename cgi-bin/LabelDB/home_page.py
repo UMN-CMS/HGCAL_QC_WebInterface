@@ -7,6 +7,9 @@ import label_functions
 import sys
 import numpy as np
 from connect import connect
+import sys
+
+sys.path.insert(0, '../../hgcal-label-info/label-authority/')
 import label_authority as la
 
 db = connect(0)
