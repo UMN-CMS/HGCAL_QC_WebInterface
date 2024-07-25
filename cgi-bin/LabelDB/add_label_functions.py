@@ -1,6 +1,9 @@
 import json
 import sys
 from connect import connect
+import sys
+
+sys.path.insert(0, '../../hgcal-label-info/label-authority/')
 import label_authority as la
 
 cnx = connect(1)

@@ -39,6 +39,7 @@ def get_pages():
                 'UplinkQuality.py',
                 'I2CData.py',
                 'search.py',
+                'search_boards.py',
              ]
     return scripts
 

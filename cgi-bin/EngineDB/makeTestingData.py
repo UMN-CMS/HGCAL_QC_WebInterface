@@ -497,3 +497,63 @@ def get_attachments():
     return csv_file
 
 
+def get_board_for_filter():
+    csv_file = io.StringIO()
+
+    header = ['Full ID', 'Major Type', 'Sub Type', 'Location', 'Test Name', 'Status', 'Date Completed', 'Real Dates']
+    writer = csv.DictWriter(csv_file, fieldnames=header)
+    writer.writeheader()
+
+    cur.execute('select full_id,type_id,location,board_id from Board')
+    boards = cur.fetchall()
+
+    prev_ids = {}
+    for board in boards:
+        cur.execute('select type_id from Board_type where type_sn="%s"' % board[1])
+        try:
+            type_id = cur.fetchall()[0][0]
+        except:
+            continue
+
+        cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
+        for t in cur.fetchall():
+            cur.execute('select name from Test_Type where test_type=%s' % t[0])
+            name = cur.fetchall()[0][0]
+
+            cur.execute('select day,successful from Test where board_id=%s and test_type_id=%s order by day desc' % (board[3], t[0]))
+            test = cur.fetchall()
+            if test:
+                if test[0][1] == 1:
+                    writer.writerow({'Full ID': board[0],
+                                    'Major Type': board[0][3:5],
+                                    'Sub Type': board[1],
+                                    'Location': board[2],
+                                    'Test Name': name,
+                                    'Status': 'Passed',
+                                    'Date Completed': test[0][0],
+                                    'Real Dates': test[0][0],
+                                    })
+                if test[0][1] == 0:
+                    writer.writerow({'Full ID': board[0],
+                                    'Major Type': board[0][3:5],
+                                    'Sub Type': board[1],
+                                    'Location': board[2],
+                                    'Test Name': name,
+                                    'Status': 'Failed',
+                                    'Date Completed': test[0][0],
+                                    'Real Dates': test[0][0],
+                                    })
+            else:
+                writer.writerow({'Full ID': board[0],
+                                'Major Type': board[0][3:5],
+                                'Sub Type': board[1],
+                                'Location': board[2],
+                                'Test Name': name,
+                                'Status': 'Not Run',
+                                'Date Completed': datetime.datetime.now(),
+                                'Real Dates': datetime.datetime.now(),
+                                })
+    
+    csv_file.seek(0)
+
+    return csv_file
