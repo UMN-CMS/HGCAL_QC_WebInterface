@@ -12,6 +12,9 @@
 #Root
 *.root
 
+# custom added files
+static_html
+
 #Network File System
 .nfs*
 

@@ -3,10 +3,13 @@
 import cgi
 import cgitb; cgitb.enable()
 import base
-import label_authority as la
 from get_labels import get_labels
 from connect import connect
 import numpy as np
+import sys
+
+sys.path.insert(0, '../../hgcal-label-info/label-authority/')
+import label_authority as la
 
 print("content-type: text/html\n\n")
 base.header(title="Decoded Label")

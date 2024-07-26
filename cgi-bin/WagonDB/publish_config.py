@@ -17,6 +17,7 @@ def get_pages():
                 'I2CData.py',
                 'BitErrorRateData.py',
                 'search.py',
+                'search_boards.py',
              ]
     return scripts
 
