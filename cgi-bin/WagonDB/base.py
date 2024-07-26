@@ -88,6 +88,9 @@ def top(static):
         <li class="nav-item">
           <a class="nav-link" href="search.html">Search Tests</a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link" href="search_boards.html">Search Boards</a>
+        </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             Board Check
@@ -140,6 +143,9 @@ def top(static):
         </li>
         <li class="nav-item">
           <a class="nav-link" href="search.py">Search Tests</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="search_boards.py">Search Boards</a>
         </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">

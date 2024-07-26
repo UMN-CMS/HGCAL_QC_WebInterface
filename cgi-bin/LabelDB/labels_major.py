@@ -3,8 +3,11 @@
 import cgi
 import cgitb; cgitb.enable()
 import base
-import label_authority as la
 import numpy as np
+import sys
+
+sys.path.insert(0, '../../hgcal-label-info/label-authority/')
+import label_authority as la
 
 from connect import connect
 

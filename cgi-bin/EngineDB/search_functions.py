@@ -254,14 +254,34 @@ Attach
     data_table = DataTable(source=td, columns=table_columns, row_height = 40, autosize_mode='fit_columns', width_policy = 'fit', height=600)
 
     w = [*widgets.values()]
-    subtypes = np.unique(ds.data['Type ID'].tolist()).tolist()
+
+    subtypes = {}
+    for major in np.unique(ds.data['Major Type'].tolist()).tolist():
+        subtypes[major] = np.unique(df.query('`Major Type` == @major')['Sub Type'].values.tolist()).tolist()
     serial_numbers = {}
-    for s in subtypes:
-        serial_numbers[s] = np.unique(AllData.query('`Type ID` == @s')['Full ID'].values.tolist()).tolist()
-    update_options = CustomJS(args=dict(serial_numbers=serial_numbers, widget=w[1]), code=('''
-widget.options = serial_numbers[this.value]
+    for s in np.unique(ds.data['Sub Type'].tolist()).tolist():
+        serial_numbers[s] = np.unique(df.query('`Sub Type` == @s')['Full ID'].values.tolist()).tolist()
+    
+    all_subtypes = np.unique(ds.data['Sub Type'].tolist()).tolist()
+    all_serials = np.unique(ds.data['Full ID'].tolist()).tolist()
+
+    update_options = CustomJS(args=dict(subtypes=subtypes, widget=w[1], all_subtypes=all_subtypes), code=('''
+if (this.value.length != 0) {
+    widget.options = subtypes[this.value]
+} else {
+    widget.options = all_subtypes
+}
 '''))
     w[0].js_on_change('value', update_options)
+    
+    update_options_2 = CustomJS(args=dict(serial_numbers=serial_numbers, widget=w[2], all_serials=all_serials), code=('''
+if (this.value.length != 0) {
+    widget.options = serial_numbers[this.value]
+} else {
+    widget.options = all_serials
+}
+'''))
+    w[1].js_on_change('value', update_options_2)
 
     return json.dumps(json_item(row(column(row(w[0:4]), row(w[4:]), data_table))))
 
