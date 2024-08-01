@@ -14,7 +14,7 @@ import uuid
 import cgi
 import json
 
-sys.path.append('{}/../LabelDB'.format(os.getcwd()))
+sys.path.insert(0, '../../hgcal-label-info/label-authority/')
 import label_authority as la
 
 #SERVER_NAME

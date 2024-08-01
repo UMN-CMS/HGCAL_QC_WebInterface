@@ -109,7 +109,7 @@ def add_board_info_form(sn, board_id):
 
     print('<hr>')
 
-def add_module(serial_number):
+def add_module(serial_number, manufacturer):
     try:
         db = connect(1)
         cur = db.cursor()
@@ -124,9 +124,20 @@ def add_module(serial_number):
 
             rows = cur.fetchall()
 
+            if 'None' not in manufacturer:
+                cur.execute('select manufacturer_id from Manufacturers where name="%s"' % manufacturer)
+                manu_id = cur.fetchall()[0][0]
+            else:
+                manu_id = None
+
             if not rows:
-                cur.execute("INSERT INTO Board (sn, full_id, type_id) VALUES (%s, '%s', '%s'); " % (sn, serial_number, type_id)) 
-                #print '<div> INSERT INTO Card set sn = %s; </div>' %(serial_number)
+                print('Entering Serial Number into Board table.')
+                if manu_id:
+                    cur.execute("INSERT INTO Board (sn, full_id, type_id, manufacturer_id) VALUES (%s, '%s', '%s', %s); " % (sn, serial_number, type_id, manu_id)) 
+                else:
+                    cur.execute("INSERT INTO Board (sn, full_id, type_id) VALUES (%s, '%s', '%s'); " % (sn, serial_number, type_id)) 
+
+                    #print '<div> INSERT INTO Card set sn = %s; </div>' %(serial_number)
                 db.commit()
                 db.close()
             else:
