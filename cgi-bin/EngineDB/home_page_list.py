@@ -109,7 +109,7 @@ def add_board_info_form(sn, board_id):
 
     print('<hr>')
 
-def add_module(serial_number):
+def add_module(serial_number, manu):
     try:
         db = connect(1)
         cur = db.cursor()
@@ -125,17 +125,25 @@ def add_module(serial_number):
             rows = cur.fetchall()
 
             if not rows:
-                cur.execute("INSERT INTO Board (sn, full_id, type_id) VALUES (%s, '%s', '%s'); " % (sn, serial_number, type_id)) 
-                #print '<div> INSERT INTO Card set sn = %s; </div>' %(serial_number)
-                db.commit()
-                db.close()
+                if manu is not 'None':
+                    cur.execute('select manufacturer_id from Manufacturers where name="%s"' % manu)
+                    manu_id = cur.fetchall()[0][0]
+                    cur.execute("INSERT INTO Board (sn, full_id, type_id, manufacturer_id) VALUES (%s, '%s', '%s', '%s'); " % (sn, serial_number, type_id, manu_id)) 
+                    db.commit()
+                    db.close()
+
+                else:
+                    cur.execute("INSERT INTO Board (sn, full_id, type_id) VALUES (%s, '%s', '%s'); " % (sn, serial_number, type_id)) 
+                    db.commit()
+                    db.close()
+                return 'Board entered successfully!'
             else:
                 print("<h3>Serial number already exists!<h3>")
         else:
-            return 'Barcode is not the correct length.'
+            print('Barcode is not the correct length.')
     except mysql.connector.Error as err:
-        print("<h3>Serial number already exists!</h3>")
         print(err)
+        print('Failed to enter Board')
     
 def allboards(static, major):
     # sorts all the boards by subtype and puts all the serial numbers in a dictionary under their subtype

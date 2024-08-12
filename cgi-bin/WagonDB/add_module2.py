@@ -19,14 +19,11 @@ form = cgi.FieldStorage()
 if form.getvalue('full_id'):
 
     full = form.getvalue('full_id')
+    manu = form.getvalue('manufacturer')
 
     # calls add_module() to add it to DB
-    text = home_page_list.add_module(full)
+    home_page_list.add_module(full)
 
-    print('\n\n\n\n')
-    print(text)
-    print('\n\n\n\n')
-    
     print('<div class="row">')
     print('<div class="col-md-3 ps-4 pt-2 mx-2 my-2">')
     print('<h2>List of All Boards</h2>' )
