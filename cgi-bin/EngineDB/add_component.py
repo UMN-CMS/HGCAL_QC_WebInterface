@@ -16,11 +16,10 @@ cur = db.cursor()
 
 form = cgi.FieldStorage()
 
-component = form.getvalue('component')
 barcode = form.getvalue('barcode')
 full_id = form.getvalue('full_id')
 
-cur.execute('update Board set %s="%s" where full_id="%s"' % (component, barcode, full_id))
+cur.execute('update Board set LDO="%s" where full_id="%s"' % (barcode, full_id))
 db.commit()
 
 base.bottom(False)
