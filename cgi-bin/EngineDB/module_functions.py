@@ -14,7 +14,7 @@ import uuid
 import cgi
 import json
 
-sys.path.append('{}/../LabelDB'.format(os.getcwd()))
+sys.path.insert(0, '../../hgcal-label-info/label-authority/')
 import label_authority as la
 
 #SERVER_NAME
@@ -283,16 +283,16 @@ def board_info(sn, static):
         except KeyError:
             attach = json.loads(attach)
         if sn[3:5] == 'EL':
-            daq_chip_id = attach['DAQ'][-1]
-            east_chip_id = attach['E'][-1]
-            west_chip_id = attach['W'][-1]
+            daq_chip_id = hex(int(attach['DAQ']["id"]))
+            east_chip_id = hex(int(attach['E']["id"]))
+            west_chip_id = hex(int(attach['W']["id"]))
         if sn[3:5] == 'EH':
-            daq1_chip_id = attach['DAQ1'][-1]
-            daq2_chip_id = attach['DAQ2'][-1]
-            trig1_chip_id = attach['TRG1'][-1]
-            trig2_chip_id = attach['TRG2'][-1]
-            trig3_chip_id = attach['TRG3'][-1]
-            trig4_chip_id = attach['TRG4'][-1]
+            daq1_chip_id = hex(int(attach['DAQ1']["id"]))
+            daq2_chip_id = hex(int(attach['DAQ2']["id"]))
+            trig1_chip_id = hex(int(attach['TRG1']["id"]))
+            trig2_chip_id = hex(int(attach['TRG2']["id"]))
+            trig3_chip_id = hex(int(attach['TRG3']["id"]))
+            trig4_chip_id = hex(int(attach['TRG4']["id"]))
     except Exception as e:
         test_id = 'No tests run'
         attach = 'none'

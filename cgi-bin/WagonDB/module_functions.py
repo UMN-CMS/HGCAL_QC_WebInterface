@@ -546,7 +546,7 @@ def add_board_image(sn, img_file, view):
             f.write(img_file)
             print("File wrote:)")
 
-        print("File recieved successfully!")
+        print("File received successfully!")
 
     except mysql.connector.Error as err:
         print("CONNECTION ERROR")
