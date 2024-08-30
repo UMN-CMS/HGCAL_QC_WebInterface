@@ -481,6 +481,42 @@ def get_gpio_functionality():
 
     return csv_file
 
+def get_current_draw():
+    csv_file = io.StringIO()
+
+    header = ['Test ID', '1.5V Current', '10V Current']
+    writer = csv.DictWriter(csv_file, fieldnames=header)
+    writer.writeheader()
+
+    cur.execute('select test_type from Test_Type where name="Current Draw"')
+    type_id = cur.fetchall()[0][0]
+
+    cur.execute('select test_id from Test where test_type_id={}'.format(type_id))
+    TestIDs = cur.fetchall()
+
+    query = 'select attach from Attachments where '
+    for i in TestIDs:
+        query += 'test_id={}'.format(i[0])
+        if i is not TestIDs[-1]:
+            query += ' or '
+    cur.execute(query)
+    Attach = cur.fetchall()
+
+    Attach_Data = []
+    for i in Attach:
+        try:
+            Attach_Data.append(json.loads(i[0])['test_data'])
+        except:
+            Attach_Data.append(json.loads(i[0]))
+
+    for n in range(len(Attach_Data)):
+        writer.writerow({'Test ID': TestIDs[n][0], '1.5V Current': Attach_Data[n]['Current_1V5'], '10V Current': Attach_Data[n]['Current_10V']})
+
+    csv_file.seek(0)
+
+    return csv_file
+
+
 def get_attachments():
     csv_file = io.StringIO()
 

@@ -294,6 +294,16 @@ def board_info(sn, static):
     except:
         info_com = 'None'
 
+    cur.execute('select successful from Test where test_type_id=7 and board_id=%s' % board_id)
+    registered = cur.fetchall()
+    if registered:
+        if registered[0][0] == 1:
+            registered = '<td class="bg-success">&nbsp</td>'
+        else:
+            registered = '<td class="bg-danger">&nbsp</td>'
+    else:
+        registered = '<td>Board has not been registered.</td>'
+
     # does the same thing as the home page to determine how many tests have passed
     cur.execute('select type_id from Board where board_id=%s' % board_id)
     type_sn = cur.fetchall()[0][0]
@@ -325,15 +335,17 @@ def board_info(sn, static):
     print('<tr>')
     print('<th colspan=2>Location</th>')
     print('<th colspan=1>Resistance ID</th>')
-    print('<th colspan=2>Testing Status</th>')
+    print('<th colspan=1>Testing Status</th>')
+    print('<th colspan=1>Registered?</th>')
     print('</tr>')
     print('<tr>')
     print('<td colspan=2>%s</td>' % location)
     print('<td colspan=1>%s</td>' % id_resistance)
     if num == total:
-        print('<td colspan=2><span class="badge bg-success rounded-pill">Done</span></td>')
+        print('<td colspan=1><span class="badge bg-success rounded-pill">Done</span></td>')
     else:
-        print('<td colspan=2><span class="badge bg-dark rounded-pill">%(success)s/%(total)s</span></td>' %{'success': num, 'total': total})
+        print('<td colspan=1><span class="badge bg-dark rounded-pill">%(success)s/%(total)s</span></td>' %{'success': num, 'total': total})
+    print(registered)
         
     # gets id of boards that have been checked out
     cur.execute('select board_id from Check_Out')
