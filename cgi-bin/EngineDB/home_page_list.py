@@ -203,12 +203,12 @@ def allboards(static, major):
                 if num == total:
                     temp_col = '<a class="d-inline-flex list-group-item list-group-item-action text-decorate-none justify-content-between" href="./%(id)s_%(serial)s_module.html"> %(serial)s <span class="badge bg-success rounded-pill">Done</span></a>' %{'serial':sn, 'id':s}
                 else:
-                    temp_col = '<a class="d-inline-flex list-group-item list-group-item-action text-decorate-none justify-content-between" href="./%(id)s_%(serial)s_module.html"> %(serial)s <span class="badge bg-success rounded-pill">%(success)s/%(total)s</span><span class="badge bg-secondary rounded-pill">%(run)s/%(total)s</span><span class="badge bg-danger rounded-pill">%(failed)s/%(total)s</span></a>' %{'serial':sn, 'id':s, 'success': num, 'total': total, 'run': r_num, 'failed': failed}
+                    temp_col = '<a class="d-inline-flex list-group-item list-group-item-action text-decorate-none justify-content-between" href="./%(id)s_%(serial)s_module.html"> %(serial)s <span class="badge bg-success rounded-pill">%(success)s/%(total)s</span><span class="badge bg-danger rounded-pill">%(run)s/%(total)s</span><span class="badge bg-secondary rounded-pill">%(failed)s/%(total)s</span></a>' %{'serial':sn, 'id':s, 'success': num, 'total': total, 'run': r_num, 'failed': failed}
             else:
                 if num == total:
                     temp_col = '<a class="d-inline-flex list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?board_id=%(id)s&full_id=%(serial)s"> %(serial)s <span class="badge bg-success rounded-pill">Done</span></a>' %{'serial':sn, 'id':board_id}
                 else:
-                    temp_col = '<a class="d-inline-flex list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?board_id=%(id)s&full_id=%(serial)s"> %(serial)s <span class="badge bg-success rounded-pill">%(success)s/%(total)s</span><span class="badge bg-secondary rounded-pill">%(run)s/%(total)s</span><span class="badge bg-danger rounded-pill">%(failed)s/%(total)s</span></a>' %{'serial':sn, 'id':s, 'success': num, 'total': total, 'run': r_num, 'failed': failed}
+                    temp_col = '<a class="d-inline-flex list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?board_id=%(id)s&full_id=%(serial)s"> %(serial)s <span class="badge bg-success rounded-pill">%(success)s/%(total)s</span><span class="badge bg-danger rounded-pill">%(run)s/%(total)s</span><span class="badge bg-secondary rounded-pill">%(failed)s/%(total)s</span></a>' %{'serial':sn, 'id':s, 'success': num, 'total': total, 'run': r_num, 'failed': failed}
 
             columns[s].append(temp_col)
 

@@ -8,7 +8,7 @@ import os
 from connect import connect, get_base_url
 
 base_url = get_base_url()
-db = connect(0)
+db = connect(1)
 cur = db.cursor()
 
 #print("Location: %s/summary.py\n\n" % base_url)
@@ -28,9 +28,20 @@ try:
 except:
     person_id = form.getvalue('person_id')
     cur.execute('select person_id from People where person_name="%s"' % person_id)
-    person_id = cur.fetchall()[0][0]
+    try:
+        person_id = cur.fetchall()[0][0]
+    except:
+        cur.execute('insert into People (person_name) values ("%s")' % person_id)
+        db.commit()
 
-comments = form.getvalue("comments")
+        cur.execute('select person_id from People where person_name="%s"' % person_id)
+        person_id = cur.fetchall()[0][0]
+        
+try:
+    comments = form.getvalue("comments")
+except:
+    location = form.getvalue("location")
+    comments = "Shipped to " + location
 
 base.header(title='Board Check Out')
 base.top(False)

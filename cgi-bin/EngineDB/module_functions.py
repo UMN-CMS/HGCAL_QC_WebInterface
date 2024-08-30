@@ -14,7 +14,7 @@ import uuid
 import cgi
 import json
 
-sys.path.append('{}/../LabelDB'.format(os.getcwd()))
+sys.path.insert(0, '../../hgcal-label-info/label-authority/')
 import label_authority as la
 
 #SERVER_NAME
@@ -283,16 +283,16 @@ def board_info(sn, static):
         except KeyError:
             attach = json.loads(attach)
         if sn[3:5] == 'EL':
-            daq_chip_id = attach['DAQ'][-1]
-            east_chip_id = attach['E'][-1]
-            west_chip_id = attach['W'][-1]
+            daq_chip_id = hex(int(attach['DAQ']["id"]))
+            east_chip_id = hex(int(attach['E']["id"]))
+            west_chip_id = hex(int(attach['W']["id"]))
         if sn[3:5] == 'EH':
-            daq1_chip_id = attach['DAQ1'][-1]
-            daq2_chip_id = attach['DAQ2'][-1]
-            trig1_chip_id = attach['TRG1'][-1]
-            trig2_chip_id = attach['TRG2'][-1]
-            trig3_chip_id = attach['TRG3'][-1]
-            trig4_chip_id = attach['TRG4'][-1]
+            daq1_chip_id = hex(int(attach['DAQ1']["id"]))
+            daq2_chip_id = hex(int(attach['DAQ2']["id"]))
+            trig1_chip_id = hex(int(attach['TRG1']["id"]))
+            trig2_chip_id = hex(int(attach['TRG2']["id"]))
+            trig3_chip_id = hex(int(attach['TRG3']["id"]))
+            trig4_chip_id = hex(int(attach['TRG4']["id"]))
     except Exception as e:
         test_id = 'No tests run'
         attach = 'none'
@@ -313,6 +313,16 @@ def board_info(sn, static):
         info_com = cur.fetchall()[0][0]
     except:
         info_com = 'None'
+
+    cur.execute('select successful from Test where test_type_id=7 and board_id=%s' % board_id)
+    registered = cur.fetchall()
+    if registered:
+        if registered[0][0] == 1:
+            registered = '<td class="bg-success">&nbsp</td>'
+        else:
+            registered = '<td class="bg-danger">&nbsp</td>'
+    else:
+        registered = '<td>Board has not been registered.</td>'
 
     # does the same thing as the home page to determine how many tests have passed
     cur.execute('select type_id from Board where board_id=%s' % board_id)
@@ -353,7 +363,7 @@ def board_info(sn, static):
         print('<th colspan=1>DAQ 2 Chip ID</th>')
         print('<th colspan=1>Trigger 1 Chip ID</th>')
         print('<th colspan=1>Trigger 2 Chip ID</th>')
-    print('<th colspan=1>Testing Status</th>')
+    print('<th colspan=2>Testing Status</th>')
     print('</tr>')
     print('<tr>')
     print('<td colspan=1>%s</td>' % location)
@@ -367,9 +377,9 @@ def board_info(sn, static):
         print('<td colspan=1>%s</td>' % trig1_chip_id)
         print('<td colspan=1>%s</td>' % trig2_chip_id)
     if num == total:
-        print('<td colspan=1><span class="badge bg-success rounded-pill">Done</span></td>')
+        print('<td colspan=2><span class="badge bg-success rounded-pill">Done</span></td>')
     else:
-        print('<td colspan=1><span class="badge bg-dark rounded-pill">%(success)s/%(total)s</span></td>' %{'success': num, 'total': total})
+        print('<td colspan=2><span class="badge bg-dark rounded-pill">%(success)s/%(total)s</span></td>' %{'success': num, 'total': total})
         
     # gets id of boards that have been checked out
     cur.execute('select board_id from Check_Out')
@@ -387,6 +397,7 @@ def board_info(sn, static):
         print('<th colspan=1>Trigger 4 Chip ID</th>')
     print('<th colspan=1>Date Received</th>')
     print('<th colspan=2>Status</th>')
+    print('<th colspan=1>Registered?</th>')
     print('</tr>')
     print('<tr>')
     if sn[3:5] == 'EL':
@@ -414,6 +425,9 @@ def board_info(sn, static):
         print('<td>%s</td>' % checkout[0])
     else:
         print('<td colspan=2> Board has not been shipped. </td>')
+
+    print('<th colspan=1>Registered?</th>')
+    print(registered)
         
     print('</tr>')
     print('</tbody>')

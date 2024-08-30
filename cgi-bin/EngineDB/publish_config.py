@@ -40,6 +40,7 @@ def get_pages():
                 'I2CData.py',
                 'search.py',
                 'search_boards.py',
+                'CurrentDrawData.py',
              ]
     return scripts
 
