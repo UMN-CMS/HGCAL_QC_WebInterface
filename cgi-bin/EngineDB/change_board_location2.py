@@ -1,15 +1,15 @@
 #!/usr/bin/python3
 
 import module_functions
-import cgi
+import cgi, html
 import base
 
 #cgi header
 print("Content-type: text/html\n")
 
 form = cgi.FieldStorage()
-bc = cgi.escape(form.getvalue("full_id"))
-location = cgi.escape(form.getvalue("location"))
+bc = html.escape(form.getvalue("full_id"))
+location = html.escape(form.getvalue("location"))
 
 base.header(title='Change Board Location')
 base.top(False)
