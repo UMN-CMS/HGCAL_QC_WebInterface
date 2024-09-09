@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 
-import cgi
+import cgi, html
 import base
 import add_test_functions
 import os
@@ -16,7 +16,7 @@ base.top(False)
 form = cgi.FieldStorage()
 
 if form.getvalue('full_id'):
-    full_id = cgi.escape(form.getvalue('full_id'))
+    full_id = html.escape(form.getvalue('full_id'))
 
 
     is_new_board_bool, check_in_id = add_test_functions.is_new_board(full_id)

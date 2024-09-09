@@ -21,7 +21,7 @@ base.top(False)
 form = cgi.FieldStorage()
 
 if form.getvalue('full_id'):
-    sn = cgi.escape(form.getvalue('full_id'))
+    sn = html.escape(form.getvalue('full_id'))
 
     #print '<div> Serial Number = %(s)s , )s </div>' %{'s': sn} 
     home_page_list.add_module(sn)

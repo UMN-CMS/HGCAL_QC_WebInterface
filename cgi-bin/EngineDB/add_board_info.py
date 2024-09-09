@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import cgi
+import cgi, html
 import base
 import home_page_list
 
@@ -9,7 +9,7 @@ print("Content-type: text/html\n")
 
 # gets board info
 form = cgi.FieldStorage()
-full_id = cgi.escape(form.getvalue('full_id'))
+full_id = html.escape(form.getvalue('full_id'))
 board_id = base.cleanCGInumber(form.getvalue('board_id'))
 
 base.header(title='Add extra information about board')

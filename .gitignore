@@ -200,3 +200,8 @@ META.yml
 MYMETA.yml
 nytprof.out
 pm_to_blib
+
+# User specified scripts
+cgi-bin/EngineDB/connect.py
+cgi-bin/WagonDB/connect.py
+cgi-bin/LabelDB/connect.py

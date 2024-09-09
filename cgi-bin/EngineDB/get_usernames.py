@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import cgi
+import cgi, html
 import base
 import add_test_functions 
 import os
@@ -16,7 +16,10 @@ usernames = add_test_functions.get_usernames()
 print('Begin')
 
 for t in usernames:
-    print(t[0])
+    try:
+        print(t[0])
+    except:
+        print("No users available")
 
 print('End')
 
