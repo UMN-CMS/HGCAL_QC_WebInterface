@@ -125,7 +125,7 @@ def add_module(serial_number, manu):
             rows = cur.fetchall()
 
             if not rows:
-                if manu is not 'None':
+                if manu != 'None':
                     cur.execute('select manufacturer_id from Manufacturers where name="%s"' % manu)
                     manu_id = cur.fetchall()[0][0]
                     cur.execute("INSERT INTO Board (sn, full_id, type_id, manufacturer_id) VALUES (%s, '%s', '%s', '%s'); " % (sn, serial_number, type_id, manu_id)) 

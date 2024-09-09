@@ -23,6 +23,7 @@ from datetime import datetime as dt
 import datetime
 import makeTestingData as mTD
 
+
 TestData = pd.read_csv(mTD.get_test(), parse_dates=['Time'])
 BoardData = pd.read_csv(mTD.get_board())
 PeopleData = pd.read_csv(mTD.get_people())
@@ -112,7 +113,7 @@ return indices;
 ''')
 
 def makeTable(ds, widgets, view):
-    td = ColumnDataSource({'Type ID':[], 'Full ID':[], 'Person Name':[], 'Test Type':[], 'Date':[], 'Outcome':[], 'Raw Time':[], 'Location':[], 'Attachment':[]})
+    td = ColumnDataSource({'Sub Type':[], 'Full ID':[], 'Person Name':[], 'Test Type':[], 'Date':[], 'Outcome':[], 'Raw Time':[], 'Location':[], 'Attachment':[]})
 
     x = CustomJS(args=dict(td=td, data=ds, view=view),code='''
 const type_ids=[];
@@ -120,21 +121,23 @@ const full_ids=[];
 const people=[];
 const tests=[];
 const times=[];
-const raw_time = [];
 const outcomes=[];
+const raw_time=[];
 const locations=[];
 const attachments=[];
 
 const indices = view.filters[0].compute_indices(data);
 let mask = new Array(data.data['Full ID'].length).fill(false);
 [...indices].forEach((x)=>{mask[x] = true;})
+
 for (let j = 0; j < data.get_length(); j++) {
     if (mask[j] == true){
-        type_ids.push(data.data['Type ID'][j])
+        type_ids.push(data.data['Sub Type'][j])
         full_ids.push(data.data['Full ID'][j])
         people.push(data.data['Person Name'][j])
         tests.push(data.data['Test Name'][j])
     
+        // converts date to a readable format
         let temp_date = new Date(data.data['Time'][j]);
         let date = temp_date.toString().slice(4, 24)
         times.push(date)
@@ -145,13 +148,13 @@ for (let j = 0; j < data.get_length(); j++) {
         attachments.push(data.data['Attach ID'][j])
     }
 }
-td.data['Type ID'] = type_ids;
+td.data['Sub Type'] = type_ids;
 td.data['Full ID'] = full_ids;
 td.data['Person Name'] = people;
 td.data['Test Type'] = tests;
 td.data['Date'] = times;
-td.data['Raw Time'] = raw_time;
 td.data['Outcome'] = outcomes;
+td.data['Raw Time'] = raw_time;
 td.data['Location'] = locations;
 td.data['Attachment'] = attachments;
 td.change.emit()
@@ -164,6 +167,7 @@ td.change.emit()
 
 def Filter():
     ds = ColumnDataSource(AllData)
+    df = AllData
 
     # create the widgets to be used
     mc_widgets = {}
@@ -171,16 +175,17 @@ def Filter():
     multi_choice = (lambda x,y: MultiChoice(options=x, value=[], title=y), 'value')
     start_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value=x, title=z), 'value')
     today = datetime.date.today()
-    end_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value=today, title=z), 'value')
+    today_plus_one = today + datetime.timedelta(days=1)
+    end_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value=today_plus_one, title=z), 'value')
     min_date = pd.Timestamp((min(ds.data['Time']))).date()
     date_range = []
-    while min_date <= today:
+    while min_date <= today_plus_one:
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
     # widget titles and data for those widgets has to be manually entered, as well as the type
-    columns = ['Type ID', 'Full ID', 'Test Name', 'Location', 'Person Name', 'Outcome', 'Start Date', 'End Date']
-    data = [ds.data['Type ID'].tolist(), ds.data['Full ID'].tolist(), ds.data['Test Name'].tolist(), ds.data['Location'].tolist(), ds.data['Person Name'].tolist(), ds.data['Outcome'], date_range, date_range]
-    t = [multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
+    columns = ['Major Type', 'Sub Type', 'Full ID', 'Test Name', 'Location', 'Person Name', 'Outcome', 'Start Date', 'End Date']
+    data = [ds.data['Major Type'].tolist(), ds.data['Sub Type'], ds.data['Full ID'].tolist(), ds.data['Test Name'].tolist(), ds.data['Location'].tolist(), ds.data['Person Name'].tolist(), ds.data['Outcome'], date_range, date_range]
+    t = [multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
 
     # constructs the widgets
     for i in range(len(columns)):
@@ -214,6 +219,7 @@ def Filter():
 
     td = makeTable(ds, widgets, view)
     
+    # html template formatter can be used to apply typical html code to bokeh elements
     template = '''
 <div style="font-size: 150%">
 <%= value %>
@@ -240,11 +246,11 @@ Attach
     board = HTMLTemplateFormatter(template=module_template)
 
     table_columns = [
-                    TableColumn(field='Type ID', title='Type ID', formatter=bigger_font),
+                    TableColumn(field='Sub Type', title='Sub Type', formatter=bigger_font),
                     TableColumn(field='Full ID', title='Full ID', formatter=board),
                     TableColumn(field='Test Type', title='Test Type', formatter=bigger_font),
                     TableColumn(field='Person Name', title='Person Name', formatter=bigger_font),
-                    TableColumn(field='Date', title='Date', formatter=bigger_font),
+                    TableColumn(field='Date', title='Time', formatter=bigger_font),
                     TableColumn(field='Raw Time', title='Raw Time', formatter=bigger_font),
                     TableColumn(field='Location', title='Location', formatter=bigger_font),
                     TableColumn(field='Outcome', title='Outcome', formatter=bigger_font),
@@ -283,5 +289,5 @@ if (this.value.length != 0) {
 '''))
     w[1].js_on_change('value', update_options_2)
 
-    return json.dumps(json_item(row(column(row(w[0:4]), row(w[4:]), data_table))))
+    return json.dumps(json_item(row(column(row(w[0:5]), row(w[5:]), data_table))))
 

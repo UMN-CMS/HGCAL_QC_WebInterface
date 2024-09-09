@@ -8,7 +8,8 @@ import pandas as pd
 import numpy as np
 from connect import connect
 
-cgitb.enable()
+cgitb.enable(display=0, logdir="/nfs/enginedb/photos")
+#cgitb.enable()
 db = connect(0)
 cur = db.cursor()
 
