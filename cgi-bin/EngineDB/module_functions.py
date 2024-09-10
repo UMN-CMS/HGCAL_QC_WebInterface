@@ -1,5 +1,5 @@
-#!/usr/bin/python3 -B
-from connect import connect
+#!./cgi_runner.sh -B
+from connect import *
 import sys
 import mysql.connector
 import mysql
@@ -426,44 +426,20 @@ def board_info(sn, static):
     else:
         print('<td colspan=2> Board has not been shipped. </td>')
 
-    print('<th colspan=1>Registered?</th>')
     print(registered)
         
     print('</tr>')
     print('</tbody>')
     print('</table>')
 
-    if static:
-        try:
-            cur.execute('select image_name,date from Board_images where board_id=%s and view="Top" order by date desc' % board_id)
-            img_name_top = cur.fetchall()[0][0]
-            cur.execute('select image_name,date from Board_images where board_id=%s and view="Bottom" order by date desc' % board_id)
-            img_name_bottom = cur.fetchall()[0][0]
+    try:
+        print('<h5>Top View:</h5>') 
+        print('<img src="get_image.py?board_id=%s&view=%s" width=900 height=auto></a>' % (board_id, 'Top'))
+        print('<h5>Bottom View:</h5>')
+        print('<img src="get_image.py?board_id=%s&view=%s" width=900 height=auto></a>' % (board_id, 'Bottom'))
+    except Exception as e:
+        print('<h6>This board has no images.</h6>')
 
-            print('<h5>Top View:</h5>') 
-            print('<a href="../../static_html/files/enginedb/%(img)s"><img src="../../static_html/files/enginedb/%(img)s" width=900 height=auto></a>' % {'img':img_name_top})
-            print('<h5>Bottom View:</h5>')
-            print('<a href="../../static_html/files/enginedb/%(img)s"><img src="../../static_html/files/enginedb/%(img)s" width=900 height=auto></a>' % {'img':img_name_bottom})
-        except Exception as e:
-            print('<h6>This board has no image.</h6>')
-
-    else:
-        # gets the server where the images are stored
-        server_name = os.environ["SERVER_NAME"]
-
-        # gets images if there are images
-        try:
-            cur.execute('select image_name,date from Board_images where board_id=%s and view="Top" order by date desc' % board_id)
-            img_name_top = cur.fetchall()[0][0]
-            cur.execute('select image_name,date from Board_images where board_id=%s and view="Bottom" order by date desc' % board_id)
-            img_name_bottom = cur.fetchall()[0][0]
-
-            print('<h5>Top View:</h5>') 
-            print('<a href="http://%(server_name)s/ePortage/wagondb/%(img)s"><img src="http://%(server_name)s/ePortage/wagondb/%(img)s" width=900 height=auto></a>' % {'server_name': server_name, 'img':img_name_top})
-            print('<h5>Bottom View:</h5>')
-            print('<a href="http://%(server_name)s/ePortage/wagondb/%(img)s"><img src="http://%(server_name)s/ePortage/wagondb/%(img)s" width=900 height=auto></a>' % {'server_name': server_name, 'img':img_name_bottom})
-        except Exception as e:
-            print('<h6>This board has no image.</h6>')
     
     print('</div>')
 
@@ -586,11 +562,11 @@ def add_board_image(sn, img_file, view):
         else:
             board_id = rows[0][0]
 
-        img_path = "/home/ePortage/wagondb"
+        img_path = get_image_location()
         # generates random string for the image name
         img_name = str(uuid.uuid4())
 
-        path = "{}/{}".format(img_path, img_name)
+        path = img_path + img_name
 
         # puts the file name and other info into DB
         cur.execute('INSERT INTO Board_images (board_id, image_name, view, date) VALUES (%s, "%s", "%s", NOW())' % (board_id, img_name, view))
@@ -606,7 +582,7 @@ def add_board_image(sn, img_file, view):
             f.write(img_file)
             print("File wrote:)")
 
-        print("File recieved successfully!")
+        print("File received successfully!")
 
     except mysql.connector.Error as err:
         print("CONNECTION ERROR")

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!./cgi_runner.sh
 def getAttachmentBasePath():
     return "/home/jmmans/tmp/ePortage"
 #    return "/home/daq/ePortageArchive/uHTR"

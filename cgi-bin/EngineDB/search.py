@@ -1,10 +1,11 @@
-#!/usr/bin/python3
+#!./cgi_runner.sh
 
 import cgi
 import cgitb
 import base
 import sys
 from search_functions import Filter
+import bokeh
 
 def run(static):
     base.header(title='Search Tests')

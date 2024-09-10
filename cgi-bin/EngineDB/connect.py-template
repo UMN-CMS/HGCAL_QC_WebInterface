@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!./cgi_runner.sh
 
 import mysql.connector
 
