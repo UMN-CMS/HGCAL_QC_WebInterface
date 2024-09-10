@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!./cgi_runner.sh
 
 import sys
 import pandas as pd
@@ -249,9 +249,9 @@ dt.change.emit()
     return time_series_data_total, time_series_data_suc, time_series_data_unc, dt
 
 def Filter():
-    df_temp = AllData
-    df_temp = df_temp.dropna()
-    ds = ColumnDataSource(df_temp)
+    df = AllData
+    df = df.dropna()
+    ds = ColumnDataSource(df)
     mc_widgets = {}
     dr_widgets = {}
     multi_choice = (lambda x,y: MultiChoice(options=x, value=[], title=y), 'value')

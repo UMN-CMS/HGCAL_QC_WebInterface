@@ -167,6 +167,7 @@ td.change.emit()
 
 def Filter():
     ds = ColumnDataSource(AllData)
+    df = AllData
 
     # create the widgets to be used
     mc_widgets = {}

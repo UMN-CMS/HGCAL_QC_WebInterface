@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!./cgi_runner.sh
 
 import cgi, html
 import cgitb
@@ -6,11 +6,11 @@ import base
 import module_functions
 import sys
 import total_tests as mp
+import bokeh
 
 def run(static):
     base.header(title='Total Tests Over Time')
     base.top(static)
-
     print('''
     <script>
     data = {};
@@ -22,8 +22,8 @@ def run(static):
     base.bottom(static)
 
 if __name__ == '__main__':
-    cgitb.enable()
     #cgi header
-    print("Content-type: text/html\n")
+    cgitb.enable()
+    print("Content-type: text/html\n\n")
 
     run(False)

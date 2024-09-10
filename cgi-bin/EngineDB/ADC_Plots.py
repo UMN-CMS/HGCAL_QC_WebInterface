@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!./cgi_runner.sh
 
 import sys
 import pandas as pd
@@ -654,14 +654,14 @@ src4.change.emit()
     w = [*widgets.values()]
 
     subtypes = {}
-    for major in np.unique(ds.data['Major Type'].tolist()).tolist():
-        subtypes[major] = np.unique(df.query('`Major Type` == @major')['Sub Type'].values.tolist()).tolist()
+    for major in np.unique(ds_adc.data['Major Type'].tolist()).tolist():
+        subtypes[major] = np.unique(df_temp.query('`Major Type` == @major')['Sub Type'].values.tolist()).tolist()
     serial_numbers = {}
-    for s in np.unique(ds.data['Sub Type'].tolist()).tolist():
-        serial_numbers[s] = np.unique(df.query('`Sub Type` == @s')['Full ID'].values.tolist()).tolist()
+    for s in np.unique(ds_adc.data['Sub Type'].tolist()).tolist():
+        serial_numbers[s] = np.unique(df_temp.query('`Sub Type` == @s')['Full ID'].values.tolist()).tolist()
     
-    all_subtypes = np.unique(ds.data['Sub Type'].tolist()).tolist()
-    all_serials = np.unique(ds.data['Full ID'].tolist()).tolist()
+    all_subtypes = np.unique(ds_adc.data['Sub Type'].tolist()).tolist()
+    all_serials = np.unique(ds_adc.data['Full ID'].tolist()).tolist()
 
     update_options = CustomJS(args=dict(subtypes=subtypes, widget=w[1], all_subtypes=all_subtypes), code=('''
 if (this.value.length != 0) {
@@ -1520,14 +1520,14 @@ src4.change.emit()
     w = [*widgets.values()]
 
     subtypes = {}
-    for major in np.unique(ds.data['Major Type'].tolist()).tolist():
-        subtypes[major] = np.unique(df.query('`Major Type` == @major')['Sub Type'].values.tolist()).tolist()
+    for major in np.unique(ds_adc.data['Major Type'].tolist()).tolist():
+        subtypes[major] = np.unique(df_temp.query('`Major Type` == @major')['Sub Type'].values.tolist()).tolist()
     serial_numbers = {}
-    for s in np.unique(ds.data['Sub Type'].tolist()).tolist():
-        serial_numbers[s] = np.unique(df.query('`Sub Type` == @s')['Full ID'].values.tolist()).tolist()
+    for s in np.unique(ds_adc.data['Sub Type'].tolist()).tolist():
+        serial_numbers[s] = np.unique(df_temp.query('`Sub Type` == @s')['Full ID'].values.tolist()).tolist()
     
-    all_subtypes = np.unique(ds.data['Sub Type'].tolist()).tolist()
-    all_serials = np.unique(ds.data['Full ID'].tolist()).tolist()
+    all_subtypes = np.unique(ds_adc.data['Sub Type'].tolist()).tolist()
+    all_serials = np.unique(ds_adc.data['Full ID'].tolist()).tolist()
 
     update_options = CustomJS(args=dict(subtypes=subtypes, widget=w[1], all_subtypes=all_subtypes), code=('''
 if (this.value.length != 0) {

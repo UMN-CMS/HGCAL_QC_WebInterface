@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!./cgi_runner.sh
 
 import re
 import sys
@@ -12,11 +12,11 @@ def header(title=''):
     print('<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">')
     print('<title> %s </title>' %title)
     print('''
-<script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.3.3.min.js"
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.3.3.js"
         crossorigin="anonymous"></script>
-<script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.3.3.min.js"
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-2.3.3.js"
         crossorigin="anonymous"></script>
-<script src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.3.3.min.js"
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-2.3.3.js"
         crossorigin="anonymous"></script>
 <script src="https://d3js.org/d3.v7.min.js"></script>
     ''')
@@ -121,7 +121,7 @@ def top(static):
     </div>
   </div>
 </nav>
-'''%connect.get_db_name())
+'''% "EngineDB")
 
     else:
         print('''<nav id="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
@@ -196,7 +196,7 @@ def top(static):
     </div>
   </div>
 </nav>
-'''%connect.get_db_name())
+'''% "EngineDB")
 
 def bottom(static):
 
