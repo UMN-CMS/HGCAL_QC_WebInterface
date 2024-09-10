@@ -1,6 +1,6 @@
 #!./cgi_runner.sh
 
-import cgi
+import cgi, html
 import base
 import home_page_list
 import board_check_functions 
@@ -15,7 +15,7 @@ print("Content-type: text/html\n")
 
 form = cgi.FieldStorage()
 try:
-    serial_num = cgi.escape(form.getvalue("serial_num"))
+    serial_num = html.escape(form.getvalue("serial_num"))
 except:
     serial_num = None
 

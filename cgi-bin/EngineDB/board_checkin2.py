@@ -1,6 +1,6 @@
 #!./cgi_runner.sh
 
-import cgi
+import cgi, html
 import cgitb; cgitb.enable()
 import base
 import board_check_functions

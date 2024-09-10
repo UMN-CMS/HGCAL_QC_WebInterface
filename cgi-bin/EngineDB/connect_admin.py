@@ -2,7 +2,7 @@
 
 from connect import connect, connect_admin
 import base
-import cgi
+import cgi, html
 import cgitb
 cgitb.enable()
 
@@ -14,7 +14,7 @@ form = cgi.FieldStorage()
 base.header(title='Try Admin Connection')
 base.top(False)
 try:
-    password = cgi.escape(form.getvalue("password"))
+    password = html.escape(form.getvalue("password"))
 except Exception as e:
     print(e)
     password = 'daq5HGCAL!'

@@ -1,6 +1,6 @@
 #!./cgi_runner.sh
 
-import cgi
+import cgi, html
 import base
 from connect import connect
 from summary_functions import get

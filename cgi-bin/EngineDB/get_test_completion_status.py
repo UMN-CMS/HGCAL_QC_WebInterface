@@ -1,6 +1,6 @@
 #!./cgi_runner.sh
 
-import cgi
+import cgi, html
 import base
 import module_functions 
 import os

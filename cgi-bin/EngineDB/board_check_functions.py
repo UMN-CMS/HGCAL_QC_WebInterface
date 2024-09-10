@@ -1,7 +1,7 @@
 #!./cgi_runner.sh
 
 from connect import connect
-import cgi
+import cgi, html
 import cgitb; cgitb.enable()
 import base
 import home_page_list

@@ -1,6 +1,6 @@
 #!./cgi_runner.sh
 
-import cgi
+import cgi, html
 import base
 from connect import connect
 
@@ -16,8 +16,8 @@ cur = db.cursor()
 form = cgi.FieldStorage()
 
 if form.getvalue('full_id'):
-    full_id = cgi.escape(form.getvalue('full_id'))
-    loc = cgi.escape(form.getvalue('location'))
+    full_id = html.escape(form.getvalue('full_id'))
+    loc = html.escape(form.getvalue('location'))
 
     try:
         cur.execute('update Board set location="%s" where full_id="%s"' %(loc, full_id))

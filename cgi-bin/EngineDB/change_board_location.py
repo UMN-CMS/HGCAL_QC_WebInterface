@@ -1,6 +1,6 @@
 #!./cgi_runner.sh
 
-import cgi
+import cgi, html
 import cgitb
 cgitb.enable()
 import base
@@ -13,7 +13,7 @@ print("Content-type: text/html\n")
 base_url = connect.get_base_url()
 
 form = cgi.FieldStorage()
-bc = cgi.escape(form.getvalue("full_id"))
+bc = html.escape(form.getvalue("full_id"))
 
 base.header(title='Change Board Location')
 base.top(False)

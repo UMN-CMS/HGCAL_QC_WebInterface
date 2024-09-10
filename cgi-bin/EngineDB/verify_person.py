@@ -1,6 +1,6 @@
 #!./cgi_runner.sh
 
-import cgi
+import cgi, html
 import base
 import add_test_functions 
 import os
@@ -15,7 +15,7 @@ form = cgi.FieldStorage()
 print("\n\n\n\n\n\n\n\n\n\n\n\n\nABSOLUTELY MASSIVE", form, "\n\n\n\n\n\n\n\n\n")
 
 
-name = cgi.escape(form.getvalue("tester"))
+name = html.escape(form.getvalue("tester"))
 
 tests = add_test_functions.verify_person(name)
 

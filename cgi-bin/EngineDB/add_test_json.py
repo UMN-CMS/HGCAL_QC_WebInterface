@@ -2,7 +2,7 @@
 
 import connect
 import json
-import cgi
+import cgi, html
 import base
 import add_test_functions
 
@@ -14,15 +14,15 @@ def parse_data(form):
         # board_type is a str
         board_type = str(full_id)[3:9]
         print("board_type:", board_type)
-        tester = cgi.escape(form.getvalue('tester'))
+        tester = html.escape(form.getvalue('tester'))
         print("tester:", tester)
         
         # test_name is a str
-        test_name = str(cgi.escape(form.getvalue('test_type')))
+        test_name = str(html.escape(form.getvalue('test_type')))
         print("test_type:", test_name)
         successful = base.cleanCGInumber(form.getvalue('successful'))
         print("successful:", successful)
-        comments = cgi.escape(form.getvalue('comments'))
+        comments = html.escape(form.getvalue('comments'))
         print("comments:", comments)    
         
         try:
@@ -97,10 +97,10 @@ for itest in range(1,4):
     if (afile.filename):
         adesc= form.getvalue("attachdesc%d"%(itest))
         if adesc:
-            adesc = cgi.escape(adesc)
+            adesc = html.escape(adesc)
         acomment= form.getvalue("attachcomment%d"%(itest))
         if acomment:
-            acomment = cgi.escape(acomment)
+            acomment = html.escape(acomment)
         add_test_functions.add_test_attachment(test_id,afile,adesc,acomment)
 
 if test_dict['test'] == 'LPGBT ID':

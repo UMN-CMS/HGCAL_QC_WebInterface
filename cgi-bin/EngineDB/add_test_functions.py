@@ -2,7 +2,7 @@
 from connect import connect, connect_admin
 #import mysql.connector
 import base
-import cgi, os
+import cgi, html, os
 import cgitb; cgitb.enable()
 import settings
 import json

@@ -1,6 +1,6 @@
 #!./cgi_runner.sh
 
-import cgi
+import cgi, html
 import cgitb
 import base
 import module_functions
@@ -18,7 +18,7 @@ print("Content-type: text/html\n")
 form = cgi.FieldStorage()
 sn = base.cleanCGInumber(form.getvalue("serial_num"))
 board_id = base.cleanCGInumber(form.getvalue("board_id"))
-comments = cgi.escape(form.getvalue("comments"))
+comments = html.escape(form.getvalue("comments"))
 
 base.header(title='Add Board Info')
 base.top(False)
