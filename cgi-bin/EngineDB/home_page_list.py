@@ -133,7 +133,7 @@ def add_module(serial_number, manu, location):
                     db.close()
 
                 else:
-                    cur.execute("INSERT INTO Board (sn, full_id, type_id) VALUES (%s, '%s', '%s', '%s'); " % (sn, serial_number, type_id, location)) 
+                    cur.execute("INSERT INTO Board (sn, full_id, type_id, location) VALUES (%s, '%s', '%s', '%s'); " % (sn, serial_number, type_id, location)) 
                     db.commit()
                     db.close()
                 return 'Board entered successfully!'
