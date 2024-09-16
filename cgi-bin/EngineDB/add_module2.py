@@ -17,11 +17,12 @@ base.top(False)
 form = cgi.FieldStorage()
 
 if form.getvalue('full_id'):
-    full = form.getvalue('full_id')
-    manu = form.getvalue('manufacturer')
+    full = html.escape(form.getvalue('full_id'))
+    manu = html.escape(form.getvalue('manufacturer'))
+    loc = html.escape(form.getvalue('location'))
 
     # calls add_module() to add it to DB
-    home_page_list.add_module(full, manu)
+    home_page_list.add_module(full, manu, location)
     
     print('<div class="row">')
     print('<div class="col-md-3 ps-4 pt-2 mx-2 my-2">')
