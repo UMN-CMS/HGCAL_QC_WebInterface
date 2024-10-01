@@ -12,6 +12,9 @@ cur = cnx.cursor()
 # updates the tables with the most recent data from the dictionary
 def update_metatables(majortypes):
    
+    cnx = connect(1)
+    cur = cnx.cursor()
+
     print("\nChecking for new major types and subtypes:\n")
 
     # Make an orphan category for Major and Sub type to house lost labels
@@ -143,145 +146,22 @@ def update_metatables(majortypes):
 #uploads the label to the database
 def upload_label(label):
 
-    # makes sure the major type exists and is valid
-    def match_major(maj, cur):
-        
-        sql = "SELECT major_type_id, major_sn, major_code FROM Major_Type WHERE major_code = %s"
-        val = (maj,)
-        
-        cur.execute(sql, val)
-        try:
-            major_type_id = cur.fetchall()[0]
-            return major_type_id[0], major_type_id[1], major_type_id[2]
-        except:
-            sql = "SELECT major_type_id, major_sn, major_code FROM Major_Type WHERE major_sn = %s"
-            val = (maj,)
-            
-            cur.execute(sql, val)
-            try:
-                major_type_id = cur.fetchall()[0]
-                return major_type_id[0], major_type_id[1], major_type_id[2]
-            except:
-                return -1, -1, -1 
+    try:
+        decoded = la.decode(label)
+        major = la.getMajorType(decoded.major_type_code)
+        sub = major.getSubtypeByCode(decoded.subtype_code)
+        sn_fv = decoded.field_values['SerialNumber']
 
-    # checks that the subtype exists
-    def check_sub(sub, maj_id, cur):
-    
-        sql = "SELECT sub_type_id, sub_sn, sub_code FROM Sub_Type WHERE sub_code = %s"
-        val = (sub,)
-    
-        cur.execute(sql, val)
-        try:
-            sub_type_id = cur.fetchall()
-            sub_type_id[0]
-            for i,sub_id in enumerate(sub_type_id):
-                if check_stitch(maj_id, sub_id[0]):
-                    return True, sub_type_id[i][0], sub_type_id[i][1], sub_type_id[i][2]
-            return False, -2, -2, -2
-        except:
-            return False, -1, -1, -1
-
-    # checks that the subtype is for the correct major type
-    def check_stitch(maj_id, sub_id):
-        
-        sql = "SELECT * from Major_Sub_Stitch WHERE major_type_id = %s AND sub_type_id = %s"
-        val = (maj_id, sub_id)
-
-        cur.execute(sql, val)
-        try:
-            cur.fetchall()[0]
-            return True
-        except:
-            return False
-
-    offset = 0
-
-    if "3205" == label[:4]:
-        return
-        prefix = label[:4]
-        offset = 1
-
-    prefix = label[:3+offset]
-    # gets the major type
-    major = label[3+offset:5+offset]
-
-    # gets major type id
-    major_type_id, major_sn, major_code = match_major(major, cur)
-
-    # makes subtypes for the different possible lengths
-    temp_two_sub = label[5+offset:7+offset]
-    temp_three_sub = label[5+offset:8+offset]
-    temp_four_sub = label[5+offset:9+offset]
-    
-    # checks which length is correct for the subtype
-    is_two_sub, two_sub_type_id, two_sub_sn, two_sub_code = check_sub(temp_two_sub, major_type_id, cur)
-    is_three_sub, three_sub_type_id, three_sub_sn, three_sub_code = check_sub(temp_three_sub, major_type_id, cur)
-    is_four_sub, four_sub_type_id, four_sub_sn, four_sub_code = check_sub(temp_four_sub, major_type_id, cur)
-
-    # sets the correct subtype values
-    if is_three_sub:
-        sub = temp_three_sub
-        sub_type_id = three_sub_type_id
-        sub_sn = three_sub_sn
-        sub_code = three_sub_code
-        sn = label[8+offset:]
-    elif is_four_sub:
-        sub = temp_four_sub
-        sub_type_id = four_sub_type_id
-        sub_sn = four_sub_sn
-        sub_code = four_sub_code
-        sn = label[9+offset:]
-    elif is_two_sub:
-        sub = temp_two_sub
-        sub_type_id = two_sub_type_id
-        sub_sn = two_sub_sn
-        sub_code = two_sub_code
-        sn = label[7+offset:]
-    else:
-        sn = label[9+offset:]
-        sub = temp_four_sub
-        sub_sn = four_sub_sn
-        sub_code = four_sub_code
-        sub_type_id = four_sub_type_id
-
-    # makes orphan label if no label can be found
-    if major_type_id < 0 or sub_type_id < 0:
-        print("Cannot find major type {} or sub type {} for sn={}".format(major, sub, label))
-        print("Will continue as orphan label upload")
-
-        with open("./Orphan_Labels.txt", "w") as f:
-            f.write(label + "\n")
-
-        major = "XX"
-        sub = "XXXX"
-
-        major_sn = 99
-        sub_sn = 9999
-
-
-    elif not is_two_sub and not is_three_sub and not is_four_sub:
-        print("No mathcing subtype for {} or {} or {}".format(temp_two_sub, temp_three_sub, temp_four_sub))
-
-        with open("./Orphan_Labels.txt", "w") as f:
-            f.write(label + "\n")
-
-        major = "XX"
-        sub = "XXXX"
-  
-        major_sn = 99
-        sub_sn = 9999
-
-    if major == "XX":
-        major_type_id = 1
-        sub_type_id = 1
- 
-    #makes type id values
-    type_sn = major_sn * 10000 + sub_sn
-    type_code = major + sub
+        type_code = str(decoded.major_type_code) + str(decoded.subtype_code)
+        sn = sn_fv.value
+    except: 
+        print(f"Unable to decode label f{label}, will insert with blank type code and sn")
+        type_code = "XXXXXX"
+        sn = "XXXXXX"
 
     # uploads the label into the database
-    query = "INSERT INTO Label (full_label, type_sn, type_code, sn, major_type_id, sub_type_id, creation_date) VALUES (%s, %s, %s, %s, %s, %s, NOW())"
-    args = (label, str(type_sn), type_code, sn, str(major_type_id), str(sub_type_id))
+    query = "INSERT INTO Label (full_label, type_sn, type_code, sn, creation_date) VALUES (%s, %s, %s, %s, NOW())"
+    args = (label, "000000", type_code, sn)
 
     try:
         cur.execute(query, args)
@@ -290,12 +170,13 @@ def upload_label(label):
         for i in args:
             print(i)
         print('End')
-    except:
+    except Exception as e:
+        print(e)
         print("Issue uploading label with sn={}, please check for duplicates.".format(label))
 
 # this uses the label authority over the database
 def decode_label(label):
-    
+    print("LABEL:", label) 
     decoded = la.decode(label)
     major = la.getMajorType(decoded.major_type_code)
     sub = major.getSubtypeByCode(decoded.subtype_code)
