@@ -172,7 +172,10 @@ def allboards(static, major):
     for s in subtypes:
         columns[s] = []
         cur.execute('select type_id from Board_type where type_sn="%s"' % s)
-        type_id = cur.fetchall()[0][0]
+        try:
+            type_id = cur.fetchall()[0][0]
+        except:
+            continue
         for sn in serial_numbers[s]:
             # determines how many tests there are and which ones have passed
             cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)

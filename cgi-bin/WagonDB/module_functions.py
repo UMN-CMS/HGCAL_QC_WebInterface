@@ -11,7 +11,7 @@ import numpy as np
 import datetime
 from datetime import datetime as dt
 import uuid
-import cgi
+import cgi, html
 import json
 
 sys.path.insert(0, '../../hgcal-label-info/label-authority/')
@@ -184,14 +184,14 @@ def ePortageTest(test_type_id, board_sn, test_name, revokes, static):
                 if test_id[i] in revokes:
                     print('<td><b>Revoked</b>: %(comment)s </td>' %{ "comment":revokes[test_id[i]] })
                 else:
-                    print('<td align=left> Yes </td>')
+                    print('<td align=left; class="table-success"> Yes </td>')
                     if static:
                         pass
                     else:
                         print("<td align=right style='{ background-color: yellow; }' ><a href='revoke_success.py?test_id=%(id)s'>Revoke</a></td>" %{ "id":test_id[i]})
 
             else:
-                print('<td colspan=2>No</td>')
+                print('<td colspan=2; class="table-danger">No</td>')
             print('</tr>')
             print('<tr>')
             print('<td><b>Comments:</b></td>' )

@@ -231,11 +231,11 @@ def add_test(person_id, test_type, barcode, success, comments, config_id):
 def add_tester(person_name, passwd):
     try:
         db = connect_admin(passwd)
+        cur = db.cursor()
     except Exception as e:
         print(e)
         print("Administrative access denied")
         return
-    cur = db.cursor()
 
     if person_name:
         sql="INSERT INTO People (person_name) VALUES ('%s')"%person_name

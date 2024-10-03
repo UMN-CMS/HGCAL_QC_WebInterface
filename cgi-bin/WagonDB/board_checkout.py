@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import cgi
+import cgi, html
 import base
 import home_page_list
 import board_check_functions 
@@ -16,7 +16,7 @@ print("Content-type: text/html\n")
 form = cgi.FieldStorage()
 #url = form.getvalue("url")
 try:
-    bc = cgi.escape(form.getvalue("full_id"))
+    bc = html.escape(form.getvalue("full_id"))
 except:
     bc = None
 

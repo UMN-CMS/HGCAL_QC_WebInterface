@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import cgi
+import cgi, html
 import cgitb
 import base
 import module_functions
@@ -16,9 +16,9 @@ print("Location: summary.py\n\n")
 print("Content-type: text/html\n")
 
 form = cgi.FieldStorage()
-full_id = cgi.escape(form.getvalue("full_id"))
+full_id = html.escape(form.getvalue("full_id"))
 board_id = base.cleanCGInumber(form.getvalue("board_id"))
-comments = cgi.escape(form.getvalue("comments"))
+comments = html.escape(form.getvalue("comments"))
 
 base.header(title='Add Board Info')
 base.top(False)

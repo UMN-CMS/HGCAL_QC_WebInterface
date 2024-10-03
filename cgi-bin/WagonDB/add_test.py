@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import cgi
+import cgi, html
 import base
 import home_page_list
 import add_test_functions
@@ -10,7 +10,7 @@ import add_test_functions
 print("Content-type: text/html\n")
 
 form = cgi.FieldStorage()
-bc = cgi.escape(form.getvalue('full_id'))
+bc = html.escape(form.getvalue('full_id'))
 suggested_test = base.cleanCGInumber(form.getvalue('suggested'))
 
 base.header(title='Add Test')

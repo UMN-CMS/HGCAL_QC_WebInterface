@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import cgi
+import cgi, html
 import cgitb
 cgitb.enable()
 import base
@@ -15,9 +15,9 @@ print("Content-type: text/html\n")
 base_url = connect.get_base_url()
 
 form = cgi.FieldStorage()
-full = cgi.escape(form.getvalue("full_id"))
-fileitem = cgi.escape(form.getvalue("image"))
-view = cgi.escape(form.getvalue("view"))
+full = html.escape(form.getvalue("full_id"))
+fileitem = html.escape(form.getvalue("image"))
+view = html.escape(form.getvalue("view"))
 
 fileitems = base64.b64decode(fileitem)
 
