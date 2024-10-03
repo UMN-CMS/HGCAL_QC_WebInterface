@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import cgi
+import cgi, html
 import base
 from connect import connect
 
@@ -16,8 +16,8 @@ cur = db.cursor()
 form = cgi.FieldStorage()
 
 if form.getvalue('full_id'):
-    full_id = cgi.escape(form.getvalue('full_id'))
-    loc = cgi.escape(form.getvalue('location'))
+    full_id = html.escape(form.getvalue('full_id'))
+    loc = html.escape(form.getvalue('location'))
 
     try:
         # updates the location of the board in the database

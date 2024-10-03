@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import module_functions
-import cgi
+import cgi, html
 import base
 
 #print("Location: %s/home_page.py\n\n" % base_url)
@@ -9,7 +9,7 @@ import base
 print("Content-type: text/html\n")
 
 form = cgi.FieldStorage()
-full_id = cgi.escape(form.getvalue("full_id"))
+full_id = html.escape(form.getvalue("full_id"))
 fileitems = [form['top_view'], form['bottom_view']]
 
 base.header(title='Add Image')

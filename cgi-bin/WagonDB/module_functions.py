@@ -11,7 +11,7 @@ import numpy as np
 import datetime
 from datetime import datetime as dt
 import uuid
-import cgi
+import cgi, html
 import json
 
 sys.path.insert(0, '../../hgcal-label-info/label-authority/')

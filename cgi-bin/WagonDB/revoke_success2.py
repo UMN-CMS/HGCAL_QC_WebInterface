@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import cgi
+import cgi, html
 import cgitb
 import base
 import module_functions
@@ -19,7 +19,7 @@ test_id = base.cleanCGInumber(form.getvalue("test_id"))
 comments = form.getvalue("revokeComments")
 
 if comments:
-    comments = cgi.escape(comments)
+    comments = html.escape(comments)
 
 base.header(title='Revoke Success')
 base.top(False)

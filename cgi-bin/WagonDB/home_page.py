@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import cgi
+import cgi, html
 import cgitb
 import base
 import home_page_list

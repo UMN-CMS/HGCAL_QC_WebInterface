@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import cgi
+import cgi, html
 import cgitb
 import base
 from connect import connect
@@ -16,7 +16,7 @@ form = cgi.FieldStorage()
 
 label = form.getvalue('label')
 working = form.getvalue('working')
-comments = cgi.escape(form.getvalue('comments'))
+comments = html.escape(form.getvalue('comments'))
 
 if working == 'Yes':
     working = 1

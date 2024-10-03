@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import cgi
+import cgi, html
 import cgitb; cgitb.enable()
 import base
 import home_page_list
@@ -15,7 +15,7 @@ form = cgi.FieldStorage()
 # this page can be accessed from a link that autofills the barcode
 # or it can be accessed normally, this checks which one it is
 try:
-    bc = cgi.escape(form.getvalue("full_id"))
+    bc = html.escape(form.getvalue("full_id"))
     board_id = base.cleanCGInumber(form.getvalue("board_id"))
 except:
     bc = None

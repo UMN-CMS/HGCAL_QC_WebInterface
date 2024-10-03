@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import cgi
+import cgi, html
 import cgitb
 cgitb.enable()
 import base
@@ -13,7 +13,7 @@ print("Content-type: text/html\n")
 base_url = connect.get_base_url()
 
 form = cgi.FieldStorage()
-full_id = cgi.escape(form.getvalue("full_id"))
+full_id = html.escape(form.getvalue("full_id"))
 
 base.header(title='Add Board Image')
 base.top(False)
