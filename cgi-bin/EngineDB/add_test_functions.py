@@ -225,7 +225,7 @@ def add_test(person_id, test_type, serial_num, success, comments, config_id):
     if serial_num:
         cur.execute("SELECT board_id FROM Board WHERE full_id = '{}'".format(serial_num))
         row = cur.fetchone()
-        print("The Card_ID=", row[0])
+        #print("The Card_ID=", row[0])
         card_id = row[0]
         
         if config_id:

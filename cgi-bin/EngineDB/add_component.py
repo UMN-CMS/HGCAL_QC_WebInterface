@@ -3,6 +3,7 @@
 import cgi, html
 import base
 from connect import connect
+import traceback
 
 
 print("Content-type: text/html\n")
@@ -14,7 +15,6 @@ db = connect(1)
 cur = db.cursor()
 
 form = cgi.FieldStorage()
-
 if form.getvalue('full_id'):
     full_id = html.escape(form.getvalue('full_id'))
     barcode = html.escape(form.getvalue('barcode'))

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!./cgi_runner.sh
 
 import cgi, html
 import base
@@ -20,9 +20,10 @@ if form.getvalue('full_id'):
 
     full = form.getvalue('full_id')
     manu = form.getvalue('manufacturer')
+    location = html.escape(form.getvalue('location'))
 
     # calls add_module() to add it to DB
-    home_page_list.add_module(full)
+    home_page_list.add_module(full, manu, location)
 
     print('<div class="row">')
     print('<div class="col-md-3 ps-4 pt-2 mx-2 my-2">')
