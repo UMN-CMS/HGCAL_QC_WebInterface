@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!./cgi_runner.sh
 from connect import connect, connect_admin
 #import mysql.connector
 import base

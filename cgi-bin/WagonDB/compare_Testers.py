@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!./cgi_runner.sh
 
 # framework for creating dynamic plots
 import sys
@@ -270,10 +270,10 @@ def Filter():
     # update options for serial numbers upon selecting a subtype
     subtypes = {}
     for major in np.unique(ds.data['Major Type'].tolist()).tolist():
-        subtypes[major] = np.unique(df.query('`Major Type` == @major')['Sub Type'].values.tolist()).tolist()
+        subtypes[major] = np.unique(df_temp.query('`Major Type` == @major')['Sub Type'].values.tolist()).tolist()
     serial_numbers = {}
     for s in np.unique(ds.data['Sub Type'].tolist()).tolist():
-        serial_numbers[s] = np.unique(df.query('`Sub Type` == @s')['Full ID'].values.tolist()).tolist()
+        serial_numbers[s] = np.unique(df_temp.query('`Sub Type` == @s')['Full ID'].values.tolist()).tolist()
     
     all_subtypes = np.unique(ds.data['Sub Type'].tolist()).tolist()
     all_serials = np.unique(ds.data['Full ID'].tolist()).tolist()

@@ -1,5 +1,5 @@
-#!/usr/bin/python3 -B
-from connect import connect
+#!./cgi_runner.sh -B
+from connect import *
 import sys
 import mysql.connector
 import mysql
@@ -92,7 +92,9 @@ def add_test_tab(barcode, board_id, static):
     decoded = la.decode(barcode)
     major = la.getMajorType(decoded.major_type_code)
     sub = major.getSubtypeByCode(decoded.subtype_code)
-    sn = decoded.field_values['SerialNumber'].value
+    schema = la.getMajorType(decoded.major_type_code).getSubtypeByCode(decoded.subtype_code).serial_schema
+    sn = schema.encode(decoded.field_values)
+    #sn = decoded.field_values['SerialNumber'].value
     print('<div class="row">')
     print('<div class="col-md-3 pt-4 ps-5 mx-2 my-2">')
     print('<h4>')
@@ -385,39 +387,47 @@ def board_info(sn, static):
     print('</tbody>')
     print('</table>')
 
-    if static:
-        try:
-            cur.execute('select image_name,date from Board_images where board_id=%s and view="Top" order by date desc' % board_id)
-            img_name_top = cur.fetchall()[0][0]
-            cur.execute('select image_name,date from Board_images where board_id=%s and view="Bottom" order by date desc' % board_id)
-            img_name_bottom = cur.fetchall()[0][0]
+    try:
+        print('<h5>Top View:</h5>') 
+        print('<img src="get_image.py?board_id=%s&view=%s" width=900 height=auto></a>' % (board_id, 'Top'))
+        print('<h5>Bottom View:</h5>')
+        print('<img src="get_image.py?board_id=%s&view=%s" width=900 height=auto></a>' % (board_id, 'Bottom'))
+    except Exception as e:
+        print('<h6>This board has no images.</h6>')
 
-            print('<h5>Top View:</h5>') 
-            print('<a href="../../static_html/files/wagondb/%(img)s"><img src="../../static_html/files/wagondb/%(img)s" width=900 height=auto></a>' % {'img':img_name_top})
-            print('<h5>Bottom View:</h5>')
-            print('<a href="../../static_html/files/wagondb/%(img)s"><img src="../../static_html/files/wagondb/%(img)s" width=900 height=auto></a>' % {'img':img_name_bottom})
-        except Exception as e:
-            print('<h6>This board has no image.</h6>')
+    #if static:
+    #    try:
+    #        cur.execute('select image_name,date from Board_images where board_id=%s and view="Top" order by date desc' % board_id)
+    #        img_name_top = cur.fetchall()[0][0]
+    #        cur.execute('select image_name,date from Board_images where board_id=%s and view="Bottom" order by date desc' % board_id)
+    #        img_name_bottom = cur.fetchall()[0][0]
 
-    else:
-        # gets the server where the images are stored
-        server_name = os.environ["SERVER_NAME"]
+    #        print('<h5>Top View:</h5>') 
+    #        print('<a href="../../static_html/files/wagondb/%(img)s"><img src="../../static_html/files/wagondb/%(img)s" width=900 height=auto></a>' % {'img':img_name_top})
+    #        print('<h5>Bottom View:</h5>')
+    #        print('<a href="../../static_html/files/wagondb/%(img)s"><img src="../../static_html/files/wagondb/%(img)s" width=900 height=auto></a>' % {'img':img_name_bottom})
+    #    except Exception as e:
+    #        print('<h6>This board has no image.</h6>')
 
-        # gets images if there are images
-        try:
-            cur.execute('select image_name,date from Board_images where board_id=%s and view="Top" order by date desc' % board_id)
-            img_name_top = cur.fetchall()[0][0]
-            cur.execute('select image_name,date from Board_images where board_id=%s and view="Bottom" order by date desc' % board_id)
-            img_name_bottom = cur.fetchall()[0][0]
+    #else:
+    #    # gets the server where the images are stored
+    #    server_name = os.environ["SERVER_NAME"]
 
-            print('<h5>Top View:</h5>') 
-            print('<a href="http://%(server_name)s/ePortage/wagondb/%(img)s"><img src="http://%(server_name)s/ePortage/wagondb/%(img)s" width=900 height=auto></a>' % {'server_name': server_name, 'img':img_name_top})
-            print('<h5>Bottom View:</h5>')
-            print('<a href="http://%(server_name)s/ePortage/wagondb/%(img)s"><img src="http://%(server_name)s/ePortage/wagondb/%(img)s" width=900 height=auto></a>' % {'server_name': server_name, 'img':img_name_bottom})
-        except Exception as e:
-            print('<h6>This board has no image.</h6>')
-    
-    print('</div>')
+    #    # gets images if there are images
+    #    try:
+    #        cur.execute('select image_name,date from Board_images where board_id=%s and view="Top" order by date desc' % board_id)
+    #        img_name_top = cur.fetchall()[0][0]
+    #        cur.execute('select image_name,date from Board_images where board_id=%s and view="Bottom" order by date desc' % board_id)
+    #        img_name_bottom = cur.fetchall()[0][0]
+
+    #        print('<h5>Top View:</h5>') 
+    #        print('<a href="http://%(server_name)s/ePortage/wagondb/%(img)s"><img src="http://%(server_name)s/ePortage/wagondb/%(img)s" width=900 height=auto></a>' % {'server_name': server_name, 'img':img_name_top})
+    #        print('<h5>Bottom View:</h5>')
+    #        print('<a href="http://%(server_name)s/ePortage/wagondb/%(img)s"><img src="http://%(server_name)s/ePortage/wagondb/%(img)s" width=900 height=auto></a>' % {'server_name': server_name, 'img':img_name_bottom})
+    #    except Exception as e:
+    #        print('<h6>This board has no image.</h6>')
+    #
+    #print('</div>')
 
 
 def add_board_info(board_id, sn, info):
@@ -538,7 +548,8 @@ def add_board_image(sn, img_file, view):
         else:
             board_id = rows[0][0]
 
-        img_path = "/home/ePortage/wagondb"
+        #img_path = "/home/ePortage/wagondb"
+        img_path = get_image_location()
         # generates random string for the image name
         img_name = str(uuid.uuid4())
 

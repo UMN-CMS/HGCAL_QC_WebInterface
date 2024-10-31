@@ -183,14 +183,14 @@ def ePortageTest(test_type_id, board_sn, test_name, revokes, static):
                 if test_id[i] in revokes:
                     print('<td><b>Revoked</b>: %(comment)s </td>' %{ "comment":revokes[test_id[i]] })
                 else:
-                    print('<td align=left> Yes </td>')
+                    print('<td align=left; class="table-success"> Yes </td>')
                     if static:
                         pass
                     else:
                         print("<td align=right style='{ background-color: yellow; }' ><a href='revoke_success.py?test_id=%(id)s'>Revoke</a></td>" %{ "id":test_id[i]})
 
             else:
-                print('<td colspan=2>No</td>')
+                print('<td colspan=2; class="table-danger">No</td>')
             print('</tr>')
             print('<tr>')
             print('<td><b>Comments:</b></td>' )
@@ -271,6 +271,12 @@ def board_info(sn, static):
     # gets location info
     cur.execute('select location from Board where board_id=%s' % board_id)
     location = cur.fetchall()[0][0]
+
+    try:
+        cur.execute('select LDO from Board where board_id=%s' % board_id)
+        ldo = cur.fetchall()[0][0]
+    except:
+        ldo = 'None'
 
     # attempts to get the Chip IDs for this Board
     try:
@@ -363,7 +369,8 @@ def board_info(sn, static):
         print('<th colspan=1>DAQ 2 Chip ID</th>')
         print('<th colspan=1>Trigger 1 Chip ID</th>')
         print('<th colspan=1>Trigger 2 Chip ID</th>')
-    print('<th colspan=2>Testing Status</th>')
+    print('<th colspan=1>LDO ID</th>')
+    print('<th colspan=1>Testing Status</th>')
     print('</tr>')
     print('<tr>')
     print('<td colspan=1>%s</td>' % location)
@@ -376,6 +383,7 @@ def board_info(sn, static):
         print('<td colspan=1>%s</td>' % daq2_chip_id)
         print('<td colspan=1>%s</td>' % trig1_chip_id)
         print('<td colspan=1>%s</td>' % trig2_chip_id)
+    print('<td colspan=1>%s</td>' % ldo)
     if num == total:
         print('<td colspan=2><span class="badge bg-success rounded-pill">Done</span></td>')
     else:

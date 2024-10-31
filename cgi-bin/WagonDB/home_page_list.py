@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!./cgi_runner.sh
 
 import numpy as np
 from connect import connect
@@ -109,7 +109,7 @@ def add_board_info_form(full_id, board_id):
 
     print('<hr>')
 
-def add_module(serial_number, manu):
+def add_module(serial_number, manu, location):
     try:
         db = connect(1)
         cur = db.cursor()
@@ -128,12 +128,14 @@ def add_module(serial_number, manu):
                 if manu is not 'None':
                     cur.execute('select manufacturer_id from Manufacturers where name="%s"' % manu)
                     manu_id = cur.fetchall()[0][0]
-                    cur.execute("INSERT INTO Board (sn, full_id, type_id, manufacturer_id) VALUES (%s, '%s', '%s', '%s'); " % (sn, serial_number, type_id, manu_id)) 
+                    
+                    print(manu_id)
+                    cur.execute("INSERT INTO Board (sn, full_id, type_id, manufacturer_id, location) VALUES ('%s', '%s', '%s', '%s', '%s'); " % (sn, serial_number, type_id, manu_id, location)) 
                     db.commit()
                     db.close()
 
                 else:
-                    cur.execute("INSERT INTO Board (sn, full_id, type_id) VALUES (%s, '%s', '%s'); " % (sn, serial_number, type_id)) 
+                    cur.execute("INSERT INTO Board (sn, full_id, type_id) VALUES ('%s', '%s', '%s', '%s'); " % (sn, serial_number, type_id, location)) 
                     db.commit()
                     db.close()
                 print('Board entered successfully!')

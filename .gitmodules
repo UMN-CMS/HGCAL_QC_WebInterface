@@ -1,3 +1,4 @@
 [submodule "hgcal-label-info"]
 	path = hgcal-label-info
-	url = https://FactoryGui:glpat-yBTS8YtYBYkUurc52Y2q@gitlab.cern.ch/hgcal-integration/hgcal-label-info.git
+	url = ssh://git@gitlab.cern.ch:7999/hgcal-integration/hgcal-label-info.git
+	#url = https://FactoryGui:glpat-yBTS8YtYBYkUurc52Y2q@gitlab.cern.ch/hgcal-integration/hgcal-label-info.git

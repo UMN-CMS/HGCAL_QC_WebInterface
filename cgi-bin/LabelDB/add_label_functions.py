@@ -299,6 +299,7 @@ def decode_label(label):
     decoded = la.decode(label)
     major = la.getMajorType(decoded.major_type_code)
     sub = major.getSubtypeByCode(decoded.subtype_code)
-    sn = decoded.field_values['SerialNumber']
+    schema = la.getMajorType(decoded.major_type_code).getSubtypeByCode(decoded.subtype_code).serial_schema
+    sn = schema.encode(decoded.field_values)
     
-    return [major.name, sub.name, sn.value, major.code, sub.code]
+    return [major.name, sub.name, sn, major.code, sub.code]

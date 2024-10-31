@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!./cgi_runner.sh
 
 import cgi, html
 import cgitb
@@ -24,6 +24,7 @@ def run(static):
         
     
 if __name__ == '__main__':
+    cgitb.enable()
     #cgi header
     print("Content-type: text/html\n")
 

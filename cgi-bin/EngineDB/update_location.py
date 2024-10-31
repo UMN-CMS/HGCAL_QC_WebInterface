@@ -29,10 +29,12 @@ if form.getvalue('full_id'):
         print('Location Updated.')
 
         print('End')
-    except:
+    except Exception as e:
         print('Begin')
 
         print('An Error Occured when updating the location.')
+        print(e)
+
 
         print('End')
         
