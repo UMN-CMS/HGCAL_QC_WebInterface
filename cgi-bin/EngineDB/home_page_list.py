@@ -53,7 +53,72 @@ def render_list_tests():
             print('<td>%s' % (test[3]))
             print('<td>%s' % (test[1]))
             print('<td>%s' % (test[2]))
-            print('</tr>'            )
+            print('</tr>')
+    print('</table></div>')
+
+    print('<div class="col-md-11 mx-4 my-4"><table class="table table-bordered table-hover table-active">')
+    print('<tr><th>Subtype<th># Boards Checked In<th># Boards Finished with Testing<th># Boards with failures<th># Boards Shipped</tr>')
+
+    cur.execute('select distinct type_id from Board order by type_id')
+    subtypes = cur.fetchall()
+    for s in subtypes:
+        print('<tr>')
+        print('<td>%s</td>' % s[0])
+        cur.execute('select full_id from Board where type_id="%s"' % s[0])
+        boards = cur.fetchall()
+        print('<td>%s</td>' % len(boards))
+
+        cur.execute('select type_id from Board_type where type_sn="%s"' % s[0])
+        type_id = cur.fetchall()[0][0]
+        cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
+        temp = cur.fetchall()
+        stitch_types = []
+        for test in temp:
+            stitch_types.append(test[0])
+        
+        t_passed = 0
+        t_failed = 0
+        shipped = 0
+        for b in boards:
+            run = {}
+            outcomes = {}
+            # makes an array of falses the length of the number of tests
+            for t in stitch_types:
+                outcomes[t] = False
+                run[t] = False
+
+            cur.execute('select board_id from Board where full_id="%s"' % b)
+            board_id = cur.fetchall()[0][0]
+            cur.execute('select test_type_id, successful, day from Test where board_id=%s order by day desc' % board_id)
+            temp = cur.fetchall()
+            ids = []
+            for t in temp:
+                if t[0] not in ids:
+                    if t[1] == 1:
+                        outcomes[t[0]] = True
+                    else:
+                        run[t[0]] = True
+                ids.append(t[0])
+
+            num = list(outcomes.values()).count(True)
+            total = len(outcomes.values())
+            r_num = list(run.values()).count(True)
+
+            if num == total:
+                t_passed += 1
+            
+            if r_num != 0:
+                t_failed += 1
+            
+            cur.execute('select board_id from Check_Out where board_id=%s' % board_id)
+            if cur.fetchall():
+                shipped += 1
+
+        print('<td>%s</td>' % t_passed)
+        print('<td>%s</td>' % t_failed)
+        print('<td>%s</td>' % shipped)
+        print('</tr>')
+
     print('</table></div>')
 
 def add_module_form():

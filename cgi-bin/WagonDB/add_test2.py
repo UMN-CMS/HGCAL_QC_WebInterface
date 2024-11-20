@@ -2,7 +2,7 @@
 
 import cgi, html
 import base
-import add_test_functions
+import add_test_functions_wagon
 import os
 import connect
 
@@ -26,7 +26,7 @@ base.header(title='Add Test')
 base.top(False)
 
 # adds the test and returns the test id
-test_id=add_test_functions.add_test(person_id, test_type, bc, success, comments)
+test_id=add_test_functions_wagon.add_test(person_id, test_type, bc, success, comments)
 
 # decodes attached file and sends it to the Attachments table
 for itest in [1]:
@@ -38,7 +38,7 @@ for itest in [1]:
         acomment= form.getvalue("attachcomment%d"%(itest))
         if acomment:
             acomment = html.escape(acomment)
-        add_test_functions.add_test_attachment(test_id,afile,adesc,acomment)
+        add_test_functions_wagon.add_test_attachment(test_id,afile,adesc,acomment)
     elif (afile.filename):
         adesc= form.getvalue("attachdesc%d"%(itest))
         if adesc:
@@ -46,6 +46,6 @@ for itest in [1]:
         acomment= form.getvalue("attachcomment%d"%(itest))
         if acomment:
             acomment = html.escape(acomment)
-        add_test_functions.add_test_attachment_gui(test_id,afile,adesc,acomment)
+        add_test_functions_wagon.add_test_attachment_gui(test_id,afile,adesc,acomment)
     
 base.bottom(False)

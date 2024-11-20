@@ -137,11 +137,15 @@ def get_previous_test_results(serial_num):
 
     cur.execute("SELECT board_id FROM Board WHERE full_id = '{}'".format(serial_num))
     board_id = cur.fetchone()[0]
+    cur.execute('select type_id from Board where board_id=%s' % board_id)
+    type_sn = cur.fetchall()[0][0]
+    cur.execute('select type_id from Board_type where type_sn="%s"' % type_sn)
+    type_id = cur.fetchall()[0][0]
+
     cur.execute("SELECT test_type_id, successful FROM Test WHERE board_id = {}".format(board_id))
     test_results_list = cur.fetchall()
     tests_run = []
     outcomes = []
-    #try:
     for i in test_results_list:
         temp = [0,1]
         cur.execute('select name from Test_Type where test_type = %s' % i[0])
@@ -154,12 +158,6 @@ def get_previous_test_results(serial_num):
             temp[1] = 'Passed'
         tests_run.append(temp[0])
         outcomes.append(temp[1])
-    #except Exception as e:
-    #    print(e)
-    #    test_results = None
-
-    cur.execute('select name from Test_Type')
-    tests = cur.fetchall()
 
     print('Begin1')
     try:
@@ -181,8 +179,18 @@ def get_previous_test_results(serial_num):
 
     print('Begin3')
     try:
-        for i in tests:
-            print(i[0])
+        cur.execute('select test_type, name from Test_Type where required=1 order by relative_order ASC')
+        test_types = cur.fetchall()
+        cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
+        temp = cur.fetchall()
+        stitch_types = []
+        for test in temp:
+            stitch_types.append(test[0])
+
+        for t in test_types:
+            if t[0] in stitch_types:
+                print(t[1])
+
     except:
         print('None')
 
@@ -264,7 +272,7 @@ def add_test(person_id, test_type, serial_num, success, comments, config_id):
 # Adds a tester person
 def add_tester(person_name, passwd):
     try:
-        db = connect_admin(passwd)
+        db = connect_admin(passwd, 'Engine')
     except Exception as e:
         print(e)
         print("Administrative access denied")

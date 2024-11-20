@@ -1,7 +1,7 @@
-#!/usr/bin/python3
+#!./cgi_runner.sh
 
 import argparse
-import add_test_functions
+import add_test_functions_engine
 import connect
 import getpass
 import importlib.util
@@ -25,7 +25,7 @@ def add_tests(test_list, passwd):
     for test in test_list:
         print("Adding new test type: {}".format(test["name"]))
         try:
-            add_test_functions.add_new_test(test["name"], test["required"], test["desc_short"], test["desc_long"], order, passwd)
+            add_test_functions_engine.add_new_test(test["name"], test["required"], test["desc_short"], test["desc_long"], order, passwd)
             order += 1
         except Exception as e:
             print("Test malformated or already in DB: {}. Check config file before proceeding.".format(test["name"]))
@@ -36,7 +36,7 @@ def add_people(people_list, passwd):
     for person in people_list:
         print("Adding new tester: {}".format(person))
         try:
-            add_test_functions.add_tester(person, passwd)
+            add_test_functions_engine.add_tester(person, passwd)
         except Exception as e:
             print("Tester could not be added to the database: {}. Check config file before proceeding.".format(person))
             quit()
@@ -46,7 +46,7 @@ def add_boards(board_type_list, passwd):
     for board in board_type_list:
         print("Adding new board type: {}".format(board["name"]))
         try:
-            add_test_functions.add_board_type(board["name"], board["type_sn"], board["requiredTests"], passwd)
+            add_test_functions_engine.add_board_type(board["name"], board["type_sn"], board["requiredTests"], passwd)
         except Exception as e:
             print(e)
             print("Board type could not be added: {}. Check config file before proceeding".format(board["name"]))

@@ -105,6 +105,7 @@ def top(static):
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
             <li><a class="dropdown-item" href="testdata.html">Total Tests</a></li>
+            <li><a class="dropdown-item" href="boarddata.html">Board Status</a></li>
             <li><a class="dropdown-item" href="CompareTesters.html">Compare Testers</a></li>
             <li><a class="dropdown-item" href="ADC_functionality.html">ADC Functionality</a></li>
             <li><a class="dropdown-item" href="EClockData.html">E Clock Rates</a></li>
@@ -177,6 +178,7 @@ def top(static):
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
             <li><a class="dropdown-item" href="testdata.py">Total Tests</a></li>
+            <li><a class="dropdown-item" href="boarddata.py">Board Status</a></li>
             <li><a class="dropdown-item" href="CompareTesters.py">Compare Testers</a></li>
             <li><a class="dropdown-item" href="ADC_functionality.py">ADC Functionality</a></li>
             <li><a class="dropdown-item" href="EClockData.py">E Clock Rates</a></li>
@@ -278,9 +280,6 @@ def bottom(static):
           </li>
           <li>
             <a href="../WagonDB/home_page.py" class="text-light text-decoration-none">HGCAL Wagon Test</a>
-          </li>
-          <li>
-            <a href="../LabelDB/home_page.py" class="text-light text-decoration-none">HGCAL Labeling</a>
           </li>
         </ul>
       </div>

@@ -2,7 +2,7 @@
 
 import cgi, html
 import base
-import add_test_functions
+import add_test_functions_engine
 import os
 
 #cgi header
@@ -25,6 +25,6 @@ if comments:
 base.header(title='Add Test')
 base.top(False)
 
-test_id=add_test_functions.add_init_tests(serial_num, tester, test_results, comments)
+test_id=add_test_functions_engine.add_init_tests(serial_num, tester, test_results, comments)
 
 base.bottom(False)
