@@ -28,7 +28,7 @@ def get_test():
     writer = csv.writer(csv_file)
     writer.writerow(columns)
 
-    cur.execute('select test_id, test_type_id, board_id, person_id, day, successful from Test')
+    cur.execute('select test_id, test_type_id, board_id, person_id, day, successful from Test order by day desc')
     Test_Data = cur.fetchall()
     writer.writerows(Test_Data)
 
@@ -107,6 +107,12 @@ def get_I2C():
     Attach_Data = []
     for i in Attach:
         Attach_Data.append(json.loads(i[0]))
+
+    for i in range(len(Attach_Data)):
+        print(Attach_Data[i])
+        print(TestIDs[i])
+
+
     mod9999 = []
     mod0 = []
     mod1 = []
@@ -423,3 +429,49 @@ def get_board_for_filter():
     csv_file.seek(0)
 
     return csv_file
+
+def get_check_in():
+    csv_file = io.StringIO()
+
+    columns = ['Board ID', 'Check In Time', 'Check Out Time']
+    writer = csv.DictWriter(csv_file, fieldnames=columns)
+    writer.writeheader()
+
+    cur.execute('select board_id, checkin_date from Check_In')
+    CheckIn_Data = cur.fetchall()
+    for c in CheckIn_Data:
+        cur.execute('select checkout_date from Check_Out where board_id=%s' % c[0])
+        checkout_date = cur.fetchall()
+        if checkout_date:
+            writer.writerow({'Board ID': c[0], 'Check In Time': c[1], 'Check Out Time': checkout_date[0][0]})
+        else:
+            writer.writerow({'Board ID': c[0], 'Check In Time': c[1], 'Check Out Time': dt.datetime.fromtimestamp(0)})
+
+    csv_file.seek(0)
+
+    return csv_file
+    
+def get_tests_needed_dict():
+    
+    cur.execute('select board_id from Check_In')
+    boards = cur.fetchall()
+
+    tests_needed = {}
+    for b in boards:
+        try:
+            cur.execute('select type_id from Board where board_id=%s' % b[0])
+            type_sn = cur.fetchall()[0][0]
+        except IndexError:
+            continue
+        
+        cur.execute('select type_id from Board_type where type_sn="%s"' % type_sn)
+        type_id = cur.fetchall()[0][0]
+        cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
+        temp = cur.fetchall()
+        stitch_types = []
+        for test in temp:
+            stitch_types.append(test[0])
+
+        tests_needed[b[0]] = len(stitch_types)
+
+    return tests_needed

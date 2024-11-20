@@ -2,7 +2,7 @@
 
 import cgi, html
 import base
-import add_test_functions
+import add_test_functions_wagon
 import os
 
 #cgi header
@@ -25,7 +25,7 @@ if comments:
 base.header(title='Add Test')
 base.top(False)
 
-test_id=add_test_functions.add_init_tests(bc, tester, test_results, comments)
+test_id=add_test_functions_wagon.add_init_tests(bc, tester, test_results, comments)
 
 base.bottom(False)
 

@@ -18,7 +18,7 @@ def get_test():
     writer = csv.writer(csv_file)
     writer.writerow(columns)
 
-    cur.execute('select test_id, test_type_id, board_id, person_id, day, successful from Test')
+    cur.execute('select test_id, test_type_id, board_id, person_id, day, successful from Test order by day desc')
     Test_Data = cur.fetchall()
     writer.writerows(Test_Data)
 
@@ -124,60 +124,63 @@ def get_adc_functionality():
     # this method of iterating over keys is preferrable
     # removes the need to use df.stack() like with the resistance measurement test
     for n in range(len(Attach_Data)):
-        resist_keys = Attach_Data[n]['engine_all_rtd'].keys()
-        volt_keys = Attach_Data[n]['int_volts'].keys()
-        temp_keys = Attach_Data[n]['temp'].keys()
-        adc_keys = Attach_Data[n]['walk_engine_read_adc'].keys()
+        try:
+            resist_keys = Attach_Data[n]['engine_all_rtd'].keys()
+            volt_keys = Attach_Data[n]['int_volts'].keys()
+            temp_keys = Attach_Data[n]['temp'].keys()
+            adc_keys = Attach_Data[n]['walk_engine_read_adc'].keys()
 
-        for j in resist_keys:
-            Resistance = Attach_Data[n]['engine_all_rtd'][j]
-            writer_1.writerow({'Test ID': TestIDs[n][0], 'E Link': j, 'Resistance': Resistance})
+            for j in resist_keys:
+                Resistance = Attach_Data[n]['engine_all_rtd'][j]
+                writer_1.writerow({'Test ID': TestIDs[n][0], 'E Link': j, 'Resistance': Resistance})
 
-        # format is different for some older tests so this converts
-        for k in volt_keys:
-            if k[0:4] == 'east': 
-                v = k[0:4] + '_' + k[4:-1] + k[-1]
-                v = v.upper()
-            elif k[0:4] == 'west': 
-                v = k[0:4] + '_' + k[4:-1] + k[-1]
-                v = v.upper()
-            elif k[0:4] == 'daqv': 
-                v = k[0:3] + '_' + k[3:-1] + k[-1]
-                v = v.upper()
-            else:
-                v = k
-                    
-            Voltage = Attach_Data[n]['int_volts'][k]
-            writer_2.writerow({'Test ID': TestIDs[n][0], 'ADC': v, 'Voltage': Voltage})
+            # format is different for some older tests so this converts
+            for k in volt_keys:
+                if k[0:4] == 'east': 
+                    v = k[0:4] + '_' + k[4:-1] + k[-1]
+                    v = v.upper()
+                elif k[0:4] == 'west': 
+                    v = k[0:4] + '_' + k[4:-1] + k[-1]
+                    v = v.upper()
+                elif k[0:4] == 'daqv': 
+                    v = k[0:3] + '_' + k[3:-1] + k[-1]
+                    v = v.upper()
+                else:
+                    v = k
+                        
+                Voltage = Attach_Data[n]['int_volts'][k]
+                writer_2.writerow({'Test ID': TestIDs[n][0], 'ADC': v, 'Voltage': Voltage})
 
-        # format is different for some older tests so this converts
-        for l in temp_keys:
-            if l[0:4] == 'east': 
-                v = 'EAST_Temperature'
-            elif l[0:4] == 'west': 
-                v = 'WEST_Temperature'
-            elif l[0:3] == 'daq': 
-                v = 'DAQ_Temperature'
-            else:
-                v = l
+            # format is different for some older tests so this converts
+            for l in temp_keys:
+                if l[0:4] == 'east': 
+                    v = 'EAST_Temperature'
+                elif l[0:4] == 'west': 
+                    v = 'WEST_Temperature'
+                elif l[0:3] == 'daq': 
+                    v = 'DAQ_Temperature'
+                else:
+                    v = l
 
-            try:
-                Temp = Attach_Data[n]['temp'][l]['temperature']
-            except:
-                Temp = Attach_Data[n]['temp'][l]
-            writer_3.writerow({'Test ID': TestIDs[n][0], 'Chip': v, 'Temperature': Temp})
+                try:
+                    Temp = Attach_Data[n]['temp'][l]['temperature']
+                except:
+                    Temp = Attach_Data[n]['temp'][l]
+                writer_3.writerow({'Test ID': TestIDs[n][0], 'Chip': v, 'Temperature': Temp})
 
-        for i in adc_keys:
-            try:
-                slope = Attach_Data[n]['walk_engine_read_adc'][i][1]['slope']
-                intercept = Attach_Data[n]['walk_engine_read_adc'][i][1]['intercept']
-                r2 = Attach_Data[n]['walk_engine_read_adc'][i][1]['rsquared']
-            except KeyError:
-                slope = Attach_Data[n]['walk_engine_read_adc'][i]['slope']
-                intercept = Attach_Data[n]['walk_engine_read_adc'][i]['intercept']
-                r2 = Attach_Data[n]['walk_engine_read_adc'][i]['rsquared']
+            for i in adc_keys:
+                try:
+                    slope = Attach_Data[n]['walk_engine_read_adc'][i][1]['slope']
+                    intercept = Attach_Data[n]['walk_engine_read_adc'][i][1]['intercept']
+                    r2 = Attach_Data[n]['walk_engine_read_adc'][i][1]['rsquared']
+                except KeyError:
+                    slope = Attach_Data[n]['walk_engine_read_adc'][i]['slope']
+                    intercept = Attach_Data[n]['walk_engine_read_adc'][i]['intercept']
+                    r2 = Attach_Data[n]['walk_engine_read_adc'][i]['rsquared']
 
-            writer_4.writerow({'Test ID': TestIDs[n][0], 'ADC': i, 'slope': slope, 'intercept': intercept, 'rsquared': r2})
+                writer_4.writerow({'Test ID': TestIDs[n][0], 'ADC': i, 'slope': slope, 'intercept': intercept, 'rsquared': r2})
+        except KeyError:
+            pass
 
     csv_file_resist.seek(0)
     csv_file_volt.seek(0)
@@ -593,3 +596,49 @@ def get_board_for_filter():
     csv_file.seek(0)
 
     return csv_file
+
+def get_check_in():
+    csv_file = io.StringIO()
+
+    columns = ['Board ID', 'Check In Time', 'Check Out Time']
+    writer = csv.DictWriter(csv_file, fieldnames=columns)
+    writer.writeheader()
+
+    cur.execute('select board_id, checkin_date from Check_In')
+    CheckIn_Data = cur.fetchall()
+    for c in CheckIn_Data:
+        cur.execute('select checkout_date from Check_Out where board_id=%s' % c[0])
+        checkout_date = cur.fetchall()
+        if checkout_date:
+            writer.writerow({'Board ID': c[0], 'Check In Time': c[1], 'Check Out Time': checkout_date[0][0]})
+        else:
+            writer.writerow({'Board ID': c[0], 'Check In Time': c[1], 'Check Out Time': datetime.datetime.fromtimestamp(0)})
+
+    csv_file.seek(0)
+
+    return csv_file
+    
+def get_tests_needed_dict():
+    
+    cur.execute('select board_id from Check_In')
+    boards = cur.fetchall()
+
+    tests_needed = {}
+    for b in boards:
+        try:
+            cur.execute('select type_id from Board where board_id=%s' % b[0])
+            type_sn = cur.fetchall()[0][0]
+        except IndexError:
+            continue
+        
+        cur.execute('select type_id from Board_type where type_sn="%s"' % type_sn)
+        type_id = cur.fetchall()[0][0]
+        cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
+        temp = cur.fetchall()
+        stitch_types = []
+        for test in temp:
+            stitch_types.append(test[0])
+
+        tests_needed[b[0]] = len(stitch_types)
+
+    return tests_needed

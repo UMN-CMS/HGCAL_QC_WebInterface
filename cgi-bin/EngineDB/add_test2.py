@@ -4,7 +4,7 @@ import cgi, html
 import cgitb
 cgitb.enable()
 import base
-import add_test_functions
+import add_test_functions_engine
 import os
 import connect
 
@@ -27,7 +27,7 @@ if comments:
 base.header(title='Add Test')
 base.top(False)
 
-test_id=add_test_functions.add_test(person_id, test_type, serial_num, success, comments)
+test_id=add_test_functions_engine.add_test(person_id, test_type, serial_num, success, comments)
 
 for itest in [1]:
     afile = form['attach%d'%(itest)]
@@ -38,7 +38,7 @@ for itest in [1]:
         acomment= form.getvalue("attachcomment%d"%(itest))
         if acomment:
             acomment = html.escape(acomment)
-        add_test_functions.add_test_attachment(test_id,afile,adesc,acomment)
+        add_test_functions_engine.add_test_attachment(test_id,afile,adesc,acomment)
     elif (afile.filename):
         adesc= form.getvalue("attachdesc%d"%(itest))
         if adesc:
@@ -46,6 +46,6 @@ for itest in [1]:
         acomment= form.getvalue("attachcomment%d"%(itest))
         if acomment:
             acomment = html.escape(acomment)
-        add_test_functions.add_test_attachment_gui(test_id,afile,adesc,acomment)
+        add_test_functions_engine.add_test_attachment_gui(test_id,afile,adesc,acomment)
     
 base.bottom(False)

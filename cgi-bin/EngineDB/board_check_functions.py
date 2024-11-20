@@ -5,7 +5,7 @@ import cgi, html
 import cgitb; cgitb.enable()
 import base
 import home_page_list
-import add_test_functions
+import add_test_functions_engine
 
 def board_checkout_form_sn(full):
     db = connect(0)

@@ -122,6 +122,7 @@ def TotalPlot(data, view, widgets, date_range, modules):
     time_series_data_unc = ColumnDataSource(data={'dates':[], 'counts':[]})
     dt = ColumnDataSource(data={'dates':[], 'total_counts':[], 'suc_counts':[], 'unc_counts':[]})
     x = CustomJS(args=dict(tsd_total=time_series_data_total, tsd_suc=time_series_data_suc, tsd_unc=time_series_data_unc, data=data, view=view, date_range=date_range, modules=modules, dt=dt),code='''
+print(data.data)
 for (let t = 0; t < modules.length; t++) {
     if (modules[t] == 'Total') {
         const indices = view.filters[0].compute_indices(data);

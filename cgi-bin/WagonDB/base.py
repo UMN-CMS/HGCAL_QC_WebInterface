@@ -116,6 +116,7 @@ def top(static):
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
             <li><a class="dropdown-item" href="testdata.html">Total Tests</a></li>
+            <li><a class="dropdown-item" href="boarddata.html">Board Status</a></li>
             <li><a class="dropdown-item" href="CompareTesters.html">Compare Testers</a></li>
             <li><a class="dropdown-item" href="ResistanceMeasurementData.html">Resistance Measurement</a></li>
             <li><a class="dropdown-item" href="IDResistorData.html">ID Resistor</a></li>
@@ -183,6 +184,7 @@ def top(static):
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
             <li><a class="dropdown-item" href="testdata.py">Total Tests</a></li>
+            <li><a class="dropdown-item" href="boarddata.py">Board Status</a></li>
             <li><a class="dropdown-item" href="CompareTesters.py">Compare Testers</a></li>
             <li><a class="dropdown-item" href="ResistanceMeasurementData.py">Resistance Measurement</a></li>
             <li><a class="dropdown-item" href="IDResistorData.py">ID Resistor</a></li>
@@ -281,9 +283,6 @@ def bottom(static):
           </li>
           <li>
             <a href="../EngineDB/home_page.py" class="text-light text-decoration-none">HGCAL Engine Test</a>
-          </li>
-          <li>
-            <a href="../LabelDB/home_page.py" class="text-light text-decoration-none">HGCAL Labeling</a>
           </li>
         </ul>
       </div>

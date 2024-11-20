@@ -3,7 +3,7 @@
 import cgi, html
 import base
 import home_page_list
-import add_test_functions
+import add_test_functions_wagon
 
 #cgi header
 print("Content-type: text/html\n")
@@ -11,7 +11,7 @@ print("Content-type: text/html\n")
 base.header(title='Add New Test Template')
 base.top(False)
 
-add_test_functions.add_new_test_template()
+add_test_functions_wagon.add_new_test_template()
 
 base.bottom(False)
 

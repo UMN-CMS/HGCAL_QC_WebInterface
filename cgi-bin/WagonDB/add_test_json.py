@@ -4,7 +4,7 @@ import connect
 import json
 import cgi, html
 import base
-import add_test_functions
+import add_test_functions_wagon
 
 def parse_data(form):
     try:
@@ -86,7 +86,7 @@ base.top(False)
 form = cgi.FieldStorage()
 test_dict = parse_data(form)
 
-test_id = add_test_functions.add_test(test_dict['person_id'], test_dict['test'], test_dict['full_id'], test_dict['successful'], test_dict['comments'], test_dict['config_id'])
+test_id = add_test_functions_wagon.add_test(test_dict['person_id'], test_dict['test'], test_dict['full_id'], test_dict['successful'], test_dict['comments'], test_dict['config_id'])
 
 
 for itest in range(1,4):
@@ -100,7 +100,7 @@ for itest in range(1,4):
         acomment= form.getvalue("attachcomment%d"%(itest))
         if acomment:
             acomment = html.escape(acomment)
-        add_test_functions.add_test_attachment(test_id,afile,adesc,acomment)
+        add_test_functions_wagon.add_test_attachment(test_id,afile,adesc,acomment)
 
 base.bottom(False)
 
