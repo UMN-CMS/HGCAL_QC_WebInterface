@@ -369,7 +369,7 @@ def board_info(sn, static):
         print('<th colspan=1>DAQ 2 Chip ID</th>')
         print('<th colspan=1>Trigger 1 Chip ID</th>')
         print('<th colspan=1>Trigger 2 Chip ID</th>')
-    print('<th colspan=1>LDO ID</th>')
+    print('<th colspan=2>LDO ID</th>')
     print('<th colspan=1>Testing Status</th>')
     print('</tr>')
     print('<tr>')
@@ -383,11 +383,11 @@ def board_info(sn, static):
         print('<td colspan=1>%s</td>' % daq2_chip_id)
         print('<td colspan=1>%s</td>' % trig1_chip_id)
         print('<td colspan=1>%s</td>' % trig2_chip_id)
-    print('<td colspan=1>%s</td>' % ldo)
+    print('<td colspan=2>%s</td>' % ldo)
     if num == total:
-        print('<td colspan=2><span class="badge bg-success rounded-pill">Done</span></td>')
+        print('<td colspan=1><span class="badge bg-success rounded-pill">Done</span></td>')
     else:
-        print('<td colspan=2><span class="badge bg-dark rounded-pill">%(success)s/%(total)s</span></td>' %{'success': num, 'total': total})
+        print('<td colspan=1><span class="badge bg-dark rounded-pill">%(success)s/%(total)s</span></td>' %{'success': num, 'total': total})
         
     # gets id of boards that have been checked out
     cur.execute('select board_id from Check_Out')
@@ -404,7 +404,8 @@ def board_info(sn, static):
         print('<th colspan=1>Trigger 3 Chip ID</th>')
         print('<th colspan=1>Trigger 4 Chip ID</th>')
     print('<th colspan=1>Date Received</th>')
-    print('<th colspan=2>Status</th>')
+    print('<th colspan=1>Manufacturer</th>')
+    print('<th colspan=2>Shipping Status</th>')
     print('<th colspan=1>Registered?</th>')
     print('</tr>')
     print('<tr>')
@@ -424,6 +425,12 @@ def board_info(sn, static):
         print('<td colspan=1>%s</td>' % r_date)
     else:
         print('<td colspan=1>No Receiving Date</td>')  
+
+    cur.execute('select manufacturer_id from Board where board_id=%s' % board_id)
+    manuf_id = cur.fetchall()[0][0]
+    cur.execute('select name from Manufacturers where manufacturer_id=%s' % manuf_id)
+    manufacturer = cur.fetchall()[0][0]
+    print('<td colspan=1>%s</td>' % manufacturer)
         
     # if the board has been checked out, get the check out data
     if board_id in ids:

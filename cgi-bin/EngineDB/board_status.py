@@ -127,7 +127,7 @@ for (let d = 0; d < date_range.length; d++) {
         const tests_run = [];
 
         for (let m = 0; m < mask.length; m++) {
-            if (mask[m] ==  true && data.data['Check In Time'][m] >= day0 && data.data['Check In Time'][m] <= day1 && data.data['Full ID'][m] == boards[b]) {
+            if (mask[m] == true && data.data['Check In Time'][m] >= day0 && data.data['Check In Time'][m] <= day1 && data.data['Full ID'][m] == boards[b]) {
                 status = 'in_prog';
                 if (data.data['Check Out Time'][m] >= day0 && data.data['Check Out Time'][m] <= day1){
                     status = 'Shipped';

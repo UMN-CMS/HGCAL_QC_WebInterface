@@ -145,7 +145,11 @@ for (let t = 0; t < modules.length; t++) {
                 let new_date = temp_date.toLocaleDateString();
                 let date = new Date(new_date);
                 // convert to central time
-                date = new Date(date.setHours(date.getHours() - 5));
+                if (String(date).includes('Daylight')) {
+                    date = new Date(date.setHours(date.getHours() - 5));
+                } else {
+                    date = new Date(date.setHours(date.getHours() - 6));
+                }
                 // iterate over all days within range
                 for (let i = 0; i < date_range.length; i++) {
                     // create a date range of one day

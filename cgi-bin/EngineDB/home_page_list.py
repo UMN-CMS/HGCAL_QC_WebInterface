@@ -93,12 +93,13 @@ def render_list_tests():
             temp = cur.fetchall()
             ids = []
             for t in temp:
-                if t[0] not in ids:
-                    if t[1] == 1:
-                        outcomes[t[0]] = True
-                    else:
-                        run[t[0]] = True
-                ids.append(t[0])
+                if t[0] in stitch_types:
+                    if t[0] not in ids:
+                        if t[1] == 1:
+                            outcomes[t[0]] = True
+                        else:
+                            run[t[0]] = True
+                    ids.append(t[0])
 
             num = list(outcomes.values()).count(True)
             total = len(outcomes.values())

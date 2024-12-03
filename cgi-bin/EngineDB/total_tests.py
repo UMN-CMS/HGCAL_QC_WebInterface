@@ -122,7 +122,6 @@ def TotalPlot(data, view, widgets, date_range, modules):
     time_series_data_unc = ColumnDataSource(data={'dates':[], 'counts':[]})
     dt = ColumnDataSource(data={'dates':[], 'total_counts':[], 'suc_counts':[], 'unc_counts':[]})
     x = CustomJS(args=dict(tsd_total=time_series_data_total, tsd_suc=time_series_data_suc, tsd_unc=time_series_data_unc, data=data, view=view, date_range=date_range, modules=modules, dt=dt),code='''
-print(data.data)
 for (let t = 0; t < modules.length; t++) {
     if (modules[t] == 'Total') {
         const indices = view.filters[0].compute_indices(data);
@@ -136,7 +135,11 @@ for (let t = 0; t < modules.length; t++) {
                 let temp_date = new Date(data.data['Time'][m]);
                 let new_date = temp_date.toLocaleDateString();
                 let date = new Date(new_date);
-                date = new Date(date.setHours(date.getHours() - 5));
+                if (String(date).includes('Daylight')) {
+                    date = new Date(date.setHours(date.getHours() - 5));
+                } else {
+                    date = new Date(date.setHours(date.getHours() - 6));
+                }
                 for (let i = 0; i < date_range.length; i++) {
                     let day0 = new Date(date_range[i]);
                     let day1 = new Date(date_range[i]);
@@ -176,7 +179,7 @@ for (let t = 0; t < modules.length; t++) {
                 let temp_date = new Date(data.data['Time'][m]);
                 let new_date = temp_date.toLocaleDateString();
                 let date = new Date(new_date);
-                date = new Date(date.setHours(date.getHours() - 5));
+                date = new Date(date.setHours(date.getHours()));
                 for (let i = 0; i < date_range.length; i++) {
                     let day0 = new Date(date_range[i]);
                     let day1 = new Date(date_range[i]);
@@ -216,7 +219,7 @@ for (let t = 0; t < modules.length; t++) {
                 let temp_date = new Date(data.data['Time'][m]);
                 let new_date = temp_date.toLocaleDateString();
                 let date = new Date(new_date);
-                date = new Date(date.setHours(date.getHours() - 5));
+                date = new Date(date.setHours(date.getHours()));
                 for (let i = 0; i < date_range.length; i++) {
                     let day0 = new Date(date_range[i]);
                     let day1 = new Date(date_range[i]);
