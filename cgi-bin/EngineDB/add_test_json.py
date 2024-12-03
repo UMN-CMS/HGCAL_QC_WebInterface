@@ -89,7 +89,6 @@ test_dict = parse_data(form)
 
 test_id = add_test_functions_engine.add_test(test_dict['person_id'], test_dict['test'], test_dict['full_id'], test_dict['successful'], test_dict['comments'], test_dict['config_id'])
 
-
 for itest in range(1,4):
     if not form.getvalue('attach%d'%(itest)): continue
     afile = form['attach%d'%(itest)]

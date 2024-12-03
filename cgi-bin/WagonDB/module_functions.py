@@ -359,6 +359,7 @@ def board_info(sn, static):
     print('<tr>')
     print('<th colspan=2>Comments</th>')
     print('<th colspan=1>Date Received</th>')
+    print('<th colspan=1>Manufacturer</th>')
     print('<th colspan=2>Status</th>')
     print('</tr>')
     print('<tr>')
@@ -373,6 +374,12 @@ def board_info(sn, static):
         print('<td colspan=1>%s</td>' % r_date)
     else:
         print('<td colspan=1>No Receiving Date</td>')  
+
+    cur.execute('select manufacturer_id from Board where board_id=%s' % board_id)
+    manuf_id = cur.fetchall()[0][0]
+    cur.execute('select name from Manufacturers where manufacturer_id=%s' % manuf_id)
+    manufacturer = cur.fetchall()[0][0]
+    print('<td colspan=1>%s</td>' % manufacturer)
         
     # if the board has been checked out, get the check out data
     if board_id in ids:

@@ -18,7 +18,7 @@ def get_test():
     writer = csv.writer(csv_file)
     writer.writerow(columns)
 
-    cur.execute('select test_id, test_type_id, board_id, person_id, day, successful from Test order by day desc')
+    cur.execute('select test_id, test_type_id, board_id, person_id, day, successful from Test order by day asc')
     Test_Data = cur.fetchall()
     writer.writerows(Test_Data)
 
