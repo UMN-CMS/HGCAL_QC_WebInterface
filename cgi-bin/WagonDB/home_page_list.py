@@ -42,22 +42,9 @@ def fetch_list_tests():
     return finalrows
 
 def render_list_tests():
-    # gets data for the table
-    rows = fetch_list_tests()
-    
-    print('<div class="row">')
-    print('<div class="col-md-11 mx-4 my-4"><table class="table table-bordered table-hover table-active">')
-    print('<tr><th>Test<th>Total Tests<th>Total Successful Tests<th>Total Wagons with Successful Tests</tr>')
-    for test in rows:
-            print('<tr><td>%s' % (test[0]))
-            print('<td>%s' % (test[3]))
-            print('<td>%s' % (test[1]))
-            print('<td>%s' % (test[2]))
-            print('</tr>'            )
-    print('</table></div>')
 
     print('<div class="col-md-11 mx-4 my-4"><table class="table table-bordered table-hover table-active">')
-    print('<tr><th>Subtype<th># Boards Checked In<th># Boards Finished with Testing<th># Boards with failures<th># Boards Shipped</tr>')
+    print('<tr><th>Subtype<th>Total Boards Checked In<th>Boards Awaiting Testing<th>Boards Finished with Testing<th>Boards Shipped<th>Boards with Failures</tr>')
 
     cur.execute('select distinct type_id from Board order by type_id')
     subtypes = cur.fetchall()
@@ -79,6 +66,7 @@ def render_list_tests():
         t_passed = 0
         t_failed = 0
         shipped = 0
+        shipped_without = 0
         for b in boards:
             run = {}
             outcomes = {}
@@ -89,7 +77,7 @@ def render_list_tests():
 
             cur.execute('select board_id from Board where full_id="%s"' % b)
             board_id = cur.fetchall()[0][0]
-            cur.execute('select test_type_id, successful, day from Test where board_id=%s order by day desc' % board_id)
+            cur.execute('select test_type_id, successful, day from Test where board_id=%s order by day desc, test_id desc' % board_id)
             temp = cur.fetchall()
             ids = []
             for t in temp:
@@ -111,14 +99,35 @@ def render_list_tests():
                 t_failed += 1
             
             cur.execute('select board_id from Check_Out where board_id=%s' % board_id)
-            if cur.fetchall():
-                shipped += 1
+            checked_out = cur.fetchall()
+            if checked_out:
+                if num != total:
+                    shipped_without += 1
+                else:
+                    shipped += 1
 
-        print('<td>%s</td>' % t_passed)
+        awaiting = len(boards) - t_passed - t_failed - shipped_without
+
+        print('<td>%s</td>' % awaiting)
+        print('<td>%s</td>' % (t_passed-shipped))
+        print('<td>%s</td>' % (shipped+shipped_without))
         print('<td>%s</td>' % t_failed)
-        print('<td>%s</td>' % shipped)
         print('</tr>')
 
+    print('</table></div>')
+
+    # gets data for the table
+    rows = fetch_list_tests()
+    
+    print('<div class="row">')
+    print('<div class="col-md-11 mx-4 my-4"><table class="table table-bordered table-hover table-active">')
+    print('<tr><th>Test<th>Total Tests<th>Total Successful Tests<th>Total Wagons with Successful Tests</tr>')
+    for test in rows:
+            print('<tr><td>%s' % (test[0]))
+            print('<td>%s' % (test[3]))
+            print('<td>%s' % (test[1]))
+            print('<td>%s' % (test[2]))
+            print('</tr>'            )
     print('</table></div>')
 
 def add_module_form():
@@ -190,7 +199,7 @@ def add_module(serial_number, manu, location):
             rows = cur.fetchall()
 
             if not rows:
-                if manu is not 'None':
+                if manu != 'None':
                     cur.execute('select manufacturer_id from Manufacturers where name="%s"' % manu)
                     manu_id = cur.fetchall()[0][0]
                     
@@ -256,7 +265,7 @@ def allboards(static, major):
 
             cur.execute('select board_id from Board where full_id="%s"' % sn)
             board_id = cur.fetchall()[0][0]
-            cur.execute('select test_type_id, successful, day from Test where board_id=%s order by day desc' % board_id)
+            cur.execute('select test_type_id, successful, day from Test where board_id=%s order by day desc, test_id desc' % board_id)
             temp = cur.fetchall()
             prev_ids = []
             for t in temp:

@@ -28,7 +28,7 @@ def Portage_fetch(test_type_id, board_sn):
     cur.execute('select board_id from Board where full_id="%s"' % board_sn)
     board_id = cur.fetchall()[0][0]
     # gets list of names, keeps duplicates
-    cur.execute('select person_id,day from Test where board_id=%(b)s and test_type_id=%(t)s order by day desc' %{'b':board_id, 't':test_type_id})
+    cur.execute('select person_id,day from Test where board_id=%(b)s and test_type_id=%(t)s order by day desc, test_id desc' %{'b':board_id, 't':test_type_id})
     person_id = cur.fetchall()
     person_name = []
     for p in person_id:
@@ -39,16 +39,16 @@ def Portage_fetch(test_type_id, board_sn):
         else:
             person_name.append('No Name')
     # gets list of datetime strings
-    cur.execute('select day from Test where test_type_id=%(t)s and board_id=%(b)s order by day desc' %{'b':board_id, 't':test_type_id})
+    cur.execute('select day from Test where test_type_id=%(t)s and board_id=%(b)s order by day desc, test_id desc' %{'b':board_id, 't':test_type_id})
     date = cur.fetchall()
     # gets list of outcomes
-    cur.execute('select successful,day from Test where test_type_id=%(t)s and board_id=%(b)s order by day desc' %{'b':board_id, 't':test_type_id})
+    cur.execute('select successful,day from Test where test_type_id=%(t)s and board_id=%(b)s order by day desc, test_id desc' %{'b':board_id, 't':test_type_id})
     successful = cur.fetchall()
     # gets list of comments
-    cur.execute('select comments,day from Test where test_type_id=%(t)s and board_id=%(b)s order by day desc' %{'b':board_id, 't':test_type_id})
+    cur.execute('select comments,day from Test where test_type_id=%(t)s and board_id=%(b)s order by day desc, test_id desc' %{'b':board_id, 't':test_type_id})
     comments = cur.fetchall()
     # gets list of test ids
-    cur.execute('select test_id,day from Test where test_type_id=%(t)s and board_id=%(b)s order by day desc' %{'b':board_id, 't':test_type_id})
+    cur.execute('select test_id,day from Test where test_type_id=%(t)s and board_id=%(b)s order by day desc, test_id desc' %{'b':board_id, 't':test_type_id})
     test_id = []
     for t in cur.fetchall():
         test_id.append(t[0])
@@ -279,7 +279,7 @@ def board_info(sn, static):
     location = cur.fetchall()[0][0]
     # attempts to get the ID resistance for this Board
     try:
-        cur.execute('select test_id,day from Test where test_type_id=2 and board_id=%s order by day desc' % board_id) 
+        cur.execute('select test_id,day from Test where test_type_id=2 and board_id=%s order by day desc, test_id desc' % board_id) 
         test_id = cur.fetchall()[0][0]
         cur.execute('select Attach from Attachments where test_id=%s' % test_id)
         attach = cur.fetchall()[0][0]
@@ -315,7 +315,7 @@ def board_info(sn, static):
     names = cur.fetchall()
     outcomes = []
 
-    cur.execute('select test_type_id, successful, day from Test where board_id=%s order by day desc' % board_id)
+    cur.execute('select test_type_id, successful, day from Test where board_id=%s order by day desc, test_id desc' % board_id)
     temp = cur.fetchall()
     ids = []
     run = []

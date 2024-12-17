@@ -123,7 +123,7 @@ def get_previous_test_results(barcode):
 
     cur.execute("SELECT board_id FROM Board WHERE full_id = '{}'".format(barcode))
     board_id = cur.fetchone()[0]
-    cur.execute("SELECT test_type_id, successful, day FROM Test WHERE board_id = {} order by day desc".format(board_id))
+    cur.execute("SELECT test_type_id, successful, day FROM Test WHERE board_id = {} order by day desc, test_id desc".format(board_id))
     test_results_list = cur.fetchall()
     tests_run = []
     outcomes = []
