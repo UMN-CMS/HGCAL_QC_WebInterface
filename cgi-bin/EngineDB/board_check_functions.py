@@ -66,7 +66,9 @@ def board_checkout_form_sn(full):
 def board_checkout(board_id, person_id, comments):
     db = connect(1)
     cur = db.cursor()
-   
+    print("BOARD_ID", board_id)
+    print("PERSON_ID", person_id)
+    print("COMMENTS:", comments) 
     try:
         cur.execute('select checkin_id from Check_In where board_id=%s' % board_id)
         checkin_id = cur.fetchall()[0][0]
@@ -77,6 +79,7 @@ def board_checkout(board_id, person_id, comments):
         checkouts = cur.fetchall()
         if checkouts:
             checkout_id = checkouts[-1][0]
+            print("CHECKOUT ID", checkout_id)
             checkout_person = checkouts[-1][1]
             print('Error: This board has already been checked out.')
 

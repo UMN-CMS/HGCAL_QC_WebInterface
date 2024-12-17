@@ -42,7 +42,7 @@ for board in all_boards:
     for t in stitch_types:
         outcomes[t] = False
 
-    cur.execute('select test_type_id, successful, day from Test where board_id=%s order by day desc' % board[0])
+    cur.execute('select test_type_id, successful, day from Test where board_id=%s order by day desc, test_id desc' % board[0])
     temp = cur.fetchall()
     ids = []
     for t in temp:

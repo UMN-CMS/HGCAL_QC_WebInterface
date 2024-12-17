@@ -53,6 +53,8 @@ def parse_data(form):
             valid_tester = True   
             person_id = i[0]
 
+    cur.execute('select test_type from Test_Type where name="%s"' % test_name)
+    test_type_id = cur.fetchall()[0][0]
  
     if not valid_tester:
         print("Invalid tester (for writting priveldges, please access DB administrators)")
@@ -60,7 +62,7 @@ def parse_data(form):
 
 
     # Creates output
-    test_dict = {'full_id': full_id, 'board_type': board_type, 'tester': tester, 'person_id': person_id, 'test': test_name, 'successful': successful, 'comments': comments, 'config_id': config_id}
+    test_dict = {'full_id': full_id, 'board_type': board_type, 'tester': tester, 'person_id': person_id, 'test': test_type_id, 'successful': successful, 'comments': comments, 'config_id': config_id}
 
 
     print("          RETURNING TEST_DICT            ")
@@ -86,12 +88,13 @@ base.top(False)
 form = cgi.FieldStorage()
 test_dict = parse_data(form)
 
-
 test_id = add_test_functions_engine.add_test(test_dict['person_id'], test_dict['test'], test_dict['full_id'], test_dict['successful'], test_dict['comments'], test_dict['config_id'])
 
 for itest in range(1,4):
+    print(itest)
     if not form.getvalue('attach%d'%(itest)): continue
     afile = form['attach%d'%(itest)]
+    print(afile)
     filename = form.getvalue('attachname%d'%(itest))
     if (afile.filename):
         adesc= form.getvalue("attachdesc%d"%(itest))

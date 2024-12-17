@@ -224,13 +224,18 @@ def add_test(person_id, test_type, serial_num, success, comments, config_id):
     db = connect(1)
     cur = db.cursor()
 
-    cur.execute('select test_type from Test_Type where name="%s"' % test_type)
-    test_type_id = cur.fetchall()[0][0]
+    #cur.execute('select test_type from Test_Type where name="%s"' % test_type)
+    #test_type_id = cur.fetchall()[0][0]
+
+    # Expecting that the test_type_id is passed from previous file
+    # If issues arrise, check whether the test_type is actually what you expect by printing
+    test_type_id = test_type
 
     if type(person_id) == type(""):
         person_id = verify_person(person_id)
 
     if serial_num:
+        print(serial_num)
         cur.execute("SELECT board_id FROM Board WHERE full_id = '{}'".format(serial_num))
         row = cur.fetchone()
         #print("The Card_ID=", row[0])

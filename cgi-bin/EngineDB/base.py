@@ -112,7 +112,7 @@ def top(static):
             <li><a class="dropdown-item" href="ELinkQualityData.html">E Link Quality</a></li>
             <li><a class="dropdown-item" href="FastCommandQualityData.html">Fast Command Quality</a></li>
             <li><a class="dropdown-item" href="UplinkQuality.html">Uplink Quality</a></li>
-            <li><a class="dropdown-item" href="X_PWRData.html">X PWR</a></li>
+            <li><a class="dropdown-item" href="X_PWRData.html">Startup Current and Voltage</a></li>
             <li><a class="dropdown-item" href="I2CData.html">I2C</a></li>
             <li><a class="dropdown-item" href="GPIO_functionality.html">GPIO Functionality</a></li>
             <li><a class="dropdown-item" href="CurrentDrawData.html">Current Draw</a></li>
@@ -180,14 +180,14 @@ def top(static):
             <li><a class="dropdown-item" href="testdata.py">Total Tests</a></li>
             <li><a class="dropdown-item" href="boarddata.py">Board Status</a></li>
             <li><a class="dropdown-item" href="CompareTesters.py">Compare Testers</a></li>
-            <li><a class="dropdown-item" href="ADC_functionality.py">ADC Functionality</a></li>
+            <li><a class="dropdown-item" href="X_PWRData.py">Startup Current and Voltage</a></li>
             <li><a class="dropdown-item" href="EClockData.py">E Clock Rates</a></li>
-            <li><a class="dropdown-item" href="ELinkQualityData.py">E Link Quality</a></li>
-            <li><a class="dropdown-item" href="FastCommandQualityData.py">Fast Command Quality</a></li>
-            <li><a class="dropdown-item" href="UplinkQuality.py">Uplink Quality</a></li>
-            <li><a class="dropdown-item" href="X_PWRData.py">X PWR</a></li>
             <li><a class="dropdown-item" href="I2CData.py">I2C</a></li>
             <li><a class="dropdown-item" href="GPIO_functionality.py">GPIO Functionality</a></li>
+            <li><a class="dropdown-item" href="ADC_functionality.py">ADC Functionality</a></li>
+            <li><a class="dropdown-item" href="UplinkQuality.py">Uplink Quality</a></li>
+            <li><a class="dropdown-item" href="FastCommandQualityData.py">Fast Command Quality</a></li>
+            <li><a class="dropdown-item" href="ELinkQualityData.py">E Link Quality</a></li>
             <li><a class="dropdown-item" href="CurrentDrawData.py">Current Draw</a></li>
           </ul>
         </li>

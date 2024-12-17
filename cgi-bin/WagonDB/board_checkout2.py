@@ -31,11 +31,7 @@ except:
     try:
         person_id = cur.fetchall()[0][0]
     except:
-        cur.execute('insert into People (person_name) values ("%s")' % person_id)
-        db.commit()
-
-        cur.execute('select person_id from People where person_name="%s"' % person_id)
-        person_id = cur.fetchall()[0][0]
+        raise Exception("This user does not exist in the Testing Database.")
         
 try:
     comments = form.getvalue("comments")
@@ -46,6 +42,6 @@ except:
 base.header(title='Board Check Out')
 base.top(False)
 
-board_check_functions.board_checkout(board_id, person_id, comments, location)
+board_check_functions.board_checkout(board_id, person_id, comments)
 
 base.bottom(False)

@@ -37,7 +37,7 @@ print('</tr>')
 print('</thead>')
 print('<tbody>')
 # gets info from Test and sorts by date, newest first
-cur.execute('select board_id,test_type_id,day,successful,test_id,config_id from Test where config_id is not NULL order by day desc')
+cur.execute('select board_id,test_type_id,day,successful,test_id,config_id from Test where config_id is not NULL order by day desc, test_id desc')
 for c in cur.fetchall():
     print('<tr>')
     cur.execute('select full_id from Board where board_id=%s' % c[0])

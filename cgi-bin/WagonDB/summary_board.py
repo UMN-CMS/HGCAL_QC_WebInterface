@@ -70,7 +70,7 @@ if __name__ == '__main__':
         print('<tr>')
         cur.execute('select board_id from Board where full_id="%s"' % sn)
         board_id = cur.fetchall()[0][0]
-        cur.execute('select test_type_id, successful, day from Test where board_id=%s order by day desc' % board_id)
+        cur.execute('select test_type_id, successful, day from Test where board_id=%s order by day desc, test_id desc' % board_id)
         temp = cur.fetchall()
         prev_ids = []
         for t in temp:
@@ -152,7 +152,7 @@ def run(type_id):
         print('<tr>')
         cur.execute('select board_id from Board where full_id="%s"' % sn)
         board_id = cur.fetchall()[0][0]
-        cur.execute('select test_type_id, successful,day from Test where board_id=%s order by day desc' % board_id)
+        cur.execute('select test_type_id, successful,day from Test where board_id=%s order by day desc, test_id desc' % board_id)
         temp = cur.fetchall()
         ids = []
         for t in temp:

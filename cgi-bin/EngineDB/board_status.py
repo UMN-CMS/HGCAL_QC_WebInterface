@@ -127,19 +127,19 @@ for (let d = 0; d < date_range.length; d++) {
         const tests_run = [];
 
         for (let m = 0; m < mask.length; m++) {
-            if (mask[m] == true && data.data['Check In Time'][m] >= day0 && data.data['Check In Time'][m] <= day1 && data.data['Full ID'][m] == boards[b]) {
+            if (mask[m] ==  true && new Date(data.data['Check In Time'][m]) >= day0 && new Date(data.data['Check In Time'][m]) <= day1 && data.data['Full ID'][m] == boards[b]){
                 status = 'in_prog';
-                if (data.data['Check Out Time'][m] >= day0 && data.data['Check Out Time'][m] <= day1){
+                if (new Date(data.data['Check Out Time'][m]) >= day0 && new Date(data.data['Check Out Time'][m]) <= day1){
                     status = 'Shipped';
                     break
                 }
-                if (data.data['Time'][m] >= day0 && data.data['Time'][m] <= day1 && tests_run.includes(data.data['Name'][m]) != true){
-                    if (data.data['Successful'][m] == 0){
+                if (data.data['Time'][m] >= day0 && data.data['Time'][m] <= day1 && tests_run.includes(data.data['Test Name'][m]) != true){
+                    if (data.data['Outcome'][m] == 'Unsuccessful'){
                         status = 'Failed';
                         break
                     } else {
                         tests_passed = tests_passed + 1;
-                        tests_run.push(data.data['Name'][m])
+                        tests_run.push(data.data['Test Name'][m])
                     }
                 }
             }
@@ -148,9 +148,9 @@ for (let d = 0; d < date_range.length; d++) {
         if (status != false) {
             if (status == 'Failed') {
                 total_failed = total_failed + 1;
-            } if (status == 'Shipped') {
+            } else if (status == 'Shipped') {
                 total_shipped = total_shipped + 1;
-            } if (tests_passed == tests_needed[boards[b]]) {
+            } else if (tests_passed == tests_needed[boards[b]]) {
                 total_done = total_done + 1;
             } else {
                 total_inprog = total_inprog + 1;
@@ -163,17 +163,17 @@ for (let d = 0; d < date_range.length; d++) {
     tsd_shipped.push(total_shipped)
     tsd_inprog.push(total_inprog)
 }
-data_failed['dates'] = dates;
-data_failed['counts'] = tsd_failed;
+data_failed.data['dates'] = dates;
+data_failed.data['counts'] = tsd_failed;
 data_failed.change.emit()
-data_done['dates'] = dates;
-data_done['counts'] = tsd_done;
+data_done.data['dates'] = dates;
+data_done.data['counts'] = tsd_done;
 data_done.change.emit()
-data_shipped['dates'] = dates;
-data_shipped['counts'] = tsd_shipped;
+data_shipped.data['dates'] = dates;
+data_shipped.data['counts'] = tsd_shipped;
 data_shipped.change.emit()
-data_inprog['dates'] = dates;
-data_inprog['counts'] = tsd_inprog;
+data_inprog.data['dates'] = dates;
+data_inprog.data['counts'] = tsd_inprog;
 data_inprog.change.emit()
 ''')
     for widget in widgets:
@@ -229,7 +229,7 @@ def Filter():
                 'possible_vals': possible_vals,
                 'widget': widget,}
 
-    start_date = DatePicker(min_date=min(date_range), max_date=max(date_range), value=today, title='Start Date')
+    start_date = DatePicker(min_date=min(date_range), max_date=max(date_range), value=min(date_range), title='Start Date')
     end_date = DatePicker(min_date=min(date_range), max_date=max(date_range), value=today, title='End Date')
 
     custom_filter = CustomJSFilter(args=dict(mc_widgets=mc_widgets, dr_widgets=dr_widgets),code=filter_code)

@@ -37,7 +37,8 @@ if __name__ == '__main__':
     module_functions.board_info(serial_num, False)
 
     # gets all test types
-    cur.execute('select test_type, name from Test_Type where required = 1 order by relative_order ASC')
+    #cur.execute('select test_type, name from Test_Type where required = 1 order by relative_order ASC')
+    cur.execute('select test_type, name from Test_Type order by relative_order ASC')
     test_types = cur.fetchall()
     cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
     temp = cur.fetchall()
@@ -47,7 +48,8 @@ if __name__ == '__main__':
     # iterates over test types and displays each test done on the board sorted by test
     for t in test_types:
         if t[0] in stitch_types:
-            module_functions.ePortageTest(t[0], serial_num, t[1], revokes, False)
+            module_functions.ePortageTest(t[0], serial_num, t[1], revokes, False, type_sn)
+                
 
     base.bottom(False)
 

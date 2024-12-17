@@ -14,9 +14,9 @@ def run(static):
     print('''
     <script>
     data = {};
-    Bokeh.embed.embed_item(data, 'exfilter');
+    Bokeh.embed.embed_item(data, 'filter');
     </script>
-    <div id='exfilter' class='bk-root'></div>
+    <div id='filter' class='bk-root'></div>
     '''.format(mp.Filter()))
 
     base.bottom(static)
