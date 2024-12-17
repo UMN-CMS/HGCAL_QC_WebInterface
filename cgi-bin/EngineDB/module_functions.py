@@ -141,7 +141,7 @@ def add_test_tab(barcode, board_id, static):
         print('</a>')
         print('</div>')
         print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="change_board_location.py?board_id=?board_id=%(id)d&full_id=%(serial)s">' %{'serial':barcode, 'id':board_id})
+        print('<a href="change_board_location.py?board_id=%(id)d&full_id=%(serial)s">' %{'serial':barcode, 'id':board_id})
         print('<button class="btn btn-dark"> Update Location </button>')
         print('</a>')
         print('</div>')
@@ -149,7 +149,7 @@ def add_test_tab(barcode, board_id, static):
 
 
 
-def ePortageTest(test_type_id, board_sn, test_name, revokes, static):
+def ePortageTest(test_type_id, board_sn, test_name, revokes, static, type_sn):
     # displays test info for each test type, is called for each type individually
     # gets info for test
     person_name, date, successful, comments, test_id = Portage_fetch(test_type_id, board_sn) 
@@ -159,6 +159,7 @@ def ePortageTest(test_type_id, board_sn, test_name, revokes, static):
     print('<div class="col-md-12 px-5 pt-2 mx-2 my-2">')
     print('<h3> %(name)s </h3>' %{ "name":test_name})
     # break before data
+
     print('<br>')
 
     # iterates over test ids
@@ -201,20 +202,49 @@ def ePortageTest(test_type_id, board_sn, test_name, revokes, static):
             for afile in attachments:
                 # links attachment
                 if static:
-                    print('<tr><td>Attachment: <a href="attach_%s.html">%s</a><td colspan=2><i>%s</i></tr>' % (afile[0], afile[3], afile[2]))
+                    print('<tr><td colspan=4>Attachment: <a href="attach_%s.html">%s</a></tr>' % (afile[0], afile[3]))
                 else:
-                    print('<tr><td>Attachment: <a href="get_attach.py?attach_id=%s">%s</a><td colspan=2><i>%s</i></tr>' % (afile[0],afile[3],afile[2]))
+                    print('<tr><td colspan=4>Attachment: <a href="get_attach.py?attach_id=%s">%s</a></tr>' % (afile[0],afile[3]))
+
 
             print('</tbody>')
             print('</table>')
+
+            print('</div>')
+            print('</div>')
+
+            print('<div class="row">')
+
+            if test_name == 'Eye Opening':
+                if type_sn[:2] == 'EH' and type_sn[-2] == 'F':
+                    print('<div class="col-md-2 pt-2 my-2">')
+                    print('<a href="get_eye_image.py?full_id=%(full_id)s&chip=DAQ1">' %{'full_id':board_sn})
+                    print('<button class="btn btn-dark"> Eye Image DAQ1 </button>')
+                    print('</a>')
+                    print('</div>')
                     
+                    print('<div class="col-md-2 pt-2 my-2">')
+                    print('<a href="get_eye_image.py?full_id=%(full_id)s&chip=DAQ2">' %{'full_id':board_sn})
+                    print('<button class="btn btn-dark"> Eye Image DAQ2 </button>')
+                    print('</a>')
+                    print('</div>')
+                else:
+                    print('<div class="col-md-2 px-5 pt-2 mx-2 my-2">')
+                    print('<a href="get_eye_image.py?full_id=%(full_id)s&chip=DAQ">' %{'full_id':board_sn})
+                    print('<button class="btn btn-dark"> Eye Image </button>')
+                    print('</a>')
+                    print('</div>')
+
             if len(test_id) > 1:
+                print('<div class="col-md-2 px-5 pt-2 mx-2 my-2">')
                 print('<a class="btn btn-dark" role="button" data-bs-toggle="collapse" href="#moretests%s" aria-expanded="false" aria-controls="moretests%s">' % (test_type_id, test_type_id))
                 print('Show More Tests')
                 print('</a>')
+                print('</div>')
 
-                print('<div class="collapse" id="moretests%s">' % test_type_id)
+                print('<div class="collapse px-5 pt-2 mx-2 my-2" id="moretests%s">' % test_type_id)
 
+        
         if i != 0:
             print('<table class="table table-bordered table-hover table-active">')
             print('<tbody>')
@@ -320,13 +350,18 @@ def board_info(sn, static):
     except:
         info_com = 'None'
 
-    cur.execute('select successful from Test where test_type_id=7 and board_id=%s' % board_id)
+    registered_name = 'Registered'
+
+    #cur.execute('select successful from Test where test_type_id=7 and board_id=%s' % board_id)
+    cur.execute('select successful from Test where board_id=%s and test_type_id in (select test_type from Test_Type where name="%s")' % (board_id, registered_name))
     registered = cur.fetchall()
     if registered:
         if registered[0][0] == 1:
-            registered = '<td class="bg-success">&nbsp</td>'
+            #registered = '<td class="bg-success">&nbsp</td>'
+            registered = '<td colspan=1><span class="badge bg-success rounded-pill">Done</span></td>'
         else:
-            registered = '<td class="bg-danger">&nbsp</td>'
+            #registered = '<td class="bg-danger">&nbsp</td>'
+            registered = '<td colspan=1><span class="badge bg-danger rounded-pill">Failed</span></td>'
     else:
         registered = '<td>Board has not been registered.</td>'
 
