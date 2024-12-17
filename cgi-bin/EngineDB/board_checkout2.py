@@ -31,12 +31,9 @@ except:
     try:
         person_id = cur.fetchall()[0][0]
     except:
-        cur.execute('insert into People (person_name) values ("%s")' % person_id)
-        db.commit()
+        raise Exception("This user does not exist in the Testing Database.")
 
-        cur.execute('select person_id from People where person_name="%s"' % person_id)
-        person_id = cur.fetchall()[0][0]
-        
+# There is a bug where comments always returns None, so the except statement is never reached.        
 try:
     comments = form.getvalue("comments")
 except:

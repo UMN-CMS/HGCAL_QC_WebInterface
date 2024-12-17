@@ -27,7 +27,7 @@ if comments:
 base.header(title='Add Test')
 base.top(False)
 
-test_id=add_test_functions_engine.add_test(person_id, test_type, serial_num, success, comments)
+test_id=add_test_functions_engine.add_test(person_id, test_type, serial_num, success, comments, None)
 
 for itest in [1]:
     afile = form['attach%d'%(itest)]

@@ -58,7 +58,7 @@ if __name__ == '__main__':
     print('</thead>')
     print('<tbody>')
     # gets info from Test and sorts by date, newest first
-    cur.execute('select board_id,test_type_id,day,successful,test_id from Test where person_id=%s order by day desc' % p)
+    cur.execute('select board_id,test_type_id,day,successful,test_id from Test where person_id=%s order by day desc, test_id desc' % p)
     for c in cur.fetchall():
         print('<tr>')
         cur.execute('select full_id from Board where board_id=%s' % c[0])
@@ -122,7 +122,7 @@ def run(p):
     print('</thead>')
     print('<tbody>')
     # gets info from Test and sorts by date, newest first
-    cur.execute('select board_id,test_type_id,day,successful,test_id from Test where person_id=%s order by day desc' % p)
+    cur.execute('select board_id,test_type_id,day,successful,test_id from Test where person_id=%s order by day desc, test_id desc' % p)
     for c in cur.fetchall():
         print('<tr>')
         cur.execute('select full_id from Board where board_id=%s' % c[0])

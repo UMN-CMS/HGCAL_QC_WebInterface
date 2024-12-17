@@ -559,7 +559,7 @@ def get_board_for_filter():
             cur.execute('select name from Test_Type where test_type=%s' % t[0])
             name = cur.fetchall()[0][0]
 
-            cur.execute('select day,successful from Test where board_id=%s and test_type_id=%s order by day desc' % (board[3], t[0]))
+            cur.execute('select day,successful from Test where board_id=%s and test_type_id=%s order by day desc, test_id desc' % (board[3], t[0]))
             test = cur.fetchall()
             if test:
                 if test[0][1] == 1:
@@ -631,6 +631,9 @@ def get_tests_needed_dict():
         except IndexError:
             continue
         
+        cur.execute('select full_id from Board where board_id=%s' % b[0])
+        full_id = cur.fetchall()[0][0]
+        
         cur.execute('select type_id from Board_type where type_sn="%s"' % type_sn)
         type_id = cur.fetchall()[0][0]
         cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
@@ -639,6 +642,6 @@ def get_tests_needed_dict():
         for test in temp:
             stitch_types.append(test[0])
 
-        tests_needed[b[0]] = len(stitch_types)
+        tests_needed[full_id] = len(stitch_types)
 
     return tests_needed

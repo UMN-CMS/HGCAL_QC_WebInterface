@@ -10,7 +10,7 @@ import add_test_functions_engine
 print("Content-type: text/html\n")
 
 form = cgi.FieldStorage()
-serial_num = base.cleanCGInumber(form.getvalue('full_id'))
+serial_num = html.escape(form.getvalue('full_id'))
 suggested_test = base.cleanCGInumber(form.getvalue('suggested'))
 
 base.header(title='Add Test')
