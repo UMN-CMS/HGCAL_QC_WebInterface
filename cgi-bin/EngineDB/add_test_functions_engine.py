@@ -129,6 +129,30 @@ def get_test_completion_status(serial_num):
     else:
         return True
 
+def get_is_ready_for_thermal(serial_num):
+
+    db = connect(0)
+    cur = db.cursor()
+ 
+    QUERY = 'SELECT t3.name, t1.successful from Test t1 INNER JOIN( SELECT max(day) max_date, test_type_id from Test WHERE board_id=(SELECT board_id from Board WHERE full_id="%s") GROUP BY test_type_id) t2 INNER JOIN Test_Type t3 on t1.test_type_id=t2.test_type_id AND t1.day=t2.max_date and t3.test_type=t1.test_type_id'
+    cur.execute(QUERY % (serial_num))
+    test_results = list(cur.fetchall())
+    tests_run = [t[0] for t in test_results]
+
+    QUERY = 'SELECT name from Test_Type'
+    cur.execute(QUERY)
+    all_tests = cur.fetchall()
+
+    for name in all_tests:
+        if "Thermal" in name[0] or "Registered" in name[0] or 'lpGBT IC/EC communication': continue
+        if name[0] not in tests_run:
+            return False
+    
+    for tr in test_results:
+        if tr[1] == 0:
+            return False
+
+    return True
 
 def get_previous_test_results(serial_num):
 

@@ -294,6 +294,25 @@ def ePortageTest(test_type_id, board_sn, test_name, revokes, static, type_sn):
     print('</div>')
     print('</div>')
 
+def get_sn_from_lpgbt_id(lpgbt_id, static):
+
+    LD_QUERY = "SELECT full_id FROM Board INNER JOIN Test INNER JOIN Attachments ON Board.board_id=Test.board_id and Test.test_id=Attachments.test_id WHERE JSON_EXTRACT(Attachments.attach, '$.test_data.DAQ.id') = %s"
+    HD_QUERY = "SELECT full_id FROM Board INNER JOIN Test INNER JOIN Attachments ON Board.board_id=Test.board_id and Test.test_id=Attachments.test_id WHERE JSON_EXTRACT(Attachments.attach, '$.test_data.DAQ1.id') = %s"
+
+    lpgbt_id_int = str(int(lpgbt_id, 16))
+
+    cur.execute(LD_QUERY % (lpgbt_id_int))
+    full_id = cur.fetchall()
+    if len(full_id[0]) != 0:
+        print(full_id[0][0])
+    else:
+        cur.execute(HD_QUERY % (lpgbt_id_int))
+        full_id = cur.fetchall()
+        if len(full_id[0]) != 0:
+            print(full_id[0][0])
+        else:
+            print("Could not find full_id associated with LPGBT ID {}".format(lpgbt_id))
+
 def board_info(sn, static):
     # gets board id
     cur.execute('select board_id from Board where full_id="%s"' % sn)

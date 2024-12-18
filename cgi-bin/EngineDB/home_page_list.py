@@ -98,7 +98,7 @@ def render_list_tests():
             if num == total:
                 t_passed += 1
             else:
-                if num == total-1 and outcomes[24] == False:
+                if (num == total-1 and outcomes[24] == False) or (num == total - 2 and outcomes[24] == False and outcomes[26] == False):
                     thermal += 1
             
             if r_num != 0:
@@ -116,10 +116,10 @@ def render_list_tests():
                     shipped += 1
 
 
-        awaiting = len(boards) - t_passed - thermal - t_failed - shipped_without
+        awaiting = len(boards) - t_passed - thermal - t_failed #- (shipped_without + shipped_without_thermal)
 
         print('<td>%s</td>' % awaiting)
-        print('<td>%s</td>' % (thermal-shipped_without_thermal))
+        print('<td>%s</td>' % (thermal-shipped_without_thermal-shipped_without))
         print('<td>%s</td>' % (t_passed-shipped))
         print('<td>%s</td>' % (shipped+shipped_without+shipped_without_thermal))
         print('<td>%s</td>' % t_failed)
