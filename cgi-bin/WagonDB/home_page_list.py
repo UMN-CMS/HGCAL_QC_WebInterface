@@ -228,6 +228,8 @@ def allboards(static, major):
         cur.execute('select board_id from Board where full_id like "%WW%" or full_id like "%WE%"')
     if major == 'HD':
         cur.execute('select board_id from Board where full_id like "%WH%"')
+    if major == 'ZP':
+        cur.execute('select board_id from Board where full_id like "%ZP%"')
     temp = cur.fetchall()
     for t in temp:
         cur.execute('select type_id from Board where board_id="%s"' % t[0])
