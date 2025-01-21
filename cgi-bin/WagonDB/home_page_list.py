@@ -44,7 +44,7 @@ def fetch_list_tests():
 def render_list_tests():
 
     print('<div class="col-md-11 mx-4 my-4"><table class="table table-bordered table-hover table-active">')
-    print('<tr><th>Subtype<th>Total Boards Checked In<th>Boards Awaiting Testing<th>Boards Finished with Testing<th>Boards Shipped<th>Boards with Failures</tr>')
+    print('<tr><th>Subtype<th>Total Checked In<th>Awaiting Testing<th>QC Passed, Awaiting Registration<th>Ready for Shipping<th>Shipped<th>Have Failures</tr>')
 
     cur.execute('select distinct type_id from Board order by type_id')
     subtypes = cur.fetchall()
@@ -66,14 +66,14 @@ def render_list_tests():
         t_passed = 0
         t_failed = 0
         shipped = 0
-        shipped_without = 0
+        not_registered = 0
         for b in boards:
-            run = {}
+            failed = {}
             outcomes = {}
             # makes an array of falses the length of the number of tests
             for t in stitch_types:
                 outcomes[t] = False
-                run[t] = False
+                failed[t] = False
 
             cur.execute('select board_id from Board where full_id="%s"' % b)
             board_id = cur.fetchall()[0][0]
@@ -85,36 +85,51 @@ def render_list_tests():
                     if t[1] == 1:
                         outcomes[t[0]] = True
                     else:
-                        run[t[0]] = True
+                        failed[t[0]] = True
                 ids.append(t[0])
 
             num = list(outcomes.values()).count(True)
             total = len(outcomes.values())
-            r_num = list(run.values()).count(True)
+            failed_num = list(failed.values()).count(True)
 
             if num == total:
                 t_passed += 1
+            else:
+                if (num == total-1 and outcomes[7] == False):
+                    not_registered += 1
             
-            if r_num != 0:
+            if failed_num != 0:
                 t_failed += 1
             
             cur.execute('select board_id from Check_Out where board_id=%s' % board_id)
             checked_out = cur.fetchall()
             if checked_out:
+                shipped += 1
                 if num != total:
-                    shipped_without += 1
+                    if (num == total-1 and outcomes[7] == False):
+                        not_registered -= 1
+                    if failed_num != 0:
+                        t_failed -= 1
                 else:
-                    shipped += 1
+                    t_passed -= 1
+            
 
-        awaiting = len(boards) - t_passed - t_failed - shipped_without
+        awaiting = len(boards) - t_passed - t_failed - shipped - not_registered
 
         print('<td>%s</td>' % awaiting)
-        print('<td>%s</td>' % (t_passed-shipped))
-        print('<td>%s</td>' % (shipped+shipped_without))
+        print('<td>%s</td>' % not_registered)
+        print('<td>%s</td>' % t_passed)
+        print('<td>%s</td>' % shipped)
         print('<td>%s</td>' % t_failed)
         print('</tr>')
 
     print('</table></div>')
+
+    print('<div class="col-md-11 mx-4 my-4">')
+    print('<form action="create_CSV_for_factory_workflow.py" method="post">')
+    print('<button type="submit" class="btn btn-dark text-light">Download Table</button>')
+    print('</form>')
+    print('</div>')
 
     # gets data for the table
     rows = fetch_list_tests()

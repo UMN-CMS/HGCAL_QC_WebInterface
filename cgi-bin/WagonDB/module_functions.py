@@ -272,6 +272,7 @@ def ePortageTest(test_type_id, board_sn, test_name, revokes, static):
 
 def board_info(sn, static):
     # gets board id
+
     cur.execute('select board_id from Board where full_id="%s"' % sn)
     board_id = cur.fetchall()[0][0]
     # gets location info
@@ -296,7 +297,10 @@ def board_info(sn, static):
     except:
         info_com = 'None'
 
-    cur.execute('select successful from Test where test_type_id=7 and board_id=%s' % board_id)
+    registered_name = 'Registered'
+
+    #cur.execute('select successful from Test where test_type_id=7 and board_id=%s' % board_id)
+    cur.execute('select successful from Test where board_id=%s and test_type_id in (select test_type from Test_Type where name="%s")' % (board_id, registered_name))
     registered = cur.fetchall()
     if registered:
         if registered[0][0] == 1:

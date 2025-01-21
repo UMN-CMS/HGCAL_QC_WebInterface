@@ -63,6 +63,7 @@ def run(static):
 
         base.bottom(static)
     except Exception as e:
+        raise
         print(e)
 
 if __name__ == '__main__':
