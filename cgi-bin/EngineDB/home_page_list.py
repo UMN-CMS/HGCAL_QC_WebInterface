@@ -52,8 +52,13 @@ def render_list_tests():
         print('<tr>')
         print('<td>%s</td>' % s[0])
         cur.execute('select full_id from Board where type_id="%s"' % s[0])
-        boards = cur.fetchall()
-        print('<td>%s</td>' % len(boards))
+        boards_list = cur.fetchall()
+        print('<td>')
+
+
+        print('<div class="list-group list-group-flush">')
+        print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#boardstable%s">%s</a>' % (s[0], len(boards_list)))
+        print('</div>')
 
         cur.execute('select type_id from Board_type where type_sn="%s"' % s[0])
         type_id = cur.fetchall()[0][0]
@@ -63,12 +68,11 @@ def render_list_tests():
         for test in temp:
             stitch_types.append(test[0])
         
-        t_passed = 0
-        t_failed = 0
-        shipped = 0
-        thermal = 0
-        not_registered = 0
-        for b in boards:
+        boards = {}
+        print('<div class="collapse" id="boardstable%s">' % s[0])
+        print('<div class="list-group list-group-flush">')
+        for b in boards_list:
+            print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': b[0]})
             failed = {}
             outcomes = {}
             # makes an array of falses the length of the number of tests
@@ -94,45 +98,117 @@ def render_list_tests():
             total = len(outcomes.values())
             failed_num = list(failed.values()).count(True)
 
+            boards[b[0]] = 'Awaiting'
+
             if num == total:
-                t_passed += 1
+                boards[b[0]] = 'Passed'
             else:
                 if (num == total-1 and outcomes[24] == False) or (num == total - 2 and outcomes[24] == False and outcomes[26] == False):
-                    thermal += 1
+                    boards[b[0]] = 'Thermal'
                 elif (num == total-1 and outcomes[26] == False):
-                    not_registered += 1
+                    boards[b[0]] = 'Not Registered'
             
             if failed_num != 0:
-                if (num == total-1 and outcomes[24] == False) or (num == total - 2 and outcomes[24] == False and outcomes[26] == False):
-                    thermal -= 1
-                t_failed += 1
+                boards[b[0]] = 'Failed'
 
             cur.execute('select board_id from Check_Out where board_id=%s' % board_id)
             checked_out = cur.fetchall()
             if checked_out:
-                shipped += 1
-                if num != total:
-                    if (num == total-1 and outcomes[24] == False) or (num == total - 2 and outcomes[24] == False and outcomes[26] == False):
-                        thermal -= 1
-                    elif (num == total-1 and outcomes[26] == False):
-                        not_registered -= 1
-                    if failed_num != 0:
-                        t_failed -= 1
-                else:
-                    t_passed -= 1
+                boards[b[0]] = 'Shipped'
 
+        print('</div>')
+        print('</div>')
 
-        awaiting = len(boards) - t_passed - t_failed - thermal - shipped - not_registered
+        print('</td>')
 
-        print('<td>%s</td>' % awaiting)
-        print('<td>%s</td>' % thermal)
-        print('<td>%s</td>' % not_registered)
-        print('<td>%s</td>' % t_passed)
-        print('<td>%s</td>' % shipped)
-        print('<td>%s</td>' % t_failed)
+        awaiting = [k for k,v in boards.items() if v == 'Awaiting']
+        thermal = [k for k,v in boards.items() if v == 'Thermal']
+        not_registered = [k for k,v in boards.items() if v == 'Not Registered']
+        passed = [k for k,v in boards.items() if v == 'Passed']
+        shipped = [k for k,v in boards.items() if v == 'Shipped']
+        failed = [k for k,v in boards.items() if v == 'Failed']
+
+        print('<td>')
+        print('<div class="list-group list-group-flush">')
+        print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#awaiting%s">%s</a>' % (s[0], len(awaiting)))
+        print('</div>')
+        print('<div class="collapse" id="awaiting%s">' % s[0])
+        print('<div class="list-group list-group-flush">')
+        for b in awaiting:
+            print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': b})
+        print('</div>')
+        print('</div>')
+        print('</td>')
+
+        print('<td>')
+        print('<div class="list-group list-group-flush">')
+        print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#thermal%s">%s</a>' % (s[0], len(thermal)))
+        print('</div>')
+        print('<div class="collapse" id="thermal%s">' % s[0])
+        print('<div class="list-group list-group-flush">')
+        for b in thermal:
+            print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': b})
+        print('</div>')
+        print('</div>')
+        print('</td>')
+
+        print('<td>')
+        print('<div class="list-group list-group-flush">')
+        print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#not_reg%s">%s</a>' % (s[0], len(not_registered)))
+        print('</div>')
+        print('<div class="collapse" id="not_reg%s">' % s[0])
+        print('<div class="list-group list-group-flush">')
+        for b in not_registered:
+            print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': b})
+        print('</div>')
+        print('</div>')
+        print('</td>')
+
+        print('<td>')
+        print('<div class="list-group list-group-flush">')
+        print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#passed%s">%s</a>' % (s[0], len(passed)))
+        print('</div>')
+        print('<div class="collapse" id="passed%s">' % s[0])
+        print('<div class="list-group list-group-flush">')
+        for b in passed:
+            print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': b})
+        print('</div>')
+        print('</div>')
+        print('</td>')
+
+        print('<td>')
+        print('<div class="list-group list-group-flush">')
+        print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#shipped%s">%s</a>' % (s[0], len(shipped)))
+        print('</div>')
+        print('<div class="collapse" id="shipped%s">' % s[0])
+        print('<div class="list-group list-group-flush">')
+        for b in shipped:
+            print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': b})
+        print('</div>')
+        print('</div>')
+        print('</td>')
+
+        print('<td>')
+        print('<div class="list-group list-group-flush">')
+        print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#failed%s">%s</a>' % (s[0], len(failed)))
+        print('</div>')
+        print('<div class="collapse" id="failed%s">' % s[0])
+        print('<div class="list-group list-group-flush">')
+        for b in failed:
+            print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': b})
+        print('</div>')
+        print('</div>')
+        print('</td>')
+
         print('</tr>')
 
     print('</table></div>')
+
+    print('<div class="col-md-11 mx-4 my-4">')
+    print('<form action="create_CSV_for_factory_workflow.py" method="post">')
+    print('<button type="submit" class="btn btn-dark text-light">Download Table</button>')
+    print('</form>')
+    print('</div>')
 
     # gets data for the table
     rows = fetch_list_tests()
