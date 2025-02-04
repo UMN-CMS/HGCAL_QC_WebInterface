@@ -9,9 +9,9 @@ def connect( num ):
         # add hostname, username, and password here
         # insert permissions
         connection = mysql.connector.connect(
-            host = '',
-            user='',
-            password='',
+            host = 'cmslab0',
+            user='FactoryReadUser',
+            password='HGCALReads',
             database=get_db_name(),
             #cursorclass=mysql.connector.cursors.DictCursor
         )
@@ -55,6 +55,6 @@ def get_base_url():
 
 # holds the database name
 def get_db_name():
-    name = "WagonDB"
+    name = "WagonDB_PRO"
     return name
 

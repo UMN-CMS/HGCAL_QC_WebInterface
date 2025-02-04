@@ -10,6 +10,7 @@ print("Content-type: text/html\n")
 # gets label from Labeling GUI and uploads it to the database
 
 form = cgi.FieldStorage()
+print(form)
 label = form.getvalue('label')
 
 upload_label(label)
