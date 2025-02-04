@@ -129,7 +129,7 @@ def get_description(batch):
 def run(csv_file):
     """Main execution function."""
     try:
-        db = connect(1)
+        db = connect(0)
         cur = db.cursor()
 
         all_ld_wagons = filter_boards(cur)
