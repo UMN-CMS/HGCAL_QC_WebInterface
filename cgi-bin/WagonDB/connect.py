@@ -9,9 +9,9 @@ def connect( num ):
         # add hostname, username, and password here
         # insert permissions
         connection = mysql.connector.connect(
-            host = 'cmslab0',
-            user='FactoryReadUser',
-            password='HGCALReads',
+            host = '',
+            user='',
+            password='',
             database=get_db_name(),
             #cursorclass=mysql.connector.cursors.DictCursor
         )
