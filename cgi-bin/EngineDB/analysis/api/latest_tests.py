@@ -6,6 +6,8 @@ import html
 import itertools as it
 import json
 import sys
+from joblib import Memory
+from util import MEMORY, cacheDisk
 
 sys.path.append("../..")
 
@@ -18,8 +20,8 @@ cgitb.enable()
 QUERY_ATTACH = """
   select LT.test_id, LT.board_id, Board.full_id, Board.type_id, LT.day, LT.successful, 
 Test_Type.name as test_name, 
-replace(replace(comments, "\n", ""), "_", " ") as comments, A.attach as attach from
-   (select T.test_id, T.day, T.board_id, T.test_type_id, T.successful from (
+LT.comments, A.attach as attach from
+   (select T.test_id, T.day, T.board_id, T.test_type_id, T.successful, T.comments from (
            select *, row_number() over (partition by Test.board_id,Test.test_type_id
                  order by Test.day desc, Test.test_id desc)
     as _rn from Test) T where T._rn = 1) LT
@@ -35,8 +37,8 @@ replace(replace(comments, "\n", ""), "_", " ") as comments, A.attach as attach f
 """
 
 QUERY = """
-  select LT.test_id, LT.board_id, Board.full_id, Board.type_id, LT.day, LT.successful, Test_Type.name as test_name, comments from
-   (select T.test_id, T.day, T.board_id, T.test_type_id, T.successful from (
+  select LT.test_id, LT.board_id, Board.full_id, Board.type_id, LT.day, LT.successful, Test_Type.name as test_name, LT.comments from
+   (select T.test_id, T.day, T.board_id, T.test_type_id, T.successful, T.comments from (
            select *, row_number() over (partition by Test.board_id,Test.test_type_id
                  order by Test.day desc, Test.test_id desc)
     as _rn from Test) T where T._rn = 1) LT
@@ -73,6 +75,7 @@ def sendError(string):
     print(json.dumps({"error": string}))
 
 
+@cacheDisk()
 def getLatestResults(
     include_attach=False,
     include_tests=None,
