@@ -1,7 +1,9 @@
 #!../../cgi_runner.sh
 
 import cgi
-import cgitb
+import jq
+
+# import cgitb
 import html
 import itertools as it
 import json
@@ -13,8 +15,7 @@ sys.path.append("../..")
 
 import connect
 
-cgitb.enable()
-
+# cgitb.enable()
 
 
 QUERY_ATTACH = """
@@ -83,6 +84,7 @@ def getLatestResults(
     end_date=None,
     subtypes=None,
     full_id=None,
+    jq_expr=None,
 ):
     if include_attach:
         query = QUERY_ATTACH
@@ -125,6 +127,18 @@ def getLatestResults(
     cur = db.cursor(dictionary=True)
     cur.execute(query, where_params)
     data = list(cur.fetchall())
+
+    for d in data:
+        d["day"] = str(d["day"])
+
+    if include_attach:
+        for d in data:
+            if d["attach"] is not None:
+                r = json.loads(d["attach"])
+                d["attach"] = r
+    if jq_expr:
+        data = jq.compile(jq_expr).input_value(data).all()
+        data = [x for x in data if x is not None]
     return data
 
 
@@ -140,7 +154,7 @@ def main():
     end_date = args.get("end_date") and args.get("end_date")[0]
     subtypes = args.get("subtypes")
     full_id = args.get("full_id")
-    json_path = args.get("json_path")
+    jq_expr = args.get("jq_expr")
 
     data = getLatestResults(
         include_attach=include_attach,
@@ -149,14 +163,9 @@ def main():
         end_date=end_date,
         subtypes=subtypes,
         full_id=full_id,
+        jq_expr=jq_expr,
     )
-    if include_attach:
-        for d in data:
-            if d["attach"] is not None:
-                r = json.loads(d["attach"])
-                if json_path:
-                    r = jsonPath(r, json_path[0])
-                d["attach"] = r
+
     print(json.dumps(data, default=str))
 
 
