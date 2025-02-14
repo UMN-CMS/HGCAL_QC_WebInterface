@@ -7,16 +7,17 @@ import module_functions
 import sys
 import board_status as mp
 import bokeh
+import os
 
 def run(static):
     base.header(title='Board Status Over Time')
     base.top(static)
     print('''
+    <div id='exfilter' class='bk-root'></div>
     <script>
     data = {};
     Bokeh.embed.embed_item(data, 'exfilter');
     </script>
-    <div id='exfilter' class='bk-root'></div>
     '''.format(mp.Filter()))
 
     base.bottom(static)

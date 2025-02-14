@@ -5,7 +5,9 @@ import csv
 import os
 import io
 import pandas as pd
-import datetime as dt
+import datetime
+import pickle
+import multiprocessing as mp
 
 path = os.path.dirname(os.path.abspath(__file__))
 
@@ -14,7 +16,7 @@ if not os.path.isdir(p):
     os.makedirs(p)
 
 db = connect(0)
-cur = db.cursor()
+cur = db.cursor(buffered=True)
 
 # collects all the necessary data from the database to be put into .csv WagonDB for the plotting scripts
 
@@ -50,36 +52,33 @@ def get_id_res():
     test_type_id = cur.fetchall()[0][0]
 
     # gets the test ids for that test type
-    cur.execute('select test_id from Test where test_type_id="{}"'.format(test_type_id))
-    TestIDs = cur.fetchall()
+    cur.execute('select board_id from Board')
+    boards_list = cur.fetchall()
+    Tests = []
+    for b in boards_list:
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],test_type_id))
+        test_id = cur.fetchone()
+        if test_id:
+            Tests.append(test_id)
 
-    # selects the attachment for all the test ids
-    query = 'select attach from Attachments where '
-    for i in TestIDs:
-        # adds the test id to the query
-        query += 'test_id={}'.format(i[0])
-        # adds or if the test id isn't the last one
-        if i is not TestIDs[-1]:
-            query += ' or '
-    # collects attachments
-    cur.execute(query)
-    Attach = cur.fetchall()
     Attach_Data = []
-    # decodes the json
-    for i in Attach:
-        Attach_Data.append(json.loads(i[0]))
+    for i in Tests:
+        Attach_Data.append(json.loads(i[1]))
     Resistance = []
     # gets the resistance out of the array
     for i in Attach_Data:
         try:
-            Resistance.append(i['wagon type chip']['WAGON_TYPE -> GND'])
-        except KeyError as e:
-            Resistance.append(-1)
+            Resistance.append(i["test_data"]['wagon type chip']['WAGON_TYPE -> GND'])
+        except KeyError:
+            try:
+                Resistance.append(i['wagon type chip']['WAGON_TYPE -> GND'])
+            except KeyError:
+                Resistance.append(-1)
 
     # writes everything to the file
     writer.writeheader()
-    for i in range(len(TestIDs)):
-        writer.writerow({'Test ID':TestIDs[i][0], 'Resistance':Resistance[i]})
+    for i in range(len(Tests)):
+        writer.writerow({'Test ID':Tests[i][0], 'Resistance':Resistance[i]})
 
     csv_file.seek(0)
 
@@ -149,20 +148,18 @@ def get_rm():
     cur.execute('select test_type from Test_Type where name="Resistance Measurement"')
     test_type_id = cur.fetchall()[0][0]
 
-    cur.execute('select test_id from Test where test_type_id="{}"'.format(test_type_id))
-    TestIDs = cur.fetchall()
+    cur.execute('select board_id from Board')
+    boards_list = cur.fetchall()
+    Tests = []
+    for b in boards_list:
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],test_type_id))
+        test_id = cur.fetchone()
+        if test_id:
+            Tests.append(test_id)
 
-    query = 'select attach from Attachments where '    
-
-    for i in TestIDs:
-        query += 'test_id={}'.format(i[0])
-        if i is not TestIDs[-1]:
-            query += ' or '
-    cur.execute(query)
-    Attach = cur.fetchall()
     Attach_Data = []
-    for i in Attach:
-        Attach_Data.append(json.loads(i[0]))
+    for i in Tests:
+        Attach_Data.append(json.loads(i[1]))
 
     RTD_VMON_1 = []
     ECON_HG_1 = []
@@ -188,80 +185,134 @@ def get_rm():
     for i in Attach_Data:
         try:
             RTD_VMON_1.append(i["module 1"]["RTD -> VMON_LVS"])
-        except KeyError as e:
-            RTD_VMON_1.append(np.nan)
+        except KeyError:
+            try:
+                RTD_VMON_1.append(i["test_data"]["module 1"]["RTD -> VMON_LVS"])
+            except KeyError:
+                RTD_VMON_1.append(np.nan)
         try:
             ECON_HG_1.append(i["module 1"]["ECON_RE_Sb -> HGCROC_RE_Sb"][0])
-        except KeyError as e:
-            ECON_HG_1.append(np.nan)
+        except KeyError:
+            try:
+                ECON_HG_1.append(i["test_data"]["module 1"]["ECON_RE_Sb -> HGCROC_RE_Sb"][0])
+            except KeyError:
+                ECON_HG_1.append(np.nan)
         try:
             PWR_PG_1.append(i["module 1"]["PWR_EN -> PG_LDO"][0])
-        except KeyError as e:
-            PWR_PG_1.append(np.nan)
+        except KeyError:
+            try:
+                PWR_PG_1.append(i["test_data"]["module 1"]["PWR_EN -> PG_LDO"][0])
+            except KeyError:
+                PWR_PG_1.append(np.nan)
         try:
             RTD_HG_1.append(i["module 1"]["RTD -> HGCROC_RE_Sb"])
-        except KeyError as e:
-            RTD_HG_1.append(np.nan)
+        except KeyError:
+            try:
+                RTD_HG_1.append(i["test_data"]["module 1"]["RTD -> HGCROC_RE_Sb"])
+            except KeyError:
+                RTD_HG_1.append(np.nan)
         try:
             HG_HG_1.append(i["module 1"]["HGCROC_RE_Hb -> HGCROC_RE_Sb"][0])
-        except KeyError as e:
-            HG_HG_1.append(np.nan)
+        except KeyError:
+            try:
+                HG_HG_1.append(i["test_data"]["module 1"]["HGCROC_RE_Hb -> HGCROC_RE_Sb"][0])
+            except KeyError:
+                HG_HG_1.append(np.nan)
         try:
             PG_ECON_1.append(i["module 1"]["PG_DCDC -> ECON_RE_Hb"][0])
-        except KeyError as e:
-            PG_ECON_1.append(np.nan) 
+        except KeyError:
+            try:
+                PG_ECON_1.append(i["test_data"]["module 1"]["PG_DCDC -> ECON_RE_Hb"][0])
+            except KeyError:
+                PG_ECON_1.append(np.nan) 
         try:
             RTD_VMON_2.append(i["module 2"]["RTD -> VMON_LVS"])
-        except KeyError as e:
-            RTD_VMON_2.append(np.nan)
+        except KeyError:
+            try:
+                RTD_VMON_2.append(i["test_data"]["module 2"]["RTD -> VMON_LVS"])
+            except KeyError:
+                RTD_VMON_2.append(np.nan)
         try:
             ECON_HG_2.append(i["module 2"]["ECON_RE_Sb -> HGCROC_RE_Sb"][0])
-        except KeyError as e:
-            ECON_HG_2.append(np.nan)
+        except KeyError:
+            try:
+                ECON_HG_2.append(i["test_data"]["module 2"]["ECON_RE_Sb -> HGCROC_RE_Sb"][0])
+            except KeyError:
+                ECON_HG_2.append(np.nan)
         try:
             PWR_PG_2.append(i["module 2"]["PWR_EN -> PG_LDO"][0])
-        except KeyError as e:  
-            PWR_PG_2.append(np.nan)
+        except KeyError:
+            try:
+                PWR_PG_2.append(i["test_data"]["module 2"]["PWR_EN -> PG_LDO"][0])
+            except KeyError:
+                PWR_PG_2.append(np.nan)
         try:
             RTD_HG_2.append(i["module 2"]["RTD -> HGCROC_RE_Sb"])
-        except KeyError as e:
-            RTD_HG_2.append(np.nan)
+        except KeyError:
+            try:
+                RTD_HG_2.append(i["test_data"]["module 2"]["RTD -> HGCROC_RE_Sb"])
+            except KeyError:
+                RTD_HG_2.append(np.nan)
         try:
             HG_HG_2.append(i["module 2"]["HGCROC_RE_Hb -> HGCROC_RE_Sb"][0])
-        except KeyError as e:
-            HG_HG_2.append(np.nan)
+        except KeyError:
+            try:
+                HG_HG_2.append(i["test_data"]["module 2"]["HGCROC_RE_Hb -> HGCROC_RE_Sb"][0])
+            except KeyError:
+                HG_HG_2.append(np.nan)
         try:
             PG_ECON_2.append(i["module 2"]["PG_DCDC -> ECON_RE_Hb"][0])
-        except KeyError as e:
-            PG_ECON_2.append(np.nan)
+        except KeyError:
+            try:
+                PG_ECON_2.append(i["test_data"]["module 2"]["PG_DCDC -> ECON_RE_Hb"][0])
+            except KeyError:
+                PG_ECON_2.append(np.nan)
         try:
             RTD_VMON_3.append(i["module 3"]["RTD -> VMON_LVS"])
-        except KeyError as e:
-            RTD_VMON_3.append(np.nan)
+        except KeyError:
+            try:
+                RTD_VMON_3.append(i["test_data"]["module 3"]["RTD -> VMON_LVS"])
+            except KeyError:
+                RTD_VMON_3.append(np.nan)
         try:
             ECON_HG_3.append(i["module 3"]["ECON_RE_Sb -> HGCROC_RE_Sb"][0])
-        except KeyError as e:
-            ECON_HG_3.append(np.nan)
+        except KeyError:
+            try:
+                ECON_HG_3.append(i["test_data"]["module 3"]["ECON_RE_Sb -> HGCROC_RE_Sb"][0])
+            except KeyError:
+                ECON_HG_3.append(np.nan)
         try:
             PWR_PG_3.append(i["module 3"]["PWR_EN -> PG_LDO"][0])
-        except KeyError as e:  
-            PWR_PG_3.append(np.nan)
+        except KeyError:
+            try:
+                PWR_PG_3.append(i["test_data"]["module 3"]["PWR_EN -> PG_LDO"][0])
+            except KeyError:
+                PWR_PG_3.append(np.nan)
         try:
             RTD_HG_3.append(i["module 3"]["RTD -> HGCROC_RE_Sb"])
-        except KeyError as e:
-            RTD_HG_3.append(np.nan)
+        except KeyError:
+            try:
+                RTD_HG_3.append(i["test_data"]["module 3"]["RTD -> HGCROC_RE_Sb"])
+            except KeyError:
+                RTD_HG_3.append(np.nan)
         try:
             HG_HG_3.append(i["module 3"]["HGCROC_RE_Hb -> HGCROC_RE_Sb"][0])
-        except KeyError as e:
-            HG_HG_3.append(np.nan)
+        except KeyError:
+            try:
+                HG_HG_3.append(i["test_data"]["module 3"]["HGCROC_RE_Hb -> HGCROC_RE_Sb"][0])
+            except KeyError:
+                HG_HG_3.append(np.nan)
         try:
             PG_ECON_3.append(i["module 3"]["PG_DCDC -> ECON_RE_Hb"][0])
-        except KeyError as e:
-            PG_ECON_3.append(np.nan)
+        except KeyError:
+            try:
+                PG_ECON_3.append(i["test_data"]["module 3"]["PG_DCDC -> ECON_RE_Hb"][0])
+            except KeyError:
+                PG_ECON_3.append(np.nan)
 
     writer.writeheader()
-    for i in range(len(TestIDs)):
-        writer.writerow({'Test ID':TestIDs[i][0], 'RTD -> VMON_LVS Module 1':RTD_VMON_1[i], 'ECON_RE_Sb -> HGCROC_RE_Sb Module 1':ECON_HG_1[i], 'PWR_EN -> PG_LDO Module 1':PWR_PG_1[i], 'RTD -> HGCROC_RE_Sb Module 1':RTD_HG_1[i], 'HGCROC_RE_Hb -> HGCROC_RE_Sb Module 1':HG_HG_1[i], 'PG_DCDC -> ECON_RE_Hb Module 1':PG_ECON_1[i], 'RTD -> VMON_LVS Module 2':RTD_VMON_2[i], 'ECON_RE_Sb -> HGCROC_RE_Sb Module 2':ECON_HG_2[i], 'PWR_EN -> PG_LDO Module 2':PWR_PG_2[i], 'RTD -> HGCROC_RE_Sb Module 2':RTD_HG_2[i], 'HGCROC_RE_Hb -> HGCROC_RE_Sb Module 2':HG_HG_2[i], 'PG_DCDC -> ECON_RE_Hb Module 2':PG_ECON_2[i], 'RTD -> VMON_LVS Module 3':RTD_VMON_3[i], 'ECON_RE_Sb -> HGCROC_RE_Sb Module 3':ECON_HG_3[i], 'PWR_EN -> PG_LDO Module 3':PWR_PG_3[i], 'RTD -> HGCROC_RE_Sb Module 3':RTD_HG_3[i], 'HGCROC_RE_Hb -> HGCROC_RE_Sb Module 3':HG_HG_3[i], 'PG_DCDC -> ECON_RE_Hb Module 3':PG_ECON_3[i]})
+    for i in range(len(Tests)):
+        writer.writerow({'Test ID':Tests[i][0], 'RTD -> VMON_LVS Module 1':RTD_VMON_1[i], 'ECON_RE_Sb -> HGCROC_RE_Sb Module 1':ECON_HG_1[i], 'PWR_EN -> PG_LDO Module 1':PWR_PG_1[i], 'RTD -> HGCROC_RE_Sb Module 1':RTD_HG_1[i], 'HGCROC_RE_Hb -> HGCROC_RE_Sb Module 1':HG_HG_1[i], 'PG_DCDC -> ECON_RE_Hb Module 1':PG_ECON_1[i], 'RTD -> VMON_LVS Module 2':RTD_VMON_2[i], 'ECON_RE_Sb -> HGCROC_RE_Sb Module 2':ECON_HG_2[i], 'PWR_EN -> PG_LDO Module 2':PWR_PG_2[i], 'RTD -> HGCROC_RE_Sb Module 2':RTD_HG_2[i], 'HGCROC_RE_Hb -> HGCROC_RE_Sb Module 2':HG_HG_2[i], 'PG_DCDC -> ECON_RE_Hb Module 2':PG_ECON_2[i], 'RTD -> VMON_LVS Module 3':RTD_VMON_3[i], 'ECON_RE_Sb -> HGCROC_RE_Sb Module 3':ECON_HG_3[i], 'PWR_EN -> PG_LDO Module 3':PWR_PG_3[i], 'RTD -> HGCROC_RE_Sb Module 3':RTD_HG_3[i], 'HGCROC_RE_Hb -> HGCROC_RE_Sb Module 3':HG_HG_3[i], 'PG_DCDC -> ECON_RE_Hb Module 3':PG_ECON_3[i]})
 
     csv_file.seek(0)
 
@@ -277,19 +328,18 @@ def get_bert():
     cur.execute('select test_type from Test_Type where name="Bit Error Rate Test"')
     test_type_id = cur.fetchall()[0][0]
 
-    cur.execute('select test_id from Test where test_type_id="{}"'.format(test_type_id))
-    TestIDs = cur.fetchall()
+    cur.execute('select board_id from Board')
+    boards_list = cur.fetchall()
+    TestIDs = []
+    for b in boards_list:
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],test_type_id))
+        test_id = cur.fetchone()
+        if test_id:
+            TestIDs.append(test_id)
 
-    query = 'select attach from Attachments where '
-    for i in TestIDs:
-        query += 'test_id={}'.format(i[0])
-        if i is not TestIDs[-1]:
-            query += ' or '
-    cur.execute(query)
-    Attach = cur.fetchall()
     Attach_Data = []
-    for i in Attach:
-        Attach_Data.append(json.loads(i[0]))
+    for i in TestIDs:
+        Attach_Data.append(json.loads(i[1]))
 
     # a nicer, more pythonic way of writing the data
     # does the stacking ahead of time with the E Links
@@ -422,8 +472,8 @@ def get_board_for_filter():
                                 'Location': board[2],
                                 'Test Name': name,
                                 'Status': 'Not Run',
-                                'Date Completed': dt.datetime.now(),
-                                'Real Dates': dt.datetime.now(),
+                                'Date Completed': datetime.datetime.now(),
+                                'Real Dates': datetime.datetime.now(),
                                 })
     
     csv_file.seek(0)
@@ -445,7 +495,7 @@ def get_check_in():
         if checkout_date:
             writer.writerow({'Board ID': c[0], 'Check In Time': c[1], 'Check Out Time': checkout_date[0][0]})
         else:
-            writer.writerow({'Board ID': c[0], 'Check In Time': c[1], 'Check Out Time': dt.datetime.fromtimestamp(0)})
+            writer.writerow({'Board ID': c[0], 'Check In Time': c[1], 'Check Out Time': datetime.datetime.fromtimestamp(0)})
 
     csv_file.seek(0)
 
@@ -478,3 +528,114 @@ def get_tests_needed_dict():
         tests_needed[full_id] = len(stitch_types)
 
     return tests_needed
+
+def write_board_statuses_file():
+
+    status = {}
+
+    stitch_types = {}
+
+    cur.execute('select type_sn from Board_type')
+    types = cur.fetchall()
+    
+    today = datetime.date.today()
+    min_date = datetime.date(2024, 10, 4)
+    while min_date <= today:
+        status[str(min_date)] = {}
+        for s in types:
+            stitch_types[s[0]] = []
+            cur.execute('select type_id from Board_type where type_sn="%s"' % s[0])
+            type_id = cur.fetchall()[0][0]
+            cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
+            temp = cur.fetchall()
+            for test in temp:
+                stitch_types[s[0]].append(test[0])
+
+            try:
+                status[str(min_date)][s[0][0:2]][s[0]] = {}
+            except KeyError:
+                status[str(min_date)][s[0][0:2]] = {}
+                status[str(min_date)][s[0][0:2]][s[0]] = {}
+            
+        min_date += datetime.timedelta(days=1)
+
+    for day in status.keys():
+        day1 = datetime.datetime.strptime(day, '%Y-%m-%d') + datetime.timedelta(days=1)
+        day1 = datetime.datetime.combine(day1, datetime.time.min).strftime('%Y-%m-%d %H:%M:%S')
+        cur.execute('select board_id from Check_In where checkin_date < "%s"' % day1)
+        boards = cur.fetchall()
+
+        for b in boards:
+            if b[0] == 0:
+                continue
+            cur.execute('select full_id from Board where board_id="%s"' % b[0])
+            sn = cur.fetchall()[0][0]
+            failed = {}
+            outcomes = {}
+            # makes an array of falses the length of the number of tests
+            for t in stitch_types[sn[3:9]]:
+                outcomes[t] = False
+                failed[t] = False
+
+            cur.execute('select test_type_id, successful, day from Test where board_id=%s and day<"%s" order by day desc, test_id desc' % (b[0], day1))
+            temp = cur.fetchall()
+            ids = []
+            for t in temp:
+                if t[0] not in ids:
+                    if t[1] == 1:
+                        outcomes[t[0]] = True
+                    else:
+                        failed[t[0]] = True
+                ids.append(t[0])
+
+            num = list(outcomes.values()).count(True)
+            total = len(outcomes.values())
+            failed_num = list(failed.values()).count(True)
+
+            cur.execute('select board_id from Check_Out where board_id=%s' % b[0])
+            checked_out = cur.fetchall()
+            if checked_out:
+                s = 'Shipped'
+            else:
+                if failed_num != 0:
+                    s = 'Failed'
+                else:
+                    if num == total:
+                        s = 'Passed'
+                    elif (num == total-1 and outcomes[7] == False):
+                        s = 'Not Registered'
+                    else:
+                        s = 'Awaiting'
+            
+            
+
+            try:
+                status[day][sn[3:5]][sn[3:9]][s] += 1
+            except:
+                status[day][sn[3:5]][sn[3:9]][s] = 1
+            try:
+                status[day][sn[3:5]][sn[3:9]]['Total'] += 1
+            except:
+                status[day][sn[3:5]][sn[3:9]]['Total'] = 1
+
+    with open('store_board_status.pkl', "wb") as f:
+        pickle.dump(status, f)
+
+
+def get_board_statuses():
+
+    try:
+        last_modified = os.path.getmtime('store_board_status.pkl')
+    except:
+        last_modified = 0
+
+    if datetime.datetime.now().timestamp() - last_modified > 86400:
+
+        p = mp.Process(target=write_board_statuses_file)
+        p.start()
+
+    with open('store_board_status.pkl', "rb") as f:
+        status = pickle.load(f)
+
+    return status
+

@@ -94,27 +94,30 @@ def render_list_tests():
                             failed[t[0]] = True
                     ids.append(t[0])
 
-            num = list(outcomes.values()).count(True)
-            total = len(outcomes.values())
-            failed_num = list(failed.values()).count(True)
-
-            boards[b[0]] = 'Awaiting'
-
-            if num == total:
-                boards[b[0]] = 'Passed'
-            else:
-                if (num == total-1 and outcomes[24] == False) or (num == total - 2 and outcomes[24] == False and outcomes[26] == False):
-                    boards[b[0]] = 'Thermal'
-                elif (num == total-1 and outcomes[26] == False):
-                    boards[b[0]] = 'Not Registered'
-            
-            if failed_num != 0:
-                boards[b[0]] = 'Failed'
+            num_tests_passed = list(outcomes.values()).count(True)
+            num_tests_req = len(outcomes.values())
+            num_tests_failed = list(failed.values()).count(True)
 
             cur.execute('select board_id from Check_Out where board_id=%s' % board_id)
             checked_out = cur.fetchall()
             if checked_out:
                 boards[b[0]] = 'Shipped'
+            else:
+                if num_tests_failed != 0:
+                    boards[b[0]] = 'Failed'
+                else:
+                    if num_tests_passed == num_tests_req:
+                        boards[b[0]] = 'Passed'
+                    else:
+                        # thermal cycle has a test id of 24 and registered has a test id of 26
+                        if (num_tests_passed == num_tests_req-1 and outcomes[24] == False) or (num_tests_passed == num_tests_req - 2 and outcomes[24] == False and outcomes[26] == False):
+                            boards[b[0]] = 'Thermal'
+                        elif (num_tests_passed == num_tests_req-1 and outcomes[26] == False):
+                            boards[b[0]] = 'Not Registered'
+                        else:
+                            boards[b[0]] = 'Awaiting'
+                
+
 
         print('</div>')
         print('</div>')

@@ -116,35 +116,35 @@ def get_usernames():
         return people   
 
 # gets the results from previous tests
-def get_previous_test_results(barcode):
+def get_previous_test_results(serial_num):
 
     db = connect(0)
     cur = db.cursor()
 
-    cur.execute("SELECT board_id FROM Board WHERE full_id = '{}'".format(barcode))
+    cur.execute("SELECT board_id FROM Board WHERE full_id = '{}'".format(serial_num))
     board_id = cur.fetchone()[0]
-    cur.execute("SELECT test_type_id, successful, day FROM Test WHERE board_id = {} order by day desc, test_id desc".format(board_id))
+    cur.execute('select type_id from Board where board_id=%s' % board_id)
+    type_sn = cur.fetchall()[0][0]
+    cur.execute('select type_id from Board_type where type_sn="%s"' % type_sn)
+    type_id = cur.fetchall()[0][0]
+
+    cur.execute("SELECT test_type_id, successful FROM Test WHERE board_id = {}".format(board_id))
     test_results_list = cur.fetchall()
     tests_run = []
     outcomes = []
-    ids = []
     for i in test_results_list:
-        if i[0] not in ids:
-            temp = [0,1]
-            cur.execute('select name from Test_Type where test_type = %s' % i[0])
-            temp[0] = cur.fetchall()[0][0]
-            if i[1] == 0:
-                temp[1] = 'Failed'
-            if i[1] == 1:
-                temp[1] = 'Passed'
-            tests_run.append(temp[0])
-            outcomes.append(temp[1])
-        ids.append(i[0])
+        temp = [0,1]
+        cur.execute('select name from Test_Type where test_type = %s' % i[0])
+        print(test_results_list)
+        print(i[0])
+        temp[0] = cur.fetchall()[0][0]
+        if i[1] == 0:
+            temp[1] = 'Failed'
+        if i[1] == 1:
+            temp[1] = 'Passed'
+        tests_run.append(temp[0])
+        outcomes.append(temp[1])
 
-    cur.execute('select name from Test_Type')
-    tests = cur.fetchall()
-
-    # tells the GUI where to find the previous test info
     print('Begin1')
     try:
         for i in tests_run:
@@ -165,8 +165,18 @@ def get_previous_test_results(barcode):
 
     print('Begin3')
     try:
-        for i in tests:
-            print(i[0])
+        cur.execute('select test_type, name from Test_Type where required=1 order by relative_order ASC')
+        test_types = cur.fetchall()
+        cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
+        temp = cur.fetchall()
+        stitch_types = []
+        for test in temp:
+            stitch_types.append(test[0])
+
+        for t in test_types:
+            if t[0] in stitch_types:
+                print(t[1])
+
     except:
         print('None')
 

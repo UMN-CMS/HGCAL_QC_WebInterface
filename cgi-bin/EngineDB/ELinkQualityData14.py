@@ -73,11 +73,11 @@ def run(static):
                   </ul>
         ''')
     print('''
+    <div id='exfilter' class='bk-root'></div>
     <script>
     data = {};
     Bokeh.embed.embed_item(data, 'exfilter');
     </script>
-    <div id='exfilter' class='bk-root'></div>
     '''.format(mp.ELinkFilter(str(14.0))))
 
     base.bottom(static)

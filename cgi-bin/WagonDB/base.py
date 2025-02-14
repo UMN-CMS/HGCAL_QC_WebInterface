@@ -66,7 +66,7 @@ def top(static):
         </div>
         <div class="col-6"></div>
         <div class="col-1">
-            <img src="../../static/files/goldy2.png" style="float:leftt">
+            <img src="get_image.py?board_id=goldy2.png" style="float:leftt">
         </div>
     </div>
     </div>
@@ -187,8 +187,7 @@ def top(static):
             <li><a class="dropdown-item" href="boarddata.py">Board Status</a></li>
             <li><a class="dropdown-item" href="CompareTesters.py">Compare Testers</a></li>
             <li><a class="dropdown-item" href="ResistanceMeasurementData.py">Resistance Measurement</a></li>
-            <li><a class="dropdown-item" href="IDResistorData.py">ID Resistor</a></li>
-            <li><a class="dropdown-item" href="I2CData.py">I2C Read/Write</a></li>
+            <li><a class="dropdown-item" href="IDResistorData.py">ID Resistance</a></li>
             <li><a class="dropdown-item" href="BitErrorRateData.py">Bit Error Rate</a></li>
           </ul>
         </li>

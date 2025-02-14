@@ -12,11 +12,11 @@ def run(static):
     base.top(static)
     # adds the bokeh filter to javascript and to the website layout
     print('''
+    <div id='exfilter' class='bk-root'></div>
     <script>
     data = {};
     Bokeh.embed.embed_item(data, 'exfilter');
     </script>
-    <div id='exfilter' class='bk-root'></div>
     '''.format(mp.Filter()))
 
     base.bottom(static)

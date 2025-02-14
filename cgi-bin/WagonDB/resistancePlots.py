@@ -227,7 +227,7 @@ def Filter():
     mc_widgets = {}
     dr_widgets = {}
     multi_choice = (lambda x,y: MultiChoice(options=x, value=[], title=y), 'value')
-    start_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value='2023-03-14', title=z), 'value')
+    start_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value='2024-11-20', title=z), 'value')
     today = datetime.date.today()
     end_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value=today, title=z), 'value')
     min_date = pd.Timestamp((min(ds.data['Time']))).date()

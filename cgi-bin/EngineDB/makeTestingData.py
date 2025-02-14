@@ -5,6 +5,9 @@ import csv
 import datetime
 import os
 import io
+import multiprocessing as mp
+import time
+import pickle
 
 path = os.path.dirname(os.path.abspath(__file__))
 
@@ -65,11 +68,11 @@ def get_people():
 def get_test_types():
     csv_file = io.StringIO()
 
-    columns = ['Test Type ID', 'Name', 'Required', 'Short Desc.', 'Long Desc.', 'Relative Order']
+    columns = ['Test Type ID', 'Name']
     writer = csv.writer(csv_file)
     writer.writerow(columns)
 
-    cur.execute('select * from Test_Type')
+    cur.execute('select test_type,name from Test_Type')
     Test_Data = cur.fetchall()
     writer.writerows(Test_Data)
 
@@ -100,22 +103,21 @@ def get_adc_functionality():
     cur.execute('select test_type from Test_Type where name="ADC functionality"')
     type_id = cur.fetchall()[0][0]
 
-    cur.execute('select test_id from Test where test_type_id={}'.format(type_id))
-    TestIDs = cur.fetchall()
+    cur.execute('select board_id from Board')
+    boards_list = cur.fetchall()
+    Tests = []
+    for b in boards_list:
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],test_type_id))
+        test_id = cur.fetchone()
+        if test_id:
+            Tests.append(test_id)
 
-    query = 'select attach from Attachments where '
-    for i in TestIDs:
-        query += 'test_id={}'.format(i[0])
-        if i is not TestIDs[-1]:
-            query += ' or '
-    cur.execute(query)
-    Attach = cur.fetchall()
     Attach_Data = []
-    for i in Attach:
+    for i in Tests:
         try:
-            Attach_Data.append(json.loads(i[0])['test_data'])
-        except:
-            Attach_Data.append(json.loads(i[0]))
+            Attach_Data.append(json.loads(i[1])['test_data'])
+        except KeyError:
+            Attach_Data.append(json.loads(i[1]))
 
     writer_1.writeheader()
     writer_2.writeheader()
@@ -198,23 +200,21 @@ def get_eclock_rates():
     cur.execute('select test_type from Test_Type where name="EClock Rates"')
     type_id = cur.fetchall()[0][0]
 
-    cur.execute('select test_id from Test where test_type_id={}'.format(type_id))
-    TestIDs = cur.fetchall()
-
-    query = 'select attach from Attachments where '
-    for i in TestIDs:
-        query += 'test_id={}'.format(i[0])
-        if i is not TestIDs[-1]:
-            query += ' or '
-    cur.execute(query)
-    Attach = cur.fetchall()
+    cur.execute('select board_id from Board')
+    boards_list = cur.fetchall()
+    Tests = []
+    for b in boards_list:
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],test_type_id))
+        test_id = cur.fetchone()
+        if test_id:
+            Tests.append(test_id)
 
     Attach_Data = []
-    for i in Attach:
+    for i in Tests:
         try:
-            Attach_Data.append(json.loads(i[0])['test_data'])
-        except Exception as e:
-            Attach_Data.append(json.loads(i[0]))
+            Attach_Data.append(json.loads(i[1])['test_data'])
+        except KeyError:
+            Attach_Data.append(json.loads(i[1]))
 
     writer.writeheader()
     for n in range(len(Attach_Data)):
@@ -241,23 +241,21 @@ def get_xpwr():
     cur.execute('select test_type from Test_Type where name="X_PWR"')
     type_id = cur.fetchall()[0][0]
 
-    cur.execute('select test_id from Test where test_type_id={}'.format(type_id))
-    TestIDs = cur.fetchall()
-
-    query = 'select attach from Attachments where '
-    for i in TestIDs:
-        query += 'test_id={}'.format(i[0])
-        if i is not TestIDs[-1]:
-            query += ' or '
-    cur.execute(query)
-    Attach = cur.fetchall()
+    cur.execute('select board_id from Board')
+    boards_list = cur.fetchall()
+    Tests = []
+    for b in boards_list:
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],test_type_id))
+        test_id = cur.fetchone()
+        if test_id:
+            Tests.append(test_id)
 
     Attach_Data = []
-    for i in Attach:
+    for i in Tests:
         try:
-            Attach_Data.append(json.loads(i[0])['test_data'])
-        except:
-            Attach_Data.append(json.loads(i[0]))
+            Attach_Data.append(json.loads(i[1])['test_data'])
+        except KeyError:
+            Attach_Data.append(json.loads(i[1]))
 
     for n in range(len(Attach_Data)):
         writer.writerow({'Test ID': TestIDs[n][0], 'Voltage': Attach_Data[n]['voltage']})
@@ -276,23 +274,21 @@ def get_elink_quality():
     cur.execute('select test_type from Test_Type where name="Elink Quality"')
     type_id = cur.fetchall()[0][0]
 
-    cur.execute('select test_id from Test where test_type_id={}'.format(type_id))
-    TestIDs = cur.fetchall()
-
-    query = 'select attach from Attachments where '
-    for i in TestIDs:
-        query += 'test_id={}'.format(i[0])
-        if i is not TestIDs[-1]:
-            query += ' or '
-    cur.execute(query)
-    Attach = cur.fetchall()
+    cur.execute('select board_id from Board')
+    boards_list = cur.fetchall()
+    Tests = []
+    for b in boards_list:
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],test_type_id))
+        test_id = cur.fetchone()
+        if test_id:
+            Tests.append(test_id)
 
     Attach_Data = []
-    for i in Attach:
+    for i in Tests:
         try:
-            Attach_Data.append(json.loads(i[0])['test_data'])
-        except:
-            Attach_Data.append(json.loads(i[0]))
+            Attach_Data.append(json.loads(i[1])['test_data'])
+        except KeyError:
+            Attach_Data.append(json.loads(i[1]))
 
     for n in range(len(Attach_Data)):
         keys = Attach_Data[n].keys()
@@ -314,23 +310,21 @@ def get_fast_command():
     cur.execute('select test_type from Test_Type where name="Fast Command Quality"')
     type_id = cur.fetchall()[0][0]
 
-    cur.execute('select test_id from Test where test_type_id={}'.format(type_id))
-    TestIDs = cur.fetchall()
-
-    query = 'select attach from Attachments where '
-    for i in TestIDs:
-        query += 'test_id={}'.format(i[0])
-        if i is not TestIDs[-1]:
-            query += ' or '
-    cur.execute(query)
-    Attach = cur.fetchall()
+    cur.execute('select board_id from Board')
+    boards_list = cur.fetchall()
+    Tests = []
+    for b in boards_list:
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],test_type_id))
+        test_id = cur.fetchone()
+        if test_id:
+            Tests.append(test_id)
 
     Attach_Data = []
-    for i in Attach:
+    for i in Tests:
         try:
-            Attach_Data.append(json.loads(i[0])['test_data'])
-        except:
-            Attach_Data.append(json.loads(i[0]))
+            Attach_Data.append(json.loads(i[1])['test_data'])
+        except KeyError:
+            Attach_Data.append(json.loads(i[1]))
 
     for n in range(len(Attach_Data)):
         try:
@@ -355,23 +349,21 @@ def get_uplink_quality():
     cur.execute('select test_type from Test_Type where name="Uplink Quality"')
     type_id = cur.fetchall()[0][0]
 
-    cur.execute('select test_id from Test where test_type_id=%(id)s and day>="%(date)s"' %{'id':type_id, 'date':datetime.datetime(2024, 4, 1)})
-    TestIDs = cur.fetchall()
-
-    query = 'select attach from Attachments where '
-    for i in TestIDs:
-        query += 'test_id={}'.format(i[0])
-        if i is not TestIDs[-1]:
-            query += ' or '
-    cur.execute(query)
-    Attach = cur.fetchall()
+    cur.execute('select board_id from Board')
+    boards_list = cur.fetchall()
+    Tests = []
+    for b in boards_list:
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],test_type_id))
+        test_id = cur.fetchone()
+        if test_id:
+            Tests.append(test_id)
 
     Attach_Data = []
-    for i in Attach:
+    for i in Tests:
         try:
-            Attach_Data.append(json.loads(i[0])['test_data'])
-        except:
-            Attach_Data.append(json.loads(i[0]))
+            Attach_Data.append(json.loads(i[1])['test_data'])
+        except KeyError:
+            Attach_Data.append(json.loads(i[1]))
 
     for n in range(len(Attach_Data)):
         for i in Attach_Data[n]:
@@ -391,23 +383,21 @@ def get_i2c():
     cur.execute('select test_type from Test_Type where name="I2C"')
     type_id = cur.fetchall()[0][0]
 
-    cur.execute('select test_id from Test where test_type_id={}'.format(type_id))
-    TestIDs = cur.fetchall()
-
-    query = 'select attach from Attachments where '
-    for i in TestIDs:
-        query += 'test_id={}'.format(i[0])
-        if i is not TestIDs[-1]:
-            query += ' or '
-    cur.execute(query)
-    Attach = cur.fetchall()
+    cur.execute('select board_id from Board')
+    boards_list = cur.fetchall()
+    Tests = []
+    for b in boards_list:
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],test_type_id))
+        test_id = cur.fetchone()
+        if test_id:
+            Tests.append(test_id)
 
     Attach_Data = []
-    for i in Attach:
+    for i in Tests:
         try:
-            Attach_Data.append(json.loads(i[0])['test_data'])
-        except:
-            Attach_Data.append(json.loads(i[0]))
+            Attach_Data.append(json.loads(i[1])['test_data'])
+        except KeyError:
+            Attach_Data.append(json.loads(i[1]))
 
     for n in range(len(Attach_Data)):
         keys = Attach_Data[n].keys()
@@ -434,23 +424,22 @@ def get_gpio_functionality():
     fetch = cur.fetchall()[0][0]
     chips = json.loads(fetch)['walked_read'][0][3].keys()
 
-    cur.execute('select test_id from Test where test_type_id={}'.format(type_id))
-    TestIDs = cur.fetchall()
+    cur.execute('select board_id from Board')
+    boards_list = cur.fetchall()
+    Tests = []
+    for b in boards_list:
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],test_type_id))
+        test_id = cur.fetchone()
+        if test_id:
+            Tests.append(test_id)
 
-    query = 'select attach from Attachments where '
-    for i in TestIDs:
-        query += 'test_id={}'.format(i[0])
-        if i is not TestIDs[-1]:
-            query += ' or '
-    cur.execute(query)
-    Attach = cur.fetchall()
-
-    for i in range(len(Attach)):
+    Attach_Data = []
+    for i in Tests:
         try:
             try:
-                data = json.loads(Attach[i][0])['test_data']
-            except:
-                data = json.loads(Attach[i][0])
+                Attach_Data.append(json.loads(i[1])['test_data'])
+            except KeyError:
+                Attach_Data.append(json.loads(i[1]))
 
             try:
                 read_data = data['walked_read']
@@ -645,3 +634,115 @@ def get_tests_needed_dict():
         tests_needed[full_id] = len(stitch_types)
 
     return tests_needed
+
+def write_board_statuses_file():
+
+    status = {}
+
+    stitch_types = {}
+
+    cur.execute('select type_sn from Board_type')
+    types = cur.fetchall()
+    
+    today = datetime.date.today()
+    min_date = datetime.date(2024, 10, 4)
+    while min_date <= today:
+        status[str(min_date)] = {}
+        for s in types:
+            stitch_types[s[0]] = []
+            cur.execute('select type_id from Board_type where type_sn="%s"' % s[0])
+            type_id = cur.fetchall()[0][0]
+            cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
+            temp = cur.fetchall()
+            for test in temp:
+                stitch_types[s[0]].append(test[0])
+
+            try:
+                status[str(min_date)][s[0][0:2]][s[0]] = {}
+            except KeyError:
+                status[str(min_date)][s[0][0:2]] = {}
+                status[str(min_date)][s[0][0:2]][s[0]] = {}
+            
+        min_date += datetime.timedelta(days=1)
+
+    for day in status.keys():
+        day1 = datetime.datetime.strptime(day, '%Y-%m-%d') + datetime.timedelta(days=1)
+        day1 = datetime.datetime.combine(day1, datetime.time.min).strftime('%Y-%m-%d %H:%M:%S')
+        cur.execute('select board_id from Check_In where checkin_date < "%s"' % day1)
+        boards = cur.fetchall()
+
+        for b in boards:
+            if b[0] == 0:
+                continue
+            cur.execute('select full_id from Board where board_id="%s"' % b[0])
+            sn = cur.fetchall()[0][0]
+            failed = {}
+            outcomes = {}
+            # makes an array of falses the length of the number of tests
+            for t in stitch_types[sn[3:9]]:
+                outcomes[t] = False
+                failed[t] = False
+
+            cur.execute('select test_type_id, successful, day from Test where board_id=%s and day<"%s" order by day desc, test_id desc' % (b[0], day1))
+            temp = cur.fetchall()
+            ids = []
+            for t in temp:
+                if t[0] not in ids:
+                    if t[1] == 1:
+                        outcomes[t[0]] = True
+                    else:
+                        failed[t[0]] = True
+                ids.append(t[0])
+
+            num = list(outcomes.values()).count(True)
+            total = len(outcomes.values())
+            failed_num = list(failed.values()).count(True)
+
+            cur.execute('select board_id from Check_Out where board_id=%s' % b[0])
+            checked_out = cur.fetchall()
+            if checked_out:
+                s = 'Shipped'
+            else:
+                if failed_num != 0:
+                    s = 'Failed'
+                else:
+                    if num == total:
+                        s = 'Passed'
+                    else:
+                        if (num == total-1 and outcomes[24] == False) or (num == total-2 and outcomes[24] == False and outcomes[26] == False):
+                            s = 'Thermal'
+                        elif (num == total-1 and outcomes[26] == False):
+                            s = 'Not Registered'
+                        else:
+                            s = 'Awaiting'
+
+            try:
+                status[day][sn[3:5]][sn[3:9]][s] += 1
+            except:
+                status[day][sn[3:5]][sn[3:9]][s] = 1
+            try:
+                status[day][sn[3:5]][sn[3:9]]['Total'] += 1
+            except:
+                status[day][sn[3:5]][sn[3:9]]['Total'] = 1
+
+    with open('store_board_status.pkl', "wb") as f:
+        pickle.dump(status, f)
+
+
+def get_board_statuses():
+
+    try:
+        last_modified = os.path.getmtime('store_board_status.pkl')
+    except:
+        last_modified = 0
+
+    if datetime.datetime.now().timestamp() - last_modified > 86400 or True:
+
+        p = mp.Process(target=write_board_statuses_file)
+        p.start()
+
+
+    with open('store_board_status.pkl', "rb") as f:
+        status = pickle.load(f)
+
+    return status

@@ -164,7 +164,11 @@ for (let t = 0; t < modules.length; t++) {
             let date = new Date(new_date);
 
             // converts to Central Time
-            date = new Date(date.setHours(date.getHours() - 5));
+            if (String(date).includes('Daylight')) {
+                date = new Date(date.setHours(date.getHours() - 5));
+            } else {
+                date = new Date(date.setHours(date.getHours() - 6));
+            }
 
             // iterate over all the days in the selected range
             for (let i = 0; i < date_range.length; i++) {
@@ -175,7 +179,7 @@ for (let t = 0; t < modules.length; t++) {
                 day1 = new Date(day1.setDate(day1.getDate() + 1));
 
                 // check if date is before the current iterated day
-                if (day0 >= date) {
+                if (date <= day1) {
                     for (let j = 0; j < mask.length; j++) {
                         if (mask[j] == true && data.data['Time'][j] >= day0 && data.data['Time'][j] <= day1){
                             // count tests done that day
