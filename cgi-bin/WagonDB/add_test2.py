@@ -29,23 +29,24 @@ base.top(False)
 test_id=add_test_functions_wagon.add_test(person_id, test_type, bc, success, comments)
 
 # decodes attached file and sends it to the Attachments table
-for itest in [1]:
-    afile = form['attach%d'%(itest)]
-    if (afile.name):
-        adesc= form.getvalue("attachdesc%d"%(itest))
-        if adesc:
-            adesc = html.escape(adesc)
-        acomment= form.getvalue("attachcomment%d"%(itest))
-        if acomment:
-            acomment = html.escape(acomment)
-        add_test_functions_wagon.add_test_attachment(test_id,afile,adesc,acomment)
-    elif (afile.filename):
-        adesc= form.getvalue("attachdesc%d"%(itest))
-        if adesc:
-            adesc = html.escape(adesc)
-        acomment= form.getvalue("attachcomment%d"%(itest))
-        if acomment:
-            acomment = html.escape(acomment)
-        add_test_functions_wagon.add_test_attachment_gui(test_id,afile,adesc,acomment)
+if test_id:
+    for itest in [1]:
+        afile = form['attach%d'%(itest)]
+        if (afile.name):
+            adesc= form.getvalue("attachdesc%d"%(itest))
+            if adesc:
+                adesc = html.escape(adesc)
+            acomment= form.getvalue("attachcomment%d"%(itest))
+            if acomment:
+                acomment = html.escape(acomment)
+            add_test_functions_wagon.add_test_attachment(test_id,afile,adesc,acomment)
+        elif (afile.filename):
+            adesc= form.getvalue("attachdesc%d"%(itest))
+            if adesc:
+                adesc = html.escape(adesc)
+            acomment= form.getvalue("attachcomment%d"%(itest))
+            if acomment:
+                acomment = html.escape(acomment)
+            add_test_functions_wagon.add_test_attachment_gui(test_id,afile,adesc,acomment)
     
 base.bottom(False)

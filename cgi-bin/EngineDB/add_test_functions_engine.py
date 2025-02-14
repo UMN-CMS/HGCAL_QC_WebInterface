@@ -255,6 +255,18 @@ def add_test(person_id, test_type, serial_num, success, comments, config_id):
     # If issues arrise, check whether the test_type is actually what you expect by printing
     test_type_id = test_type
 
+    cur.execute('select type_id from Board_type where type_sn="%s"' % barcode[3:9])
+    type_id = cur.fetchall()[0][0]
+
+    cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
+    temp = cur.fetchall()
+    req_tests = []
+    for test in temp:
+        req_tests.append(temp)
+
+    if test_type_id not in req_tests:
+        return None
+
     if type(person_id) == type(""):
         person_id = verify_person(person_id)
 

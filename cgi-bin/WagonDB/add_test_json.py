@@ -88,19 +88,19 @@ test_dict = parse_data(form)
 
 test_id = add_test_functions_wagon.add_test(test_dict['person_id'], test_dict['test'], test_dict['full_id'], test_dict['successful'], test_dict['comments'], test_dict['config_id'])
 
-
-for itest in range(1,4):
-    if not form.getvalue('attach%d'%(itest)): continue
-    afile = form['attach%d'%(itest)]
-    filename = form.getvalue('attachname%d'%(itest))
-    if (afile.filename):
-        adesc= form.getvalue("attachdesc%d"%(itest))
-        if adesc:
-            adesc = html.escape(adesc)
-        acomment= form.getvalue("attachcomment%d"%(itest))
-        if acomment:
-            acomment = html.escape(acomment)
-        add_test_functions_wagon.add_test_attachment(test_id,afile,adesc,acomment)
+if test_id:
+    for itest in range(1,4):
+        if not form.getvalue('attach%d'%(itest)): continue
+        afile = form['attach%d'%(itest)]
+        filename = form.getvalue('attachname%d'%(itest))
+        if (afile.filename):
+            adesc= form.getvalue("attachdesc%d"%(itest))
+            if adesc:
+                adesc = html.escape(adesc)
+            acomment= form.getvalue("attachcomment%d"%(itest))
+            if acomment:
+                acomment = html.escape(acomment)
+            add_test_functions_wagon.add_test_attachment(test_id,afile,adesc,acomment)
 
 base.bottom(False)
 
