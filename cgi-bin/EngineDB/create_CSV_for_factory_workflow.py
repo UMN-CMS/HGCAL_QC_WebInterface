@@ -10,13 +10,13 @@ import cgi
 
 form = cgi.FieldStorage()
 print('Content-Type: text/plain')
-print('Content-Disposition: attachment; filename=wagon_workflow.csv')
+print('Content-Disposition: attachment; filename=engine_workflow.csv')
 print()
 
 db = connect(0)
 cur=db.cursor()
 
-columns = "'Subtype', 'Number Received', 'Number In Progress', 'Number Awaiting Registration', 'Number Passed and not Shipped', 'Number Shipped', 'Number Failed'"
+columns = "'Subtype', 'Number Received', 'Number In Progress', 'Number Awaiting Thermal Test', 'Number Awaiting Registration', 'Number Passed and not Shipped', 'Number Shipped', 'Number Failed'"
 print(columns)
 
 cur.execute('select distinct type_id from Board order by type_id')
@@ -36,6 +36,7 @@ for s in subtypes:
     t_passed = 0
     t_failed = 0
     shipped = 0
+    thermal = 0
     not_registered = 0
     for b in boards:
         failed = {}
@@ -47,16 +48,17 @@ for s in subtypes:
 
         cur.execute('select board_id from Board where full_id="%s"' % b)
         board_id = cur.fetchall()[0][0]
-        cur.execute('select test_type_id, successful, day from Test where board_id=%s order by day desc, test_id desc' % board_id)
+        cur.execute('select test_type_id, successful from Test where board_id=%s order by day desc, test_id desc' % board_id)
         temp = cur.fetchall()
         ids = []
         for t in temp:
-            if t[0] not in ids:
-                if t[1] == 1:
-                    outcomes[t[0]] = True
-                else:
-                    failed[t[0]] = True
-            ids.append(t[0])
+            if t[0] in stitch_types:
+                if t[0] not in ids:
+                    if t[1] == 1:
+                        outcomes[t[0]] = True
+                    else:
+                        failed[t[0]] = True
+                ids.append(t[0])
 
         num = list(outcomes.values()).count(True)
         total = len(outcomes.values())
@@ -65,25 +67,31 @@ for s in subtypes:
         if num == total:
             t_passed += 1
         else:
-            if (num == total-1 and outcomes[7] == False):
+            if (num == total-1 and outcomes[24] == False) or (num == total - 2 and outcomes[24] == False and outcomes[26] == False):
+                thermal += 1
+            elif (num == total-1 and outcomes[26] == False):
                 not_registered += 1
         
         if failed_num != 0:
+            if (num == total-1 and outcomes[24] == False) or (num == total - 2 and outcomes[24] == False and outcomes[26] == False):
+                thermal -= 1
             t_failed += 1
-        
+
         cur.execute('select board_id from Check_Out where board_id=%s' % board_id)
         checked_out = cur.fetchall()
         if checked_out:
             shipped += 1
             if num != total:
-                if (num == total-1 and outcomes[7] == False):
+                if (num == total-1 and outcomes[24] == False) or (num == total - 2 and outcomes[24] == False and outcomes[26] == False):
+                    thermal -= 1
+                elif (num == total-1 and outcomes[26] == False):
                     not_registered -= 1
                 if failed_num != 0:
                     t_failed -= 1
             else:
                 t_passed -= 1
-        
 
-    awaiting = len(boards) - t_passed - t_failed - shipped - not_registered
-    print("%s, %s, %s, %s, %s, %s, %s" % (s[0], len(boards), awaiting, not_registered, t_passed, shipped, t_failed))
+
+    awaiting = len(boards) - t_passed - t_failed - thermal - shipped - not_registered
+    print("%s, %s, %s, %s, %s, %s, %s, %s" % (s[0], len(boards), awaiting, thermal, not_registered, t_passed, shipped, t_failed))
 

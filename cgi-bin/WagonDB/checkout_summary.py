@@ -38,10 +38,14 @@ def run(static):
     data = {}
     # runs twice, one to set up the dictionary and one to fill the dictionary
     for f in fetch:
+        if f[0] == 0:
+            continue
         cur.execute('select type_id from Board where board_id=%s' % f[0])
         type_id = cur.fetchall()[0][0]
         data[type_id] = []
     for f in fetch:
+        if f[0] == 0:
+            continue
         cur.execute('select type_id from Board where board_id=%s' % f[0])
         type_id = cur.fetchall()[0][0]
         # each subtype has a list of lists

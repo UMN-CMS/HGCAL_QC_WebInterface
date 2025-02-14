@@ -144,7 +144,7 @@ for (let t = 0; t < modules.length; t++) {
                     let day0 = new Date(date_range[i]);
                     let day1 = new Date(date_range[i]);
                     day1 = new Date(day1.setDate(day1.getDate() + 1));
-                    if (day0 >= date) {
+                    if (date <= day1) {
                         for (let j = 0; j < mask.length; j++) {
                             if (mask[j] == true && data.data['Time'][j] >= day0 && data.data['Time'][j] <= day1){
                                 count++; 

@@ -127,78 +127,55 @@ def Histogram(columns, data, views, widgets, subtypes, serial_numbers, slider):
     # each subtype gets its own subpage, this is done by changing which plot is visible
     # each serial number is then iterated over and plotted individually as a legend entry
     hist = {}
-    td = {}
-    std = {}
     for s in subtypes:
-        hist[s] = {}
-        for sn in serial_numbers[s]:
-            hist[s][sn] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
+        hist[s] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
 
-        td[s] = ColumnDataSource(data={'Full ID':[], 'Resistance':[], 'Outcome':[]})
-        std[s] = ColumnDataSource(data={'Full ID':[], 'mean':[], 'std':[]})
+    td = ColumnDataSource(data={'Subtype': subtypes, 'mean': [], 'std':[]})
 
-    x = CustomJS(args=dict(col=columns, hist=hist, data=data, views=views, subtypes=subtypes, serial_numbers=serial_numbers, slider=slider, td=td, std=std),code='''
+    x = CustomJS(args=dict(col=columns, hist=hist, data=data, views=views, subtypes=subtypes, slider=slider, td=td),code='''
+// create arrays for table
+const means = [];
+const devs = [];
+
 // iterate over subtypes
 for (let s = 0; s < subtypes.length; s++) {
-    // create arrays for table
-    const full_ids = [];
-    const res = [];
-    const outcomes = [];
-    const serials = [];
-    const means = [];
-    const stds = [];
-    // iterate over serial numbers
-    for (let sn = 0; sn < serial_numbers[subtypes[s]].length; sn++) {
-        // create mask
-        const indices = views[subtypes[s]].filters[0].compute_indices(data[subtypes[s]]);
-        let mask = new Array(data[subtypes[s]].data[col].length).fill(false);
-        [...indices].forEach((x)=>{mask[x] = true;})
-        for (let j = 0; j < data[subtypes[s]].get_length(); j++) {
-            if (data[subtypes[s]].data['Full ID'][j] == serial_numbers[subtypes[s]][sn] && mask[j] == true){
-                mask[j] = true;
-                full_ids.push(serial_numbers[subtypes[s]][sn])
-                res.push(data[subtypes[s]].data[col][j])
-                outcomes.push(data[subtypes[s]].data['Outcome'][j])
-            } else {
-                mask[j] = false;
-            }
-        }
-        // bin data by subtype
-        const good_data = data[subtypes[s]].data[col].filter((_,y)=>mask[y])
-        let bins = slider.value
-        let min = Math.min(...good_data);
-        let m = Math.max(...good_data);
-        let scale = d3.scaleLinear().domain([min-0.5,m+0.5]).nice()
-        let binner = d3.bin().domain(scale.domain()).thresholds(m*bins)
-        let d = binner(good_data)
-        let right = d.map(x=>x.x1)
-        let left = d.map(x=>x.x0)
-        let bottom = new Array(d.length).fill(0)
-        let top = d.map(x=>x.length);
-        // fill data sources
-        hist[subtypes[s]][serial_numbers[subtypes[s]][sn]].data['right'] = right;
-        hist[subtypes[s]][serial_numbers[subtypes[s]][sn]].data['left'] = left;
-        hist[subtypes[s]][serial_numbers[subtypes[s]][sn]].data['bottom'] = bottom;
-        hist[subtypes[s]][serial_numbers[subtypes[s]][sn]].data['top'] = top;
-        hist[subtypes[s]][serial_numbers[subtypes[s]][sn]].change.emit()
-        serials.push(serial_numbers[subtypes[s]][sn])
-        means.push(d3.mean(good_data))
-        stds.push(d3.deviation(good_data))
-    }
-    td[subtypes[s]].data['Full ID'] = full_ids;
-    td[subtypes[s]].data['Resistance'] = res;
-    td[subtypes[s]].data['Outcome'] = outcomes;
-    td[subtypes[s]].change.emit()
-    std[subtypes[s]].data['Full ID'] = serials;
-    std[subtypes[s]].data['mean'] = means;
-    std[subtypes[s]].data['std'] = stds;
-    std[subtypes[s]].change.emit()
+
+    const indices = views[subtypes[s]].filters[0].compute_indices(data[subtypes[s]]);
+    let mask = new Array(data[subtypes[s]].data[col].length).fill(false);
+    [...indices].forEach((x)=>{mask[x] = true;})
+
+    const good_data = data[subtypes[s]].data[col].filter((_,y)=>mask[y])
+    let bins = slider.value
+    let min = Math.min(...good_data);
+    let m = Math.max(...good_data);
+    let scale = d3.scaleLinear().domain([min-0.5,m+0.5]).nice()
+    let binner = d3.bin().domain(scale.domain()).thresholds(m*bins)
+    let d = binner(good_data)
+    let right = d.map(x=>x.x1)
+    let left = d.map(x=>x.x0)
+    let bottom = new Array(d.length).fill(0)
+    let top = d.map(x=>x.length);
+
+    // fill data sources
+    hist[subtypes[s]].data['right'] = right;
+    hist[subtypes[s]].data['left'] = left;
+    hist[subtypes[s]].data['bottom'] = bottom;
+    hist[subtypes[s]].data['top'] = top;
+    hist[subtypes[s]].change.emit()
+
+    means.push(d3.mean(good_data))
+    devs.push(d3.deviation(good_data))
 }
-    ''')
+
+td.data['mean'] = means;
+td.data['std'] = devs;
+td.change.emit()
+
+''')
     for widget in widgets:
         widget.js_on_change('value', x)
     slider.js_on_change('value', x)
-    return hist, td, std
+    return hist, td
 
 def Filter():
     df_temp = AllData.merge(IDR, on='Test ID', how='left')
@@ -216,7 +193,7 @@ def Filter():
     mc_widgets = {}
     dr_widgets = {}
     multi_choice = (lambda x,y: MultiChoice(options=x, value=[], title=y), 'value')
-    start_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value='2023-03-14', title=z), 'value')
+    start_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value='2024-11-20', title=z), 'value')
     today = datetime.date.today()
     end_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value=today, title=z), 'value')
     min_date = pd.Timestamp((min(ds.data['Time']))).date()
@@ -265,74 +242,32 @@ for (let i = 0; i < subtypes.length; i++) {
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
 
-    hist, td, std = Histogram('Resistance', data_sources, views, widgets.values(), subtypes, serial_numbers, slider)
+    hist, td = Histogram('Resistance', data_sources, views, widgets.values(), subtypes, serial_numbers, slider)
     # holds all the plot objects by subtype
-    plots = {}
-    tables = {}
-    tables_2 = {}
-    for s in subtypes:
-        p = figure(
-            title='ID Resistance for ' + s,
-            x_axis_label='Resistance',
-            y_axis_label='Number of Boards',
-            tools='pan,wheel_zoom,box_zoom,reset,save',
-            width = 925
-            )
-        for sn in range(len(serial_numbers[s])): 
-            p.quad(top='top', bottom='bottom', left='left', right='right', source=hist[s][serial_numbers[s][sn]], legend_label=serial_numbers[s][sn], color = colors[sn])
-            p.visible = False
-            p.legend.click_policy='hide'
-            p.legend.label_text_font_size = '8pt' 
-        plots[s] = p
-        table_columns = [
-                        TableColumn(field='Full ID', title='Full ID'),
-                        TableColumn(field='Resistance', title='Resistance'),
-                        TableColumn(field='Outcome', title='Outcome'),
-                        ]
-        data_table = DataTable(source=td[s], columns=table_columns, autosize_mode='fit_columns')
-        data_table.visible = False
-        tables[s] = data_table
+    p = figure(
+        title='ID Resistance by Subtype ',
+        x_axis_label='Resistance',
+        y_axis_label='Number of Boards',
+        tools='pan,wheel_zoom,box_zoom,reset,save',
+        width = 925
+        )
 
-        table_columns_2 = [
-                        TableColumn(field='Full ID', title='Full ID'),
-                        TableColumn(field='mean', title='Mean'),
-                        TableColumn(field='std', title='Standard Deviation'),
-                        ]
-        data_table_2 = DataTable(source=std[s], columns=table_columns_2, autosize_mode='fit_columns')
-        data_table_2.visible = False
-        tables_2[s] = data_table_2
-            
+    for idx,s in enumerate(subtypes):
+        p.quad(top='top', bottom='bottom', left='left', right='right', source=hist[s], legend_label=s, color = colors[idx])
+        p.legend.click_policy='hide'
+        p.legend.label_text_font_size = '8pt' 
+
+    table_columns = [
+                    TableColumn(field='Subtype', title='Subtype'),
+                    TableColumn(field='mean', title='Mean'),
+                    TableColumn(field='std', title='Standard Deviation'),
+                    ]
+    data_table = DataTable(source=td, columns=table_columns, autosize_mode='fit_columns')
+
     w = [*widgets.values()]
-    # creates a custom select widget that changes which plot to display
-    display_plot = CustomJS(args=dict(plots=plots, tables=tables, tables_2=tables_2), code=('''
-for (let [name,plot] of Object.entries(plots)){
-    if (name == this.value){
-        plot.visible = true
-    } else {
-        plot.visible = false
-    }
-}
-for (let [name,table] of Object.entries(tables)){
-    if (name == this.value){
-        table.visible = true
-    } else {
-        table.visible = false
-    }
-}
-for (let [name,table] of Object.entries(tables_2)){
-    if (name == this.value){
-        table.visible = true
-    } else {
-        table.visible = false
-    }
-}
-'''))
-    
-    select = Select(title='Type ID', options=subtypes)
-    select.js_on_change('value', display_plot)
 
     # column and row objects only take it lists, need to make arguments lists
-    layout = column(row(w[0:2] + [select]), row(w[2:5]), slider, column(list(plots.values())),  column(list(tables.values())), column(list(tables_2.values())))
+    layout = column(row(w[0:2]), row(w[2:5]), slider, p, data_table)
     plot_json = json.dumps(json_item(layout))
     return plot_json
 

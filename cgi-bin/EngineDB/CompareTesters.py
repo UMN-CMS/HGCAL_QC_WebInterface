@@ -11,11 +11,11 @@ def run(static):
     base.header(title='Compare Testers')
     base.top(static)
     print('''
+    <div id='exfilter' class='bk-root'></div>
     <script>
     data = {};
     Bokeh.embed.embed_item(data, 'exfilter');
     </script>
-    <div id='exfilter' class='bk-root'></div>
     '''.format(mp.Filter()))
 
     base.bottom(static)

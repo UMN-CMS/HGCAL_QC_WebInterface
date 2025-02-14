@@ -4,18 +4,18 @@ import cgi, html
 import cgitb
 import base
 import sys
-from filter_boards import Filter
+from hold_filter_boardsd import Filter
 
 def run(static):
     base.header(title='Search Boards')
     base.top(static)
 
     print('''
+    <div id='render' class='bk-root'></div>
     <script>
     data = {};
-    Bokeh.embed.embed_item(data, 'exfilter');
+    Bokeh.embed.embed_item(data, 'render');
     </script>
-    <div id='exfilter' class='bk-root'></div>
     '''.format(Filter()))
 
     base.bottom(static)

@@ -391,6 +391,7 @@ def board_info(sn, static):
     type_id = cur.fetchall()[0][0]
     cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
     names = cur.fetchall()
+    names = np.unique(names)
     outcomes = []
 
     cur.execute('select test_type_id, successful, day from Test where board_id=%s order by day desc, test_id desc' % board_id)
