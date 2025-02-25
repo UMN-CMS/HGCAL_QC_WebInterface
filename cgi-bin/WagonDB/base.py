@@ -86,6 +86,9 @@ def top(static):
           <a class="nav-link active" aria-current="page" href="home_page.html">Home</a>
         </li>
         <li class="nav-item">
+            <a class="nav-link" href="https://sites.google.com/umn.edu/cms-hgcal-factory/home">HGCAL Factory</a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link" href="search.html">Search Tests</a>
         </li>
         <li class="nav-item">
@@ -143,6 +146,9 @@ def top(static):
           <a class="nav-link active" aria-current="page" href="home_page.py">Home</a>
         </li>
         <li class="nav-item">
+            <a class="nav-link" href="https://sites.google.com/umn.edu/cms-hgcal-factory/home">HGCAL Factory</a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link" href="search.py">Search Tests</a>
         </li>
         <li class="nav-item">
@@ -176,6 +182,7 @@ def top(static):
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
             <li><a class="dropdown-item" href="add_tester.py">Add New Tester</a></li>
             <li><a class="dropdown-item" href="add_new_test_template.py">Add New Test Template</a></li>
+            <li><a class="dropdown-item" href="board_grade.py">Grade Board</a></li>
           </ul>
         </li>
         <li class="nav-item dropdown">
@@ -282,6 +289,9 @@ def bottom(static):
           </li>
           <li>
             <a href="../EngineDB/home_page.py" class="text-light text-decoration-none">HGCAL Engine Test</a>
+          </li>
+          <li>
+            <a href="https://sites.google.com/umn.edu/cms-hgcal-factory/home" class="text-light text-decoration-none">HGCAL Factory</a>
           </li>
         </ul>
       </div>

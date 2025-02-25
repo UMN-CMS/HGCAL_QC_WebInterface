@@ -203,7 +203,7 @@ def add_test(person_id, test_type, barcode, success, comments, config_id):
     temp = cur.fetchall()
     req_tests = []
     for test in temp:
-        req_tests.append(temp)
+        req_tests.append(test[0])
 
     if test_type_id not in req_tests:
         return None
@@ -527,3 +527,94 @@ def add_tester_template():
     print('</div>')
 
     print('</form>')
+
+def add_board_grade_form(sn=""):
+
+    db = connect(0)
+    cur = db.cursor()
+
+    print('<form action="board_grade2.py" method="post" enctype="multipart/form-data">')
+    print('<div class="row">')
+    print('<div class="col-md-12 pt-4 ps-5 mx-2 my-2">')
+    print('<h2>Grade Board</h2>')
+    print('</div>')
+    print('</div>')
+
+    print('<div class="row">')
+    print('<div class="col-md-6 pt-4 ps-5 mx-2 my-2">')
+    print('<label>Board Serial Number</label><p>')
+    print('<INPUT type="text" class="form-control" name="full_id" value="{}">'.format(sn))
+    print('</div>')
+
+    # gives options for tester
+    cur.execute("Select person_id, person_name from People;")
+
+    print('<div class="row">')
+    print('<div class="col-md-3 pt-2 ps-5 mx-2 my-2">')
+    print('<label>Tester')
+    print('<select class="form-control" name="person_id">')
+    for person_id in cur:
+        print("<option value='%s'>%s</option>" % ( person_id[0] , person_id[1] ))
+                        
+    print('</select>')
+    print('</label>')
+    print('</div>')
+
+    print('<div class="row">')
+    print('<div class="col-md-6 pt-4 ps-5 mx-2 my-2">')
+    print('<label>Board Grade</label><p>')
+    print('<select name="grade" id="grade">')
+    print('<option value="A">A</option>')
+    print('<option value="B">B</option>')
+    print('<option value="C">C</option>')
+    print('<option value="D">D</option>')
+    print('<option value="F">F</option>')
+    print('</select>')
+    print('</div>')
+
+    print('<div class="row">')
+    print('<div class="col-md-6 pt-4 ps-5 mx-2 my-2">')
+    print('<label>Comments</label><p>')
+    print('<textarea class="form-control" name="comment" id="comment" rows="4" cols="50"></textarea>')
+    print('</div>')
+
+    print("<div class='row'>")
+    print('<div class = "col-md-3 pt-2 ps-5 mx-2 my-2">')
+    print("<label for='password'>Admin Password</label>")
+    print("<input type='password' name='password'>")
+    print("</div>")
+    print("</div>")
+    
+    print("<div class='row'>")
+    print('<div class="col-md-6 pt-2 ps-5 mx-2 my-2">')
+    print('<input type="submit" class="btn btn-dark" value="Submit">')
+    print('</div>')
+    print('</div>')
+
+    print('</form>')
+
+def add_board_grade(passwd, board_id, person_id, grade, comments):
+
+    print(board_id, person_id, grade, comments)
+
+    try:
+        db = connect_admin(passwd)
+    except Exception:
+        print("Administrative access denied")
+        return
+
+    cur = db.cursor()
+    
+    if board_id and person_id and grade and comments:
+        sql="INSERT INTO Grades (board_id, person_id, grade, comments) VALUES ('%s', '%s', '%s', '%s')"%(board_id, person_id, grade, comments)
+        #print(sql)
+        cur.execute(sql)
+
+        db.commit()
+
+    else:
+        print('<div class ="row">')
+        print('<div class = "col-md-3 pt-4 ps-4 mx-2 my-2">')
+        print('<h3> Attempt Failed. Please Ensure All Fields are Filled </h3>')
+        print('</div>')
+        print('</div>')
