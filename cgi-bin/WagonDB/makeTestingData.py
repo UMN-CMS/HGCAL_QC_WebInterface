@@ -367,10 +367,7 @@ def get_board():
     Temp_Data = cur.fetchall()
     Board_Data = []
     for line in Temp_Data:
-        if line[0][4] == 'H':
-            Board_Data.append(line + ('HD',))
-        else:
-            Board_Data.append(line + ('LD',))
+        Board_Data.append(line + (line[0][3:5],))
     writer.writerows(Board_Data)
 
     csv_file.seek(0)
@@ -618,24 +615,16 @@ def write_board_statuses_file():
             except:
                 status[day][sn[3:5]][sn[3:9]]['Total'] = 1
 
-    with open('store_board_status.pkl', "wb") as f:
+    with open('/home/webapp/pro/HGCAL_QC_WebInterface/cgi-bin/WagonDB/cache/store_board_status.pkl', "wb") as f:
         pickle.dump(status, f)
 
 
 def get_board_statuses():
 
-    try:
-        last_modified = os.path.getmtime('store_board_status.pkl')
-    except:
-        last_modified = 0
-
-    if datetime.datetime.now().timestamp() - last_modified > 86400:
-
-        p = mp.Process(target=write_board_statuses_file)
-        p.start()
-
-    with open('store_board_status.pkl', "rb") as f:
+    with open('/home/webapp/pro/HGCAL_QC_WebInterface/cgi-bin/WagonDB/cache/store_board_status.pkl', "rb") as f:
         status = pickle.load(f)
 
     return status
 
+def write_datafiles():
+    write_board_statuses_file()

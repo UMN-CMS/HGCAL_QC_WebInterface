@@ -145,6 +145,12 @@ def add_test_tab(barcode, board_id, static):
         print('<button class="btn btn-dark"> Update Location </button>')
         print('</a>')
         print('</div>')
+        print('<div class="row">')
+        print('<div class="col-md-2 ps-5 pt-2 my-2">')
+        print('<a href="board_grade.py?board_id=?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':barcode, 'id':board_id})
+        print('<button class="btn btn-dark"> Grade Board </button>')
+        print('</a>')
+        print('</div>')
         print('</div>')
 
 
@@ -303,12 +309,12 @@ def get_sn_from_lpgbt_id(lpgbt_id, static):
 
     cur.execute(LD_QUERY % (lpgbt_id_int))
     full_id = cur.fetchall()
-    if len(full_id[0]) != 0:
+    if full_id:
         print(full_id[0][0])
     else:
         cur.execute(HD_QUERY % (lpgbt_id_int))
         full_id = cur.fetchall()
-        if len(full_id[0]) != 0:
+        if full_id:
             print(full_id[0][0])
         else:
             print("Could not find full_id associated with LPGBT ID {}".format(lpgbt_id))
@@ -343,11 +349,12 @@ def board_info(sn, static):
             west_chip_id = hex(int(attach['W']["id"]))
         if sn[3:5] == 'EH':
             daq1_chip_id = hex(int(attach['DAQ1']["id"]))
-            daq2_chip_id = hex(int(attach['DAQ2']["id"]))
             trig1_chip_id = hex(int(attach['TRG1']["id"]))
             trig2_chip_id = hex(int(attach['TRG2']["id"]))
-            trig3_chip_id = hex(int(attach['TRG3']["id"]))
-            trig4_chip_id = hex(int(attach['TRG4']["id"]))
+            if sn[7] == 'F':
+                daq2_chip_id = hex(int(attach['DAQ2']["id"]))
+                trig3_chip_id = hex(int(attach['TRG3']["id"]))
+                trig4_chip_id = hex(int(attach['TRG4']["id"]))
     except Exception as e:
         test_id = 'No tests run'
         attach = 'none'
@@ -421,7 +428,9 @@ def board_info(sn, static):
         print('<th colspan=1>West Chip ID</th>')
     if sn[3:5] == 'EH':
         print('<th colspan=1>DAQ 1 Chip ID</th>')
-        print('<th colspan=1>DAQ 2 Chip ID</th>')
+        if sn[7] == 'F':
+            print('<th colspan=1>DAQ 2 Chip ID</th>')
+
         print('<th colspan=1>Trigger 1 Chip ID</th>')
         print('<th colspan=1>Trigger 2 Chip ID</th>')
     print('<th colspan=2>LDO ID</th>')
@@ -435,7 +444,9 @@ def board_info(sn, static):
         print('<td colspan=1>%s</td>' % west_chip_id)
     if sn[3:5] == 'EH':
         print('<td colspan=1>%s</td>' % daq1_chip_id)
-        print('<td colspan=1>%s</td>' % daq2_chip_id)
+        if sn[7] == 'F':
+            print('<td colspan=1>%s</td>' % daq2_chip_id)
+
         print('<td colspan=1>%s</td>' % trig1_chip_id)
         print('<td colspan=1>%s</td>' % trig2_chip_id)
     print('<td colspan=2>%s</td>' % ldo)
@@ -455,9 +466,13 @@ def board_info(sn, static):
     if sn[3:5] == 'EL':
         print('<th colspan=2>Comments</th>')
     if sn[3:5] == 'EH':
-        print('<th colspan=1>Comments</th>')
-        print('<th colspan=1>Trigger 3 Chip ID</th>')
-        print('<th colspan=1>Trigger 4 Chip ID</th>')
+        if sn[7] == 'F':
+            print('<th colspan=1>Comments</th>')
+            print('<th colspan=1>Trigger 3 Chip ID</th>')
+            print('<th colspan=1>Trigger 4 Chip ID</th>')
+        else:
+            print('<th colspan=2>Comments</th>')
+
     print('<th colspan=1>Date Received</th>')
     print('<th colspan=1>Manufacturer</th>')
     print('<th colspan=2>Shipping Status</th>')
@@ -467,9 +482,12 @@ def board_info(sn, static):
     if sn[3:5] == 'EL':
         print('<td colspan=2>%s</td>' % info_com)
     if sn[3:5] == 'EH':
-        print('<td colspan=1>%s</td>' % info_com)
-        print('<td colspan=1>%s</td>' % trig3_chip_id)
-        print('<td colspan=1>%s</td>' % trig4_chip_id)
+        if sn[7] == 'F':
+            print('<td colspan=1>%s</td>' % info_com)
+            print('<td colspan=1>%s</td>' % trig3_chip_id)
+            print('<td colspan=1>%s</td>' % trig4_chip_id)
+        else:
+            print('<td colspan=2>%s</td>' % info_com)
     # gets check in date
     cur.execute('select checkin_date from Check_In where board_id=%s' % board_id)
     try:

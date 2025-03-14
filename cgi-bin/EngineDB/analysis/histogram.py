@@ -68,17 +68,15 @@ def main():
         title="Query:",
     )
 
-    nbins_input = TextInput()
+    nbins_input = TextInput(title="NBins")
+    xlabel_input = TextInput(title="X Label")
+    ylabel_input = TextInput(title="Y Label")
 
     callback = CustomJS(
-        args=dict(source=cds, nbins=nbins_input),
+        args=dict(source=cds, te=text_input, nbins=nbins_input),
         code="""
-    const base_url = "http://cmslab1.spa.umn.edu/Factory/EngineDB/analysis/api/histogrammer.py?"
-    console.log(cb_obj.value)
-
-
-
-        const data = {jq: cb_obj.value}
+        const base_url = "http://cmslab1.spa.umn.edu/Factory/EngineDB/analysis/api/histogrammer.py?"
+        const data = {jq: te.value}
         if(nbins.value){
              data.nbins = parseInt(nbins.value);
         }
@@ -90,8 +88,6 @@ def main():
         """,
     )
 
-    xlabel_input = TextInput()
-    ylabel_input = TextInput()
     xlabel_input.js_on_change(
         "change", CustomJS(args=dict(source=cds, p=p.xaxis), code ='''
         console.log(cb_obj.value);
@@ -109,6 +105,7 @@ def main():
     p.yaxis.axis_label_text_font_size = '15pt'
 
     text_input.js_on_change("value", callback)
+    nbins_input.js_on_change("value", callback)
     item_text = json.dumps(
         json_item(column(text_input, row(xlabel_input, ylabel_input, nbins_input), p), "myplot")
     )

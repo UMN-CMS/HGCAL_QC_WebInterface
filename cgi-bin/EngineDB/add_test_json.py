@@ -88,25 +88,36 @@ base.top(False)
 form = cgi.FieldStorage()
 test_dict = parse_data(form)
 
+
+#######################################################
+# TEMPORARY FIX FOR COMMENT STRINGS THAT ARE TOO LONG #
+#######################################################
+
+test_dict['comments'] = test_dict['comments'][:320]
+
+# SHOULD REMOVE AND UPDATE TABLE TO ACCEPT LONGER COMMENTS
+
+
 test_id = add_test_functions_engine.add_test(test_dict['person_id'], test_dict['test'], test_dict['full_id'], test_dict['successful'], test_dict['comments'], test_dict['config_id'])
 
-for itest in range(1,4):
-    print(itest)
-    if not form.getvalue('attach%d'%(itest)): continue
-    afile = form['attach%d'%(itest)]
-    print(afile)
-    filename = form.getvalue('attachname%d'%(itest))
-    if (afile.filename):
-        adesc= form.getvalue("attachdesc%d"%(itest))
-        if adesc:
-            adesc = html.escape(adesc)
-        acomment= form.getvalue("attachcomment%d"%(itest))
-        if acomment:
-            acomment = html.escape(acomment)
-        add_test_functions_engine.add_test_attachment(test_id,afile,adesc,acomment)
+if test_id:
+    for itest in range(1,4):
+        print(itest)
+        if not form.getvalue('attach%d'%(itest)): continue
+        afile = form['attach%d'%(itest)]
+        print(afile)
+        filename = form.getvalue('attachname%d'%(itest))
+        if (afile.filename):
+            adesc= form.getvalue("attachdesc%d"%(itest))
+            if adesc:
+                adesc = html.escape(adesc)
+            acomment= form.getvalue("attachcomment%d"%(itest))
+            if acomment:
+                acomment = html.escape(acomment)
+            add_test_functions_engine.add_test_attachment(test_id,afile,adesc,acomment)
 
-if test_dict['test'] == 'LPGBT ID':
-    add_test_functions_engine.set_daq_chip_id(test_dict['full_id'], test_id)
+#    if test_dict['test'] == 'LPGBT ID':
+#        add_test_functions_engine.set_daq_chip_id(test_dict['full_id'], test_id)
 
 base.bottom(False)
 

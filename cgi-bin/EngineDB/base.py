@@ -75,10 +75,16 @@ def top(static):
           <a class="nav-link active" aria-current="page" href="home_page.html">Home</a>
         </li>
         <li class="nav-item">
+            <a class="nav-link" href="https://sites.google.com/umn.edu/cms-hgcal-factory/home">HGCAL Factory</a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link" href="search.html">Search Tests</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="search_boards.html">Boards</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="register_boards_form.html">Register Boards</a>
         </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -137,10 +143,16 @@ def top(static):
           <a class="nav-link active" aria-current="page" href="home_page.py">Home</a>
         </li>
         <li class="nav-item">
+            <a class="nav-link" href="https://sites.google.com/umn.edu/cms-hgcal-factory/home">HGCAL Factory</a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link" href="search.py">Search Tests</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="search_boards.py">Search Boards</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="register_boards_form.py">Register Boards</a>
         </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -170,6 +182,7 @@ def top(static):
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
             <li><a class="dropdown-item" href="add_tester.py">Add New Tester</a></li>
             <li><a class="dropdown-item" href="add_new_test_template.py">Add New Test Template</a></li>
+            <li><a class="dropdown-item" href="board_grade.py">Grade Board</a></li>
           </ul>
         </li>
         <li class="nav-item dropdown">
@@ -182,13 +195,10 @@ def top(static):
             <li><a class="dropdown-item" href="CompareTesters.py">Compare Testers</a></li>
             <li><a class="dropdown-item" href="X_PWRData.py">Startup Current and Voltage</a></li>
             <li><a class="dropdown-item" href="EClockData.py">E Clock Rates</a></li>
-            <li><a class="dropdown-item" href="I2CData.py">I2C</a></li>
-            <li><a class="dropdown-item" href="GPIO_functionality.py">GPIO Functionality</a></li>
             <li><a class="dropdown-item" href="ADC_functionality.py">ADC Functionality</a></li>
-            <li><a class="dropdown-item" href="UplinkQuality.py">Uplink Quality</a></li>
-            <li><a class="dropdown-item" href="FastCommandQualityData.py">Fast Command Quality</a></li>
-            <li><a class="dropdown-item" href="ELinkQualityData.py">E Link Quality</a></li>
+            <li><a class="dropdown-item" href="ELinkQualityData.py?elink=0">E Link Quality</a></li>
             <li><a class="dropdown-item" href="CurrentDrawData.py">Current Draw</a></li>
+            <li><a class="dropdown-item" href="CrossoverLinkData.py">Crossover Link Quality</a></li>
           </ul>
         </li>
         <li class="nav-item">
@@ -281,6 +291,9 @@ def bottom(static):
           <li>
             <a href="../WagonDB/home_page.py" class="text-light text-decoration-none">HGCAL Wagon Test</a>
           </li>
+            <li>
+                <a href="https://sites.google.com/umn.edu/cms-hgcal-factory/home" class="text-light text-decoration-none">HGCAL Factory</a>
+            </li>
         </ul>
       </div>
     </div>

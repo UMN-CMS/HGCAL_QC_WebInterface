@@ -12,7 +12,7 @@ import pickle
 path = os.path.dirname(os.path.abspath(__file__))
 
 db = connect(0)
-cur = db.cursor()
+cur = db.cursor(buffered=True)
 
 def get_test():
     csv_file = io.StringIO()
@@ -107,7 +107,7 @@ def get_adc_functionality():
     boards_list = cur.fetchall()
     Tests = []
     for b in boards_list:
-        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],test_type_id))
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],type_id))
         test_id = cur.fetchone()
         if test_id:
             Tests.append(test_id)
@@ -134,7 +134,9 @@ def get_adc_functionality():
 
             for j in resist_keys:
                 Resistance = Attach_Data[n]['engine_all_rtd'][j]
-                writer_1.writerow({'Test ID': TestIDs[n][0], 'E Link': j, 'Resistance': Resistance})
+                if j == 'THERM':
+                    continue
+                writer_1.writerow({'Test ID': Tests[n][0], 'E Link': j, 'Resistance': Resistance})
 
             # format is different for some older tests so this converts
             for k in volt_keys:
@@ -151,7 +153,7 @@ def get_adc_functionality():
                     v = k
                         
                 Voltage = Attach_Data[n]['int_volts'][k]
-                writer_2.writerow({'Test ID': TestIDs[n][0], 'ADC': v, 'Voltage': Voltage})
+                writer_2.writerow({'Test ID': Tests[n][0], 'ADC': v, 'Voltage': Voltage})
 
             # format is different for some older tests so this converts
             for l in temp_keys:
@@ -168,7 +170,7 @@ def get_adc_functionality():
                     Temp = Attach_Data[n]['temp'][l]['temperature']
                 except:
                     Temp = Attach_Data[n]['temp'][l]
-                writer_3.writerow({'Test ID': TestIDs[n][0], 'Chip': v, 'Temperature': Temp})
+                writer_3.writerow({'Test ID': Tests[n][0], 'Chip': v, 'Temperature': Temp})
 
             for i in adc_keys:
                 try:
@@ -180,7 +182,7 @@ def get_adc_functionality():
                     intercept = Attach_Data[n]['walk_engine_read_adc'][i]['intercept']
                     r2 = Attach_Data[n]['walk_engine_read_adc'][i]['rsquared']
 
-                writer_4.writerow({'Test ID': TestIDs[n][0], 'ADC': i, 'slope': slope, 'intercept': intercept, 'rsquared': r2})
+                writer_4.writerow({'Test ID': Tests[n][0], 'ADC': i, 'slope': slope, 'intercept': intercept, 'rsquared': r2})
         except KeyError:
             pass
 
@@ -204,7 +206,7 @@ def get_eclock_rates():
     boards_list = cur.fetchall()
     Tests = []
     for b in boards_list:
-        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],test_type_id))
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],type_id))
         test_id = cur.fetchone()
         if test_id:
             Tests.append(test_id)
@@ -218,14 +220,17 @@ def get_eclock_rates():
 
     writer.writeheader()
     for n in range(len(Attach_Data)):
-        writer.writerow({'Test ID': TestIDs[n][0],
-                        'Module 1': Attach_Data[n][0],
-                        'Module 2': Attach_Data[n][1],
-                        'Module 3': Attach_Data[n][2],
-                        'Module 4': Attach_Data[n][3],
-                        'Module 5': Attach_Data[n][4],
-                        'Module 6': Attach_Data[n][5],
-                        'Module 7': Attach_Data[n][6],})
+        try:
+            writer.writerow({'Test ID': Tests[n][0],
+                            'Module 1': Attach_Data[n][0],
+                            'Module 2': Attach_Data[n][1],
+                            'Module 3': Attach_Data[n][2],
+                            'Module 4': Attach_Data[n][3],
+                            'Module 5': Attach_Data[n][4],
+                            'Module 6': Attach_Data[n][5],
+                            'Module 7': Attach_Data[n][6],})
+        except:
+            continue
 
     csv_file.seek(0)
 
@@ -245,7 +250,7 @@ def get_xpwr():
     boards_list = cur.fetchall()
     Tests = []
     for b in boards_list:
-        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],test_type_id))
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],type_id))
         test_id = cur.fetchone()
         if test_id:
             Tests.append(test_id)
@@ -258,18 +263,21 @@ def get_xpwr():
             Attach_Data.append(json.loads(i[1]))
 
     for n in range(len(Attach_Data)):
-        writer.writerow({'Test ID': TestIDs[n][0], 'Voltage': Attach_Data[n]['voltage']})
+        writer.writerow({'Test ID': Tests[n][0], 'Voltage': Attach_Data[n]['voltage']})
 
     csv_file.seek(0)
 
     return csv_file
 
 def get_elink_quality():
-    csv_file = io.StringIO()
+    header = ['Test ID', 'Phase', 'Bit Errors']
+    writers = {}
+    csvs = {}
+    for i in range(42):
+        csvs[i] = io.StringIO()
 
-    header = ['Test ID', 'Phase', 'E Link', 'Bit Errors']
-    writer = csv.DictWriter(csv_file, fieldnames=header)
-    writer.writeheader()
+        writers[i] = csv.DictWriter(csvs[i], fieldnames=header)
+        writers[i].writeheader()
 
     cur.execute('select test_type from Test_Type where name="Elink Quality"')
     type_id = cur.fetchall()[0][0]
@@ -278,7 +286,7 @@ def get_elink_quality():
     boards_list = cur.fetchall()
     Tests = []
     for b in boards_list:
-        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],test_type_id))
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],type_id))
         test_id = cur.fetchone()
         if test_id:
             Tests.append(test_id)
@@ -294,11 +302,15 @@ def get_elink_quality():
         keys = Attach_Data[n].keys()
         for k in keys:
             for v in Attach_Data[n][k]:
-                writer.writerow({'Test ID': TestIDs[n][0], 'Phase': k, 'E Link': v[0], 'Bit Errors': v[1]})
+                try:
+                    writers[v[0]].writerow({'Test ID': Tests[n][0], 'Phase': k, 'Bit Errors': v[1]})
+                except KeyError:
+                    continue
 
-    csv_file.seek(0)
+    for i in range(42):
+        csvs[i].seek(0)
 
-    return csv_file
+    return csvs
 
 def get_fast_command():
     csv_file = io.StringIO()
@@ -314,7 +326,7 @@ def get_fast_command():
     boards_list = cur.fetchall()
     Tests = []
     for b in boards_list:
-        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],test_type_id))
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],type_id))
         test_id = cur.fetchone()
         if test_id:
             Tests.append(test_id)
@@ -331,7 +343,7 @@ def get_fast_command():
             keys = Attach_Data[n].keys()
             for k in keys:
                 for idx,v in enumerate(Attach_Data[n][k]):
-                    writer.writerow({'Test ID': TestIDs[n][0], 'Phase': k, 'Channel': idx, 'Bit Errors': v})
+                    writer.writerow({'Test ID': Tests[n][0], 'Phase': k, 'Channel': idx, 'Bit Errors': v})
         except AttributeError:
             pass
 
@@ -353,7 +365,7 @@ def get_uplink_quality():
     boards_list = cur.fetchall()
     Tests = []
     for b in boards_list:
-        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],test_type_id))
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],type_id))
         test_id = cur.fetchone()
         if test_id:
             Tests.append(test_id)
@@ -367,7 +379,10 @@ def get_uplink_quality():
 
     for n in range(len(Attach_Data)):
         for i in Attach_Data[n]:
-            writer.writerow({'Test ID': TestIDs[n][0], 'Module': i[0], 'Bit Errors': i[1]})
+            try:
+                writer.writerow({'Test ID': Tests[n][0], 'Module': i[0], 'Bit Errors': i[1]})
+            except:
+                continue
 
     csv_file.seek(0)
 
@@ -387,7 +402,7 @@ def get_i2c():
     boards_list = cur.fetchall()
     Tests = []
     for b in boards_list:
-        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],test_type_id))
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],type_id))
         test_id = cur.fetchone()
         if test_id:
             Tests.append(test_id)
@@ -400,11 +415,14 @@ def get_i2c():
             Attach_Data.append(json.loads(i[1]))
 
     for n in range(len(Attach_Data)):
-        keys = Attach_Data[n].keys()
-        for k in keys:
-            keys_2 = Attach_Data[n][k].keys()
-            for v in keys_2:
-                writer.writerow({'Test ID': TestIDs[n][0], 'Connector': k, 'Channel': v, 'Bit Errors': Attach_Data[n][k][v]})
+        try:
+            keys = Attach_Data[n].keys()
+            for k in keys:
+                keys_2 = Attach_Data[n][k].keys()
+                for v in keys_2:
+                    writer.writerow({'Test ID': Tests[n][0], 'Connector': k, 'Channel': v, 'Bit Errors': Attach_Data[n][k][v]})
+        except:
+            continue
 
     csv_file.seek(0)
 
@@ -428,7 +446,7 @@ def get_gpio_functionality():
     boards_list = cur.fetchall()
     Tests = []
     for b in boards_list:
-        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],test_type_id))
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],type_id))
         test_id = cur.fetchone()
         if test_id:
             Tests.append(test_id)
@@ -454,16 +472,16 @@ def get_gpio_functionality():
                 
                 for c in chips:
                     if c in read_keys and c in write_keys:
-                        writer.writerow({'Test ID': TestIDs[i][0], 'Pin': c, 'Read': 0, 'Write': 0})
+                        writer.writerow({'Test ID': Tests[i][0], 'Pin': c, 'Read': 0, 'Write': 0})
                     elif c in read_keys and c not in write_keys:
-                        writer.writerow({'Test ID': TestIDs[i][0], 'Pin': c, 'Read': 0, 'Write': 1})
+                        writer.writerow({'Test ID': Tests[i][0], 'Pin': c, 'Read': 0, 'Write': 1})
                     elif c in write_keys and c not in read_keys:
-                        writer.writerow({'Test ID': TestIDs[i][0], 'Pin': c, 'Read': 1, 'Write': 0})
+                        writer.writerow({'Test ID': Tests[i][0], 'Pin': c, 'Read': 1, 'Write': 0})
                     else:
-                        writer.writerow({'Test ID': TestIDs[i][0], 'Pin': c, 'Read': 1, 'Write': 1})
+                        writer.writerow({'Test ID': Tests[i][0], 'Pin': c, 'Read': 1, 'Write': 1})
             except IndexError:
                 for c in chips:
-                        writer.writerow({'Test ID': TestIDs[i][0], 'Pin': c, 'Read': 1, 'Write': 1})
+                        writer.writerow({'Test ID': Tests[i][0], 'Pin': c, 'Read': 1, 'Write': 1})
             
             
         except json.decoder.JSONDecodeError:
@@ -483,26 +501,70 @@ def get_current_draw():
     cur.execute('select test_type from Test_Type where name="Current Draw"')
     type_id = cur.fetchall()[0][0]
 
-    cur.execute('select test_id from Test where test_type_id={}'.format(type_id))
-    TestIDs = cur.fetchall()
-
-    query = 'select attach from Attachments where '
-    for i in TestIDs:
-        query += 'test_id={}'.format(i[0])
-        if i is not TestIDs[-1]:
-            query += ' or '
-    cur.execute(query)
-    Attach = cur.fetchall()
+    cur.execute('select board_id from Board')
+    boards_list = cur.fetchall()
+    Tests = []
+    for b in boards_list:
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],type_id))
+        test_id = cur.fetchone()
+        if test_id:
+            Tests.append(test_id)
 
     Attach_Data = []
-    for i in Attach:
+    for i in Tests:
         try:
-            Attach_Data.append(json.loads(i[0])['test_data'])
-        except:
-            Attach_Data.append(json.loads(i[0]))
+            Attach_Data.append(json.loads(i[1])['test_data'])
+        except KeyError:
+            Attach_Data.append(json.loads(i[1]))
 
     for n in range(len(Attach_Data)):
-        writer.writerow({'Test ID': TestIDs[n][0], '1.5V Current': Attach_Data[n]['Current_1V5'], '10V Current': Attach_Data[n]['Current_10V']})
+        try:
+            writer.writerow({'Test ID': Tests[n][0], '1.5V Current': Attach_Data[n]['Current_1V5'], '10V Current': Attach_Data[n]['Current_10V']})
+        except KeyError:
+            continue
+
+    csv_file.seek(0)
+
+    return csv_file
+
+def get_crossover_link():
+    csv_file = io.StringIO()
+
+    header = ['Test ID', 'Crossover Link', 'Phase', 'Bit Errors']
+    writer = csv.DictWriter(csv_file, fieldnames=header)
+    writer.writeheader()
+
+    cur.execute('select test_type from Test_Type where name="Crossover link quality"')
+    type_id = cur.fetchall()[0][0]
+
+    cur.execute('select board_id from Board')
+    boards_list = cur.fetchall()
+    Tests = []
+    for b in boards_list:
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],type_id))
+        test_id = cur.fetchone()
+        if test_id:
+            Tests.append(test_id)
+
+    Attach_Data = []
+    for i in Tests:
+        try:
+            Attach_Data.append(json.loads(i[1])['test_data'])
+        except KeyError:
+            Attach_Data.append(json.loads(i[1]))
+
+    phases = [0, 50, 100, 150, 200, 250, 300, 350]
+
+    for n in range(len(Attach_Data)):
+        keys = Attach_Data[n].keys()
+        for k in keys:
+            for idx,v in enumerate(Attach_Data[n][k]):
+                try:
+                    if k == '3':
+                        continue
+                    writer.writerow({'Test ID': Tests[n][0], 'Crossover Link': k, 'Phase': phases[idx], 'Bit Errors': v})
+                except (KeyError, TypeError):
+                    continue
 
     csv_file.seek(0)
 
@@ -725,24 +787,16 @@ def write_board_statuses_file():
             except:
                 status[day][sn[3:5]][sn[3:9]]['Total'] = 1
 
-    with open('store_board_status.pkl', "wb") as f:
+    with open('/home/webapp/pro/HGCAL_QC_WebInterface/cgi-bin/EngineDB/cache/store_board_status.pkl', "wb") as f:
         pickle.dump(status, f)
 
 
 def get_board_statuses():
 
-    try:
-        last_modified = os.path.getmtime('store_board_status.pkl')
-    except:
-        last_modified = 0
-
-    if datetime.datetime.now().timestamp() - last_modified > 86400 or True:
-
-        p = mp.Process(target=write_board_statuses_file)
-        p.start()
-
-
-    with open('store_board_status.pkl', "rb") as f:
+    with open('/home/webapp/pro/HGCAL_QC_WebInterface/cgi-bin/EngineDB/cache/store_board_status.pkl', "rb") as f:
         status = pickle.load(f)
 
     return status
+
+def write_datafiles():
+    write_board_statuses_file()

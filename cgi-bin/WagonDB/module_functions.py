@@ -147,6 +147,12 @@ def add_test_tab(barcode, board_id, static):
         print('<button class="btn btn-dark"> Update Location </button>')
         print('</a>')
         print('</div>')
+        print('<div class="row">')
+        print('<div class="col-md-2 ps-5 pt-2 my-2">')
+        print('<a href="board_grade.py?board_id=?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':barcode, 'id':board_id})
+        print('<button class="btn btn-dark"> Grade Board </button>')
+        print('</a>')
+        print('</div>')
         print('</div>')
 
 
@@ -285,7 +291,10 @@ def board_info(sn, static):
         cur.execute('select Attach from Attachments where test_id=%s' % test_id)
         attach = cur.fetchall()[0][0]
         attach = json.loads(attach)
-        id_resistance = attach['wagon type chip']['WAGON_TYPE -> GND']
+        try:
+            id_resistance = attach['test_data']['wagon type chip']['WAGON_TYPE -> GND']
+        except:
+            id_resistance = attach['wagon type chip']['WAGON_TYPE -> GND']
     except:
         test_id = 'No tests run'
         attach = 'none'
@@ -305,6 +314,7 @@ def board_info(sn, static):
     if registered:
         if registered[0][0] == 1:
             registered = '<td class="bg-success">&nbsp</td>'
+            registered = '<td colspan=1><span class="badge bg-success rounded-pill">Done</span></td>'
         else:
             registered = '<td class="bg-danger">&nbsp</td>'
     else:

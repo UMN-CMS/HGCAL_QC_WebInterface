@@ -4,7 +4,7 @@ import cgi, html
 import cgitb
 import base
 import sys
-from hold_filter_boardsd import Filter
+from filter_boards import Filter
 
 def run(static):
     base.header(title='Search Boards')

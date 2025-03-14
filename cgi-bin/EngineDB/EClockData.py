@@ -12,6 +12,11 @@ def run(static):
     base.top(static)
 
     print('''
+    <div class="row">
+    <div class="col-md-12 pt-4 ps-5 mx-2 my-2">
+    <h5> These rates are relative to 320640000 Hz </h5>
+    </div>
+    </div>
     <div id='exfilter' class='bk-root'></div>
     <script>
     data = {};
