@@ -6,8 +6,8 @@ import sys
 sys.path.insert(0, '../../hgcal-label-info/label-authority/')
 import label_authority as la
 
-cnx = connect(1)
-cur = cnx.cursor()
+#cnx = connect(1)
+#cur = cnx.cursor()
 
 # updates the tables with the most recent data from the dictionary
 def update_metatables(majortypes):
