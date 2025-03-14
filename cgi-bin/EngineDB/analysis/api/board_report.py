@@ -12,7 +12,7 @@ from collections import defaultdict
 import connect
 from latest_tests import getLatestResults
 from needed_tests import getNeededTests
-from util import cacheDisk, catchExceptions
+from util import cacheDisk, catchExceptions, compileRuleSet
 
 
 class TestState(str, enum.Enum):
@@ -25,68 +25,19 @@ VIRTUAL_TESTS = ["Registered"]
 VISUAL_INPECTION_NAME = "Visual Inspection"
 THERMAL_INPECTION_NAME = "Thermal Cycle"
 
+rules = {
+    "AmbientQCPassed": ["EQ", ["NOT", "Registered", "Thermal Cycle"], TestState.PASSED],
+    "VisualInspected": ["EQ", VISUAL_INPECTION_NAME, TestState.PASSED],
+    "Failed": ["EQ", ["ANYNOT", "_"], TestState.FAILED],
+    "QCPassed": ["EQ", ["NOT", "Registered"], TestState.PASSED],
+    "ReadyToShip": ["EQ", ["NOT", "_"], TestState.PASSED],
+}
 
-class HasAnyNonVirtual(object):
-    flag_name = "PartiallyTested"
-
-    def reset(self):
-        self.has_flag = False
-
-    def __call__(self, test_name, test_state):
-        if test_name not in VIRTUAL_TESTS and test_name != VISUAL_INPECTION_NAME:
-            if test_state != TestState.NOT_RUN:
-                self.has_flag = True
-
-
-class HasPassed(object):
-    flag_name = "QCPassed"
-
-    def reset(self):
-        self.has_flag = True
-
-    def __call__(self, test_name, test_state):
-        if test_name not in VIRTUAL_TESTS:
-            self.has_flag = self.has_flag and test_state == TestState.PASSED
-
-
-class HasFailed(object):
-    flag_name = "Failed"
-
-    def reset(self):
-        self.has_flag = False
-
-    def __call__(self, test_name, test_state):
-        if test_state == TestState.FAILED:
-            self.has_flag = True
-
-
-class HasAllNonThermal(object):
-    flag_name = "AmbientQCPassed"
-
-    def reset(self):
-        self.has_flag = True
-
-    def __call__(self, test_name, test_state):
-        if test_name not in VIRTUAL_TESTS:
-            if test_name == THERMAL_INPECTION_NAME:
-                self.has_flag = self.has_flag and test_state == TestState.NOT_RUN
-            else:
-                self.has_flag = self.has_flag and test_state == TestState.PASSED
-
-
-flaggers = [HasAllNonThermal(), HasFailed(), HasAnyNonVirtual(), HasPassed()]
-
+rule_set = compileRuleSet(rules, lambda d,x: d[x]["test_state"])
 
 def getBoardQCState(test_states):
-    for flagger in flaggers:
-        flagger.reset()
-    for item in test_states.items():
-        for flagger in flaggers:
-            flagger(*item)
-    return [x.flag_name for x in flaggers if x.has_flag]
-
-
-state_flags = {}
+    # print(test_states)
+    return rule_set(test_states)
 
 
 class Board:
@@ -99,7 +50,7 @@ class Board:
         self.checkin_time = checkin_time
 
 
-@cacheDisk()
+# @cacheDisk()
 def getBoards(subtypes=None, start_date=None, end_date=None):
     db = connect.connect(0)
     cur = db.cursor(dictionary=True)
@@ -129,7 +80,7 @@ def getBoards(subtypes=None, start_date=None, end_date=None):
     return data
 
 
-@cacheDisk()
+# @cacheDisk()
 def getTests(test_ids):
     db = connect.connect(0)
     cur = db.cursor(dictionary=True)
@@ -152,7 +103,7 @@ def getTests(test_ids):
     return data
 
 
-@cacheDisk()
+# @cacheDisk()
 def getBoardStates(subtypes=None, start_date=None, end_date=None):
     boards = getBoards(subtypes, start_date, end_date)
     needed_data = getNeededTests()

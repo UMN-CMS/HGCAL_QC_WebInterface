@@ -88,6 +88,16 @@ base.top(False)
 form = cgi.FieldStorage()
 test_dict = parse_data(form)
 
+
+#######################################################
+# TEMPORARY FIX FOR COMMENT STRINGS THAT ARE TOO LONG #
+#######################################################
+
+test_dict['comments'] = test_dict['comments'][:320]
+
+# SHOULD REMOVE AND UPDATE TABLE TO ACCEPT LONGER COMMENTS
+
+
 test_id = add_test_functions_engine.add_test(test_dict['person_id'], test_dict['test'], test_dict['full_id'], test_dict['successful'], test_dict['comments'], test_dict['config_id'])
 
 if test_id:
@@ -106,8 +116,8 @@ if test_id:
                 acomment = html.escape(acomment)
             add_test_functions_engine.add_test_attachment(test_id,afile,adesc,acomment)
 
-    if test_dict['test'] == 'LPGBT ID':
-        add_test_functions_engine.set_daq_chip_id(test_dict['full_id'], test_id)
+#    if test_dict['test'] == 'LPGBT ID':
+#        add_test_functions_engine.set_daq_chip_id(test_dict['full_id'], test_id)
 
 base.bottom(False)
 

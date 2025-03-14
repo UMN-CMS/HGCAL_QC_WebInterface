@@ -62,11 +62,11 @@ def render_list_tests():
 
         cur.execute('select type_id from Board_type where type_sn="%s"' % s[0])
         type_id = cur.fetchall()[0][0]
-        cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
+        cur.execute('select Test_Type.test_type, Test_Type.name from Type_test_stitch join Test_Type on Type_test_stitch.test_type_id=Test_Type.test_type where Type_test_stitch.type_id=%s' % type_id)
         temp = cur.fetchall()
         stitch_types = []
         for test in temp:
-            stitch_types.append(test[0])
+            stitch_types.append(test)
         
         boards = {}
         print('<div class="collapse" id="boardstable%s">' % s[0])
@@ -75,23 +75,23 @@ def render_list_tests():
             print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': b[0]})
             failed = {}
             outcomes = {}
-            # makes an array of falses the length of the number of tests
-            for t in stitch_types:
-                outcomes[t] = False
-                failed[t] = False
-
             cur.execute('select board_id from Board where full_id="%s"' % b)
             board_id = cur.fetchall()[0][0]
-            cur.execute('select test_type_id, successful, day from Test where board_id=%s order by day desc, test_id desc' % board_id)
-            temp = cur.fetchall()
-            ids = []
-            for t in temp:
-                if t[0] not in ids:
-                    if t[1] == 1:
-                        outcomes[t[0]] = True
-                    else:
-                        failed[t[0]] = True
-                ids.append(t[0])
+            # makes an array of falses the length of the number of tests
+            for t in stitch_types:
+
+                cur.execute('select successful from Test where board_id=%s and test_type_id=%s order by day desc, test_id desc' % (board_id, t[0]))
+                temp = cur.fetchall()
+
+                if not temp:
+                    outcomes[t[1]] = False
+                    failed[t[1]] = False
+                elif temp[0][0] == 1:
+                    outcomes[t[1]] = True
+                    failed[t[1]] = False
+                else:
+                    outcomes[t[1]] = False
+                    failed[t[1]] = True
 
             num_tests_passed = list(outcomes.values()).count(True)
             num_tests_req = len(outcomes.values())
@@ -109,8 +109,7 @@ def render_list_tests():
                     if num_tests_passed == num_tests_req:
                         boards[b[0]] = 'Passed'
                     else:
-                        # registered has a test id of 7
-                        if (num_tests_passed == num_tests_req-1 and outcomes[7] == False):
+                        if (num_tests_passed == num_tests_req-1 and outcomes['Registered'] == False):
                             boards[b[0]] = 'Not Registered'
                         else:
                             boards[b[0]] = 'Awaiting'

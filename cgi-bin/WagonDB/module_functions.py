@@ -314,6 +314,7 @@ def board_info(sn, static):
     if registered:
         if registered[0][0] == 1:
             registered = '<td class="bg-success">&nbsp</td>'
+            registered = '<td colspan=1><span class="badge bg-success rounded-pill">Done</span></td>'
         else:
             registered = '<td class="bg-danger">&nbsp</td>'
     else:
