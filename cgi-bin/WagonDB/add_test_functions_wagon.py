@@ -618,3 +618,43 @@ def add_board_grade(passwd, board_id, person_id, grade, comments):
         print('<h3> Attempt Failed. Please Ensure All Fields are Filled </h3>')
         print('</div>')
         print('</div>')
+
+def register_boards_form():
+
+    db = connect(0)
+    cur = db.cursor()
+
+    print('<form action="register_boards_submit.py" method="post" enctype="multipart/form-data">')
+    print('<div class="row">')
+    print('<div class="col-md-12 pt-4 ps-5 mx-2 my-2">')
+    print('<h2>Board Registration</h2>')
+    print('</div>')
+    print('</div>')
+
+    # gives options for tester
+    cur.execute("Select person_id, person_name from People;")
+
+    print('<div class="row">')
+    print('<div class="col-md-3 pt-2 ps-5 mx-2 my-2">')
+    print('<label>Tester')
+    print('<select class="form-control" name="person_id">')
+    for person_id in cur:
+        print("<option value='%s'>%s</option>" % ( person_id[0] , person_id[1] ))
+                        
+    print('</select>')
+    print('</label>')
+    print('</div>')
+    print('<div class="row">')
+    print('<div class="col-md-2 pt-2 ps-5 mx-2 my-2">')
+    print("<b>Boards CSV:</b>")
+    print('</div><div class="col-md-5 pt-2 ps-5 mx-2 my-2">')
+    print("<input type='file' class='form-control' name='boards'>")
+    print('</div>')
+
+    print('<div class="row">')
+    print('<div class="col-md-6 pt-2 ps-5 mx-2 my-2">')
+    print('<input type="submit" class="btn btn-dark" value="Submit">')
+    print('</div>')
+    print('</div>')
+
+    print('</form>')
