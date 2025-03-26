@@ -1,8 +1,10 @@
 #!../../cgi_runner.sh
 
+import cgi
 import itertools as it
 import json
 from util import  getBothConnections
+import asyncio
 
 
 
@@ -64,7 +66,7 @@ def sendError(string):
     print(json.dumps({"error": string}))
 
 
-def getLatestResults(
+async def getLatestResults(
     include_attach=False,
     include_tests=None,
     start_date=None,
@@ -134,12 +136,7 @@ def getLatestResults(
     return all_data
 
 
-def main():
-    print("Content-Type: application/json\n\n")
-
-    args = cgi.parse()
-    attach = False
-
+async def main(args):
     include_attach = bool(json.loads(args.get("include_attach", ["false"])[0]))
     include_tests = args.get("test")
     start_date = args.get("start_date") and args.get("start_date")[0]
@@ -147,8 +144,7 @@ def main():
     subtypes = args.get("subtypes")
     full_id = args.get("full_id")
     jq_expr = args.get("jq_expr")
-
-    data = getLatestResults(
+    data = await getLatestResults(
         include_attach=include_attach,
         include_tests=include_tests,
         start_date=start_date,
@@ -162,4 +158,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    print("Content-Type: application/json\n\n")
+    args = cgi.parse()
+    attach = False
+
+    asyncio.run(main(args))

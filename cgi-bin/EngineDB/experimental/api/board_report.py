@@ -6,7 +6,9 @@ import enum
 import json
 from latest_tests import getLatestResults
 from needed_tests import getNeededTests
-from util import  catchExceptions, compileRuleSet, getBothConnections
+from util import catchExceptions, compileRuleSet, getBothConnections
+
+import asyncio
 
 
 class TestState(str, enum.Enum):
@@ -19,22 +21,28 @@ VIRTUAL_TESTS = ["Registered"]
 VISUAL_INPECTION_NAME = "Visual Inspection"
 THERMAL_INPECTION_NAME = "Thermal Cycle"
 
-engine_rules = {
-    "AmbientQCPassed": ["EQ", ["NOT", "Registered", "Thermal Cycle"], TestState.PASSED],
+common_rules = {
     "VisualInspected": ["EQ", VISUAL_INPECTION_NAME, TestState.PASSED],
     "Failed": ["EQ", ["ANYNOT", "_"], TestState.FAILED],
-    "QCPassed": ["EQ", ["NOT", "Registered"], TestState.PASSED],
-    "ReadyToShip": ["EQ", ["NOT", "_"], TestState.PASSED],
-}
-wagon_rules = {
-    "VisualInspected": ["EQ", VISUAL_INPECTION_NAME, TestState.PASSED],
-    "Failed": ["EQ", ["ANYNOT", "_"], TestState.FAILED],
-    "QCPassed": ["EQ", ["NOT", "Registered"], TestState.PASSED],
-    "ReadyToShip": ["EQ", ["NOT", "_"], TestState.PASSED],
+    "QCPassed": ["EQ", ["NOT", "Registered", "Shipped"], TestState.PASSED],
+    "Shipped": ["EQ", "Shipped", TestState.PASSED],
+    "ReadyToShip": [
+        "AND",
+        ["EQ", ["NOT", "Shipped"], TestState.PASSED],
+        ["EQ", "Shipped", TestState.NOT_RUN],
+    ],
 }
 
-rule_set_engine = compileRuleSet(engine_rules, lambda d,x: d[x]["test_state"])
-rule_set_wagon = compileRuleSet(wagon_rules, lambda d,x: d[x]["test_state"])
+engine_rules = {
+    "AmbientQCPassed": ["EQ", ["NOT", "Registered", "Thermal Cycle"], TestState.PASSED],
+    **common_rules,
+}
+
+wagon_rules = common_rules
+
+rule_set_engine = compileRuleSet(engine_rules, lambda d, x: d[x]["test_state"])
+rule_set_wagon = compileRuleSet(wagon_rules, lambda d, x: d[x]["test_state"])
+
 
 def getBoardQCState(fid, test_states):
     try:
@@ -47,20 +55,25 @@ def getBoardQCState(fid, test_states):
 
 
 class Board:
-    __slots__ = ("board_id", "full_id", "subtype", "checkin_time")
+    __slots__ = ("board_id", "full_id", "subtype", "checkin_time", "shipped")
 
-    def __init__(self, board_id, full_id, subtype, checkin_time):
+    def __init__(self, board_id, full_id, subtype, checkin_time, shipped=None):
+        if shipped == "None":
+            shipped = None
         self.board_id = board_id
         self.full_id = full_id
         self.subtype = subtype
         self.checkin_time = checkin_time
+        self.shipped = shipped
 
 
 # @cacheDisk()
-def getBoards(db, subtypes=None, start_date=None, end_date=None):
+async def getBoards(db, subtypes=None, start_date=None, end_date=None):
     cur = db.cursor(dictionary=True)
-    query = """SELECT Board.board_id, Board.type_id as subtype, Board.full_id, Check_In.checkin_date as checkin_time FROM Board
-    left join Check_In on Check_In.board_id = Board.board_id """
+    query = """SELECT Board.board_id, Board.type_id as subtype, Board.full_id, Check_In.checkin_date as checkin_time, Check_Out.comment as shipped FROM Board
+    left join Check_In on Check_In.board_id = Board.board_id
+    left join Check_Out on Check_Out.board_id = Board.board_id
+    """
     where_parts = []
     if start_date:
         where_parts.append(("Check_In.checkin_date > %s", (start_date,)))
@@ -86,7 +99,7 @@ def getBoards(db, subtypes=None, start_date=None, end_date=None):
 
 
 # @cacheDisk()
-def getTests(db, test_ids):
+async def getTests(db, test_ids):
     cur = db.cursor(dictionary=True)
     q = """SELECT Test.test_id, Test.successful, A.attach, Test.comments
     FROM Test
@@ -99,21 +112,16 @@ def getTests(db, test_ids):
     WHERE Test.test_id IN ( """
     q += ",".join(["%s"] * len(test_ids))
     q += ");"
-    # print(q)
-    # print(test_ids)
     cur.execute(q, test_ids)
-
     data = {x["test_id"]: x for x in (cur.fetchall())}
     return data
 
-
-# @cacheDisk()
-def getBoardStates(subtypes=None, start_date=None, end_date=None):
+async def getBoardStates(subtypes=None, start_date=None, end_date=None, qc_states=None):
     ret = {}
     for db in getBothConnections():
-        boards = getBoards(db,subtypes, start_date, end_date)
-        needed_data = getNeededTests()
-        latest_tests = getLatestResults(
+        boards = await getBoards(db, subtypes, start_date, end_date)
+        needed_data = await getNeededTests()
+        latest_tests = await getLatestResults(
             subtypes=subtypes, start_date=start_date, end_date=end_date, dbs=[db]
         )
 
@@ -127,6 +135,7 @@ def getBoardStates(subtypes=None, start_date=None, end_date=None):
                 "board_id": bid,
                 "check_in": board.checkin_time,
                 "typecode": board.subtype,
+                "shipped": board.shipped,
                 "test_status": {
                     x["test_name"]: {
                         "test_state": TestState.NOT_RUN,
@@ -137,15 +146,29 @@ def getBoardStates(subtypes=None, start_date=None, end_date=None):
         for test in latest_tests:
             try:
                 v = thisdata[test["full_id"]]["test_status"][test["test_name"]]
-                v["test_state"] = TestState.PASSED if test["successful"] else TestState.FAILED
+                v["test_state"] = (
+                    TestState.PASSED if test["successful"] else TestState.FAILED
+                )
             except KeyError as e:
                 pass
 
-            v["test_id"] = test["test_id"]
+            # v["test_id"] = test["test_id"]
             v["test_comment"] = test["comments"]
 
         for board in thisdata.values():
-            board["qc_states"] = getBoardQCState(board["full_id"], board["test_status"])
+            s = board["test_status"]
+            s["Shipped"] = {
+                "test_state": (
+                    TestState.PASSED if board["shipped"] else TestState.NOT_RUN
+                )
+            }
+            board["qc_states"] = getBoardQCState(board["full_id"], s)
+        if qc_states:
+            to_add = {}
+            for k, v in thisdata.items():
+                if any(x in qc_states for x in v["qc_states"]):
+                    to_add[k] = v
+            thisdata = to_add
         ret.update(thisdata)
 
     return ret
@@ -162,7 +185,7 @@ def filterStates(data, filter_states):
     return ret
 
 
-def addAttachments(data, include_tests=None):
+async def addAttachments(data, include_tests=None):
     all_ids = []
     for d in data.values():
         all_ids += [
@@ -170,7 +193,7 @@ def addAttachments(data, include_tests=None):
             for k, x in d["test_status"].items()
             if "test_id" in x and (not include_tests or k in include_tests)
         ]
-    attachments = getTests(all_ids)
+    attachments = await getTests(all_ids)
     for d in data.values():
         for v in d["test_status"].values():
             if "test_id" in v:
@@ -182,6 +205,7 @@ def parseArgs():
     args = dict(cgi.parse().items())
     include_attach = args.pop("include_attach", [])
     limit_subtypes = args.pop("subtypes", None)
+    qc_states = args.pop("qc_states", None)
     checkin_start = args.pop("start", [None])[0]
     checkin_end = args.pop("end", [None])[0]
     return dict(
@@ -190,40 +214,41 @@ def parseArgs():
         checkin_end=checkin_end,
         include_attach=include_attach,
         filter_states={x: TestState[y[0]] for x, y in args.items()},
+        qc_states=qc_states,
     )
 
 
-def boardReport(
+async def boardReport(
     limit_subtypes=None,
     checkin_start=None,
     checkin_end=None,
     filter_states=None,
     include_attach=None,
+    qc_states=None,
 ):
-    needed_data = getNeededTests()
-    latest_tests = getLatestResults()
-    data = getBoardStates(limit_subtypes, checkin_start, checkin_end)
+
+    data = await getBoardStates(limit_subtypes, checkin_start, checkin_end, qc_states)
     if filter_states:
-        data = filterStates(data, filter_states)
+        data = await filterStates(data, filter_states)
     if include_attach and data:
-        addAttachments(data, include_attach)
-    print(json.dumps(data, default=str))
+        await addAttachments(data, include_attach)
+    return data
 
 
-#@catchExceptions
-def main():
-    print("Content-Type: application/json\n\n")
+# @catchExceptions
+async def main():
     args = parseArgs()
-    needed_data = getNeededTests()
-    latest_tests = getLatestResults()
-    return boardReport(
+    d = await boardReport(
         args["limit_subtypes"],
         args["checkin_start"],
         args["checkin_end"],
         args["filter_states"],
         args["include_attach"],
+        args["qc_states"],
     )
+    print(json.dumps(d, default=str))
 
 
 if __name__ == "__main__":
-    main()
+    print("Content-Type: application/json\n\n")
+    asyncio.run(main())
