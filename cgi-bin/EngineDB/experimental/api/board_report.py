@@ -22,6 +22,11 @@ VISUAL_INPECTION_NAME = "Visual Inspection"
 THERMAL_INPECTION_NAME = "Thermal Cycle"
 
 common_rules = {
+    "Checked-In": [
+        "OR",
+        ["EQ", VISUAL_INPECTION_NAME, TestState.PASSED],
+        ["EQ", VISUAL_INPECTION_NAME, TestState.FAILED],
+    ],
     "VisualInspected": ["EQ", VISUAL_INPECTION_NAME, TestState.PASSED],
     "Failed": ["EQ", ["ANYNOT", "_"], TestState.FAILED],
     "QCPassed": ["EQ", ["NOT", "Registered", "Shipped"], TestState.PASSED],
@@ -116,9 +121,10 @@ async def getTests(db, test_ids):
     data = {x["test_id"]: x for x in (cur.fetchall())}
     return data
 
+
 async def getBoardStates(subtypes=None, start_date=None, end_date=None, qc_states=None):
     ret = {}
-    for db in getBothConnections():
+    for db in await getBothConnections():
         boards = await getBoards(db, subtypes, start_date, end_date)
         needed_data = await getNeededTests()
         latest_tests = await getLatestResults(
