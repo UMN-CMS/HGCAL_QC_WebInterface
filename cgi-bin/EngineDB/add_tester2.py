@@ -2,12 +2,10 @@
 
 import cgi, html
 import base
-import add_test_functions_engine
+import add_test_functions
 import os
 import connect
 import sys
-sys.path.append('../WagonDB/')
-import add_test_functions_wagon
 
 base_url = connect.get_base_url()
 
@@ -24,7 +22,7 @@ base.top(False)
 
 
 print(person_name)
-add_test_functions_engine.add_tester(person_name, password)
-add_test_functions_wagon.add_tester(person_name, password)
+add_test_functions.add_tester(person_name, password, 'Engine')
+add_test_functions.add_tester(person_name, password, 'Wagon')
 
 base.bottom(False)

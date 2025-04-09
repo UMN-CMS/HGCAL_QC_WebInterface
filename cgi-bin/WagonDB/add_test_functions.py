@@ -250,9 +250,9 @@ def add_test(person_id, test_type, barcode, success, comments, config_id):
 
 
 # Adds a tester person
-def add_tester(person_name, passwd):
+def add_tester(person_name, passwd, db):
     try:
-        db = connect_admin(passwd, 'Wagon')
+        db = connect_admin(passwd, db)
         cur = db.cursor()
     except Exception as e:
         print(e)

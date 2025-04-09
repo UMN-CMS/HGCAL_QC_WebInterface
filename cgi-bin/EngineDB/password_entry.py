@@ -3,7 +3,7 @@
 import cgi, html
 import base
 import home_page_list
-import add_test_functions_engine
+import add_test_functions
 
 
 #cgi header

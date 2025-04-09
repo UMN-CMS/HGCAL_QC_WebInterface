@@ -4,7 +4,7 @@ import connect
 import json
 import cgi, html
 import base
-import add_test_functions_wagon
+import add_test_functions
 
 def parse_data(form):
     try:
@@ -35,6 +35,8 @@ def parse_data(form):
             config_id = form.getvalue('config_id')
         except:
             config_id = None
+
+        print('config_id:', config_id)
 
     except KeyError: 
         print('Json must contain at least the following entries:\nserial\nboard_type\ntester\ntest\nsucessful\ncomments\n\nPlease double check your json file for these fields')
@@ -95,7 +97,7 @@ test_dict['comments'] = test_dict['comments'][:320]
 
 # SHOULD REMOVE AND UPDATE TABLE TO ACCEPT LONGER COMMENTS
 
-test_id = add_test_functions_wagon.add_test(test_dict['person_id'], test_dict['test'], test_dict['full_id'], test_dict['successful'], test_dict['comments'], test_dict['config_id'])
+test_id = add_test_functions.add_test(test_dict['person_id'], test_dict['test'], test_dict['full_id'], test_dict['successful'], test_dict['comments'], test_dict['config_id'])
 
 if test_id:
     for itest in range(1,4):
@@ -109,7 +111,7 @@ if test_id:
             acomment= form.getvalue("attachcomment%d"%(itest))
             if acomment:
                 acomment = html.escape(acomment)
-            add_test_functions_wagon.add_test_attachment(test_id,afile,adesc,acomment)
+            add_test_functions.add_test_attachment(test_id,afile,adesc,acomment)
 
 base.bottom(False)
 

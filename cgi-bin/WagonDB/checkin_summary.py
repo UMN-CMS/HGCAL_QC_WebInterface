@@ -37,6 +37,8 @@ def run(static):
     print('<tbody>')
     # iterates over all the rows in check_in
     for d in fetch:
+        if d[0] == 0:
+            continue
         print('<tr>')
         # gets the serial number from the board_id
         cur.execute('select full_id from Board where board_id=%s' % d[0])

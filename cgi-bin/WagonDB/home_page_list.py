@@ -44,7 +44,7 @@ def fetch_list_tests():
 def render_list_tests():
 
     print('<div class="col-md-11 mx-4 my-4"><table class="table table-bordered table-hover table-active">')
-    print('<tr><th>Subtype<th>Total Checked In<th>Awaiting Testing<th>QC Passed, Awaiting Registration<th>Ready for Shipping<th>Shipped<th>Have Failures</tr>')
+    print('<tr><th>Subtype<th>Nickname<th>Total Checked In<th>Awaiting Testing<th>QC Passed, Awaiting Registration<th>Ready for Shipping<th>Shipped<th>Have Failures</tr>')
 
     cur.execute('select distinct type_id from Board order by type_id')
     subtypes = cur.fetchall()
@@ -53,9 +53,14 @@ def render_list_tests():
         print('<td>%s</td>' % s[0])
         cur.execute('select full_id from Board where type_id="%s"' % s[0])
         boards_list = cur.fetchall()
+
+        cur.execute('select name from Board_type where type_sn="%s"' % s[0])
+        nickname = cur.fetchall()[0][0]
         print('<td>')
+        print(nickname)
+        print('</td>')
 
-
+        print('<td>')
         print('<div class="list-group list-group-flush">')
         print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#boardstable%s">%s</a>' % (s[0], len(boards_list)))
         print('</div>')

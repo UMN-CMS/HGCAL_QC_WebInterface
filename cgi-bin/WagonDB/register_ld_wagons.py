@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import sys
 import json 
 import csv
 import logging
@@ -13,6 +14,9 @@ logger = logging.getLogger(__name__)
 # Constants
 LOCATION = "UMN"
 INSTITUTION = "UMN"
+
+MANU_RENAMES = { "Poly" : "PolyElectronics" }
+
 
 # Helper Functions
 def filter_boards(cur) -> list:
@@ -86,7 +90,10 @@ def get_manufacturer(cur, barcode):
         if len(name_parts) < 2:
             logger.warning(f"Manufacturer name '{name}' does not contain a hyphen")
             return None
-        return name_parts[1].strip()
+        name_asm = name_parts[1].strip()
+        if name_asm in MANU_RENAMES:
+            name_asm = MANU_RENAMES[name_asm]
+        return name_asm
     except Exception as e:
         logger.error(f"Error getting manufacturer for barcode {barcode}: {e}")
         return None
@@ -131,52 +138,60 @@ def run(csv_file):
     try:
         db = connect(0)
         cur = db.cursor()
+        ofile = None
 
         all_ld_wagons = filter_boards(cur)
 
-        with open(csv_file, mode='w', newline='') as file:
-            writer = csv.writer(file)
+        if csv_file is None:
+            writer = csv.writer(sys.stdout)
+        else:
+            ofile = open(csv_file, mode='w', newline='')
+            writer = csv.writer(ofile)
 
-            # Write the header row
+        # Write the header row
+        writer.writerow([
+            "LABEL_TYPECODE", "SERIAL_NUMBER", "BARCODE", "LOCATION",
+            "INSTITUTION", "MANUFACTURER", "NAME_LABEL", "PRODUCTION_DATE",
+	    "BATCH_NUMBER", "COMMENT_DESCRIPTION", 
+        ])
+
+        success = 0
+        
+        for barcode in all_ld_wagons:
+            logger.info(f"Processing barcode: {barcode}")
+            
+            if check_if_registered(cur, barcode):
+                logger.info(f"Skipping {barcode}, already registered")
+                continue
+
+            label_typecode = get_typecode(cur, barcode)
+            manufacturer = get_manufacturer(cur, barcode)
+            batch = get_batch(cur, barcode)
+            name_label = get_name(barcode)
+            production_date = get_date(label_typecode)
+            comment = get_description(batch)
+
             writer.writerow([
-                "LABEL_TYPECODE", "SERIAL_NUMBER", "BARCODE", "LOCATION",
-                "INSTITUTION", "MANUFACTURER", "NAME_LABEL", "PRODUCTION_DATE",
-	        "BATCH_NUMBER", "COMMENT_DESCRIPTION", 
+                label_typecode, barcode, barcode, LOCATION,
+                INSTITUTION, manufacturer, name_label, production_date,
+                batch, comment,
             ])
 
-            success = 0
+            success += 1
 
-            for barcode in all_ld_wagons:
-                logger.info(f"Processing barcode: {barcode}")
-                
-                if check_if_registered(cur, barcode):
-                    logger.info(f"Skipping {barcode}, already registered")
-                    continue
-
-                label_typecode = get_typecode(cur, barcode)
-                manufacturer = get_manufacturer(cur, barcode)
-                batch = get_batch(cur, barcode)
-                name_label = get_name(barcode)
-                production_date = get_date(label_typecode)
-                comment = get_description(batch)
-
-                writer.writerow([
-                    label_typecode, barcode, barcode, LOCATION,
-                    INSTITUTION, manufacturer, name_label, production_date,
-                    batch, comment,
-                ])
-
-                success += 1
-
-            logger.info(f"CSV file '{csv_file}' for {success} LD wagons created successfully.")
+        logger.info(f"CSV file for {success} LD wagons created successfully.")
+        if ofile is not None:
+            close(ofile)
 
     except Exception as e:
         logger.error(f"Critical error in run function: {e}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Register LD wagons by exporting data to a CSV file.")
-    parser.add_argument("-o", "--output", type=str, required=True, help="Output CSV file name (e.g., output.csv)")
+    parser.add_argument("-o", "--output", type=str, default=None, help="Output CSV file name (e.g., output.csv)")
     args = parser.parse_args()
 
-    print("Content-type: text/html\n")
+    if args.output is None:        
+        print("Content-type: text/csv")
+        print('Content-disposition: attachment; filename="ld_wagons_register.csv"\n')
     run(args.output)
