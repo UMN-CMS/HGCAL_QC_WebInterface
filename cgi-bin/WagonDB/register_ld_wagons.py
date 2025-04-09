@@ -103,11 +103,20 @@ def get_name(barcode):
     """Generate a name label for the barcode."""
     return f"LD Wagon {barcode[4]} {barcode}"
 
-def get_date(typecode):
-    """Determine the production date based on typcode."""
-    first_group = {"WE-10A1", "WE-20A1", "WW-10A1", "WW-20A1", "WE-20B1"}
-    second_group = {"WE-11A1", "WE-12A1", "WW-11A1", "WW-12A1"}
-    return "2024-06-01" if typecode in first_group else "2024-09-01" if typecode in second_group else "UNKNOWN"
+BATCH_BOARD_DATES = {
+    "WE-10A1:A" : "2024-06-01", "WE-20A1:A" : "2024-06-01", "WE-20B1:A" : "2024-06-01", "WW-10A1:A" : "2024-06-01", "WW-20A1:A" : "2024-06-01",
+    "WE-11A1:1" : "2024-09-01", "WE-12A1:1" : "2024-09-01", "WW-11A1:1" : "2024-09-01", "WW-12A1:1" : "2024-09-01",
+    "WE-12A1:B" : "2025-02-28", "WW-12A1:B" : "2025-02-28",
+    "WE-21A1:B" : "2025-03-04", "WE-21B1:B" : "2025-03-04", "WW-21B1:B" : "2025-03-04"
+}
+
+def get_date(typecode, batch):
+    """Determine the production date based on typcode and batch."""
+    fullcode="%s:%s"%(typecode,batch)
+    if fullcode in BATCH_BOARD_DATES:
+        return BATCH_BOARD_DATES[fullcode]
+    else:
+        return "UNKNOWN"
 
 def get_batch(cur, barcode):
     """Get the full SN of the barcode, parse it to determine the board batch."""
@@ -131,7 +140,7 @@ def get_batch(cur, barcode):
 
 def get_description(batch):
     """Check if the batch character is a number or a letter to assign a comment field."""
-    return "Pre-series" if batch.isdigit() else "Pre-production" if batch.isalpha() else "None"
+    return "Pre-series" if batch.isdigit() else "Pre-production" if batch=="A" else "Production"
  
 def run(csv_file):
     """Main execution function."""
