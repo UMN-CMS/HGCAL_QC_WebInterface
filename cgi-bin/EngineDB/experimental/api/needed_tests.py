@@ -13,7 +13,7 @@ QUERY = """
 
 async def getStitch():
     all_data = []
-    for db in getBothConnections():
+    for db in await getBothConnections():
         cur = db.cursor(dictionary=True)
         cur.execute(QUERY)
         all_data += list(cur.fetchall())

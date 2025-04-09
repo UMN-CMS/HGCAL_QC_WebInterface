@@ -1,6 +1,10 @@
 import json
-from functools import wraps
+from functools import wraps, lru_cache
+import re
 
+from mysql.connector.aio import connect
+import mysql
+import asyncio
 
 
 def catchExceptions(func):
@@ -12,8 +16,6 @@ def catchExceptions(func):
             print(json.dumps({"error": "EXCEPTION", "reason": str(e)}))
 
     return inner
-
-
 
 
 def compileRule(rule, accessor):
@@ -55,21 +57,52 @@ def compileRuleSet(desc, accessor=lambda d, x: d[x]):
     return ret
 
 
-def getBothConnections():
-    import importlib.util
-    import sys
-
-    spec = importlib.util.spec_from_file_location(
-        "enginedb.connect", "../../../EngineDB/connect.py"
+conn_cache = {}
+async def getAsyncConnection(path, db_name):
+    if (path,db_name) in conn_cache:
+        return conn_cache[(path,db_name)]
+    with open(path, "r") as f:
+        getme = False
+        for l in f:
+            if getme:
+                password = re.search(r"password='([a-zA-Z]+)',", l)[1]
+                break
+            if "FactoryReadUser" in l:
+                getme = True
+    # cnx = await connect(
+    #     user="FactoryReadUser", password=password, database=db_name, host="cmslab0"
+    # )
+    cnx = mysql.connector.connect(
+        user="FactoryReadUser", password=password, database=db_name, host="cmslab0"
     )
-    c1 = importlib.util.module_from_spec(spec)
-    sys.modules["enginedb.connect"] = c1
-    spec.loader.exec_module(c1)
+    conn_cache[(path,db_name)] = cnx
+    return cnx
 
-    spec2 = importlib.util.spec_from_file_location(
-        "wagondb.connect", "../../../WagonDB/connect.py"
+
+async def getBothConnections():
+    c1, c2 = await asyncio.gather(
+        getAsyncConnection("../../../EngineDB/connect.py", "EngineDB_PRO"),
+        getAsyncConnection("../../../WagonDB/connect.py", "WagonDB_PRO"),
     )
-    c2 = importlib.util.module_from_spec(spec2)
-    sys.modules["wagondb.connect"] = c2
-    spec2.loader.exec_module(c2)
-    return c1.connect(0), c2.connect(0)
+    return c1, c2
+
+
+# def getBothConnections():
+#     import importlib.util
+#     import sys
+#
+#     spec = importlib.util.spec_from_file_location(
+#         "enginedb.connect", "../../../EngineDB/connect.py"
+#     )
+#     c1 = importlib.util.module_from_spec(spec)
+#     sys.modules["enginedb.connect"] = c1
+#     spec.loader.exec_module(c1)
+#
+#     spec2 = importlib.util.spec_from_file_location(
+#         "wagondb.connect", "../../../WagonDB/connect.py"
+#     )
+#     c2 = importlib.util.module_from_spec(spec2)
+#     sys.modules["wagondb.connect"] = c2
+#     spec2.loader.exec_module(c2)
+
+# c1.connect(0), c2.connect(0)
