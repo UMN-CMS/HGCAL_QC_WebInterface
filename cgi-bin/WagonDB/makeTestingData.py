@@ -419,6 +419,27 @@ def get_attachments():
 
     return csv_file
 
+def get_tests_required():
+    cur.execute('select Test_Type.name from Test_Type left join Type_test_stitch on Test_Type.test_type=Type_test_stitch.test_type_id where type_id=62 order by relative_order asc')
+    temp = cur.fetchall()
+    ld_tests = []
+    for t in temp:
+        ld_tests.append(t[0])
+
+    cur.execute('select Test_Type.name from Test_Type left join Type_test_stitch on Test_Type.test_type=Type_test_stitch.test_type_id where type_id=122 order by relative_order asc')
+    temp = cur.fetchall()
+    hd_tests = []
+    for t in temp:
+        hd_tests.append(t[0])
+
+    cur.execute('select Test_Type.name from Test_Type left join Type_test_stitch on Test_Type.test_type=Type_test_stitch.test_type_id where type_id=72 order by relative_order asc')
+    temp = cur.fetchall()
+    zp_tests = []
+    for t in temp:
+        zp_tests.append(t[0])
+
+    return ld_tests, hd_tests, zp_tests
+
 def get_board_for_filter():
     csv_file = io.StringIO()
 

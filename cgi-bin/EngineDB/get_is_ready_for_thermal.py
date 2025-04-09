@@ -2,7 +2,7 @@
 
 import cgi, html
 import base
-import add_test_functions_engine
+import add_test_functions
 import os
 
 #cgi header
@@ -16,7 +16,7 @@ form = cgi.FieldStorage()
 if form.getvalue('full_id'):
     full_id = html.escape(form.getvalue('full_id'))
 
-    test_results = add_test_functions_engine.get_is_ready_for_thermal(full_id)
+    test_results = add_test_functions.get_is_ready_for_thermal(full_id)
 
     print(test_results)
 

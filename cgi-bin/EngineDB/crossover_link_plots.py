@@ -39,11 +39,8 @@ AllData = AllData.rename(columns={'Successful':'Outcome'})
 AllData['Outcome'] = AllData['Outcome'].replace(0, 'Unsuccessful')
 AllData['Outcome'] = AllData['Outcome'].replace(1, 'Successful')
 
-csvs = mTD.get_elink_quality()
-EC = {}
-for i in range(42):
-    tempEC = pd.read_csv(csvs[i])
-    EC[str(i)] = tempEC.dropna()
+tempCL = pd.read_csv(mTD.get_crossover_link())
+CL = tempCL.dropna()
 
 
 # custom javascript filter to control which data is displayed using the widgets
@@ -125,51 +122,58 @@ colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10]
 
 
 #creates a matrix of filterable data to be used in the plot
-def Histogram(data, view, widgets, phases):
+def Histogram(data, view, widgets, phases, crossover_links, crossover_strs):
     # creates a dictionary for the histogram data to go in
-    hist_data = ColumnDataSource(data={'x': phases, 'Bit Errors': []})
+    hist_data = {}
+    for l in crossover_strs:
+        hist_data[l] = ColumnDataSource(data={'x': phases, 'Bit Errors': []})
 
     # creates a dictionary for the filtered data to be put in data tables
-    dt = ColumnDataSource(data={'Sub Type':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'Outcome':[], 'Phase':[], 'Bit Errors':[]})
+    dt = ColumnDataSource(data={'Sub Type':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'Outcome':[], 'Crossover Link':[], 'Phase':[], 'Bit Errors':[]})
     # custom javascript to be run to actually create the plotted data client side
     # all done in javascript so it runs on the website and can update without refreshing the page
-    x = CustomJS(args=dict(hist=hist_data, data=data, view=view, phases=phases, dt=dt),code='''
+    x = CustomJS(args=dict(hist=hist_data, data=data, view=view, phases=phases, dt=dt, crossover_links=crossover_links, crossover_strs=crossover_strs),code='''
 const type_ids=[];
 const full_ids=[];
 const people=[];
 const times=[];
 const outcomes=[];
 const pathways=[];
+const links2=[];
 const res=[];
-const bit_errors = [];
-for (let i = 0; i < phases.length; i++) {
-    const indices = view.filters[0].compute_indices(data);
-    let mask = new Array(data.data['Bit Errors'].length).fill(false);
-    [...indices].forEach((x)=>{mask[x] = true;})
-    for (let j = 0; j < data.get_length(); j++) {
-        if (data.data['Phase'][j] == phases[i] && mask[j] == true){
-            mask[j] = true;
-            type_ids.push(data.data['Sub Type'][j])
-            full_ids.push(data.data['Full ID'][j])
-            people.push(data.data['Person Name'][j])
-            times.push(data.data['Time'][j])
-            outcomes.push(data.data['Outcome'][j])
-            pathways.push(data.data['Phase'][j])
-            res.push(data.data['Bit Errors'][j])
-        } else {
-            mask[j] = false;
+for (let k = 0; k < crossover_links.length; k++) {
+    const bit_errors = [];
+    for (let i = 0; i < phases.length; i++) {
+        const indices = view.filters[0].compute_indices(data);
+        let mask = new Array(data.data['Bit Errors'].length).fill(false);
+        [...indices].forEach((x)=>{mask[x] = true;})
+        for (let j = 0; j < data.get_length(); j++) {
+            if (data.data['Phase'][j] == phases[i] && data.data['Crossover Link'][j] == crossover_links[k] && mask[j] == true){
+                mask[j] = true;
+                type_ids.push(data.data['Sub Type'][j])
+                full_ids.push(data.data['Full ID'][j])
+                people.push(data.data['Person Name'][j])
+                times.push(data.data['Time'][j])
+                outcomes.push(data.data['Outcome'][j])
+                links2.push(crossover_links[k])
+                pathways.push(data.data['Phase'][j])
+                res.push(data.data['Bit Errors'][j])
+            } else {
+                mask[j] = false;
+            }
         }
+        const good_data = data.data['Bit Errors'].filter((_,y)=>mask[y])
+        bit_errors.push(d3.mean(good_data)/1000000)
     }
-    const good_data = data.data['Bit Errors'].filter((_,y)=>mask[y])
-    bit_errors.push(d3.mean(good_data)/1000000)
+    hist[crossover_strs[k]].data['Bit Errors'] = bit_errors;
+    hist[crossover_strs[k]].change.emit()
 }
-hist.data['Bit Errors'] = bit_errors;
-hist.change.emit()
 dt.data['Sub Type'] = type_ids;
 dt.data['Full ID'] = full_ids;
 dt.data['Person Name'] = people;
 dt.data['Time'] = times;
 dt.data['Outcome'] = outcomes;
+dt.data['Crossover Link'] = links2;
 dt.data['Phase'] = pathways;
 dt.data['Bit Errors'] = res;
 dt.change.emit()
@@ -180,9 +184,9 @@ dt.change.emit()
     return hist_data, dt
 
 # takes in the selected phase based on the webpage
-def ELinkFilter(sel_elink):
+def Filter():
     # create a CDS with all the data to be used
-    df_temp = AllData.merge(EC[sel_elink], on='Test ID', how='left')
+    df_temp = AllData.merge(CL, on='Test ID', how='left')
     df_temp = df_temp.dropna()
     ds = ColumnDataSource(df_temp)
 
@@ -198,6 +202,11 @@ def ELinkFilter(sel_elink):
     while min_date <= today:
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
+    crossover_links = np.unique(ds.data['Crossover Link']).tolist()
+    crossover_strs = []
+    for l in crossover_links:
+        crossover_strs.append(str(l))
+
     phases = np.unique(ds.data['Phase']).tolist()
     # widget titles and data for those widgets has to be manually entered, as well as the type
     columns = ['Major Type', 'Sub Type', 'Full ID', 'Person Name', 'Outcome', 'Start Date', 'End Date']
@@ -234,17 +243,21 @@ def ELinkFilter(sel_elink):
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
     # calls the function that creates the plotting data
-    hds, dt = Histogram(ds, view, widgets.values(), phases)
+    hds, dt = Histogram(ds, view, widgets.values(), phases, crossover_links, crossover_strs)
     # creates the figure object
     p = figure(
-        title='E Link Quality for ' + sel_elink,
+        title='Crossover Link Quality',
         x_axis_label='Phase',
         y_axis_label='Number of Bit Errors (x1m)',
         tools='pan,wheel_zoom,box_zoom,reset,save',
         width = 925
         )
     # tells the figure object what data source to use
-    p.vbar(x='x', top='Bit Errors', source=hds, color=colors[0], width=0.8)
+    for idx,l in enumerate(crossover_strs):
+        p.vbar(x='x', top='Bit Errors', source=hds[l], color=colors[idx], width=0.8, legend_label=l)
+
+    p.legend.click_policy='hide'
+    p.legend.label_text_font_size = '8pt'
 
     # creates data tables
     table_columns = [
@@ -253,6 +266,7 @@ def ELinkFilter(sel_elink):
                     TableColumn(field='Person Name', title='Person Name'),
                     TableColumn(field='Time', title='Date', formatter=DateFormatter()),
                     TableColumn(field='Outcome', title='Outcome'),
+                    TableColumn(field='Crossover Link', title='Crossover Link'),
                     TableColumn(field='Phase', title='Phase'),
                     TableColumn(field='Bit Errors', title='Bit Errors'),
                     ]

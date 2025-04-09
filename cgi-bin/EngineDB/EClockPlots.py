@@ -126,18 +126,16 @@ colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10]
 
 
 #creates a matrix of filterable data to be used in the plot
-def Histogram(columns, data, view, widgets, modules, slider):
+def Histogram(columns, data, view, widgets, slider):
     # creates a dictionary for the histogram data to go in
-    hist_data = {}
-    for i in modules:
-        hist_data[i] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
+    hist_data = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
     
     # creates a dictionary for the filtered data to be put in data tables
     dt = ColumnDataSource(data={'Sub Type':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'Outcome':[], 'level_1':[], 'Rate':[]})
-    std = ColumnDataSource(data={'clock':[],'std':[], 'mean':[]})
+    std = ColumnDataSource(data={'std':[], 'mean':[]})
     # custom javascript to be run to actually create the plotted data client side
     # all done in javascript so it runs on the website and can update without refreshing the page
-    x = CustomJS(args=dict(col=columns, hist=hist_data, data=data, view=view, modules=modules, slider=slider, dt=dt, std=std),code='''
+    x = CustomJS(args=dict(col=columns, hist=hist_data, data=data, view=view, slider=slider, dt=dt, std=std),code='''
 const type_ids=[];
 const full_ids=[];
 const people=[];
@@ -148,47 +146,50 @@ const res=[];
 const means=[];
 const devs=[];
 const pathways_2=[];
-for (let i = 0; i < modules.length; i++) {
-    const indices = view.filters[0].compute_indices(data);
-    let mask = new Array(data.data[col].length).fill(false);
-    [...indices].forEach((x)=>{mask[x] = true;})
 
-    const all_data = data.data[col].filter((_,y)=>mask[y])
-    let m = Math.max(...all_data);
+const indices = view.filters[0].compute_indices(data);
+let mask = new Array(data.data[col].length).fill(false);
+[...indices].forEach((x)=>{mask[x] = true;})
 
-    for (let j = 0; j < data.get_length(); j++) {
-        if (data.data['level_1'][j] == modules[i] && mask[j] == true){
-            mask[j] = true;
-            type_ids.push(data.data['Sub Type'][j])
-            full_ids.push(data.data['Full ID'][j])
-            people.push(data.data['Person Name'][j])
-            times.push(data.data['Time'][j])
-            outcomes.push(data.data['Outcome'][j])
-            pathways.push(data.data['level_1'][j])
-            res.push(data.data[col][j])
-        } else {
-            mask[j] = false;
-        }
+
+for (let j = 0; j < data.get_length(); j++) {
+    if (mask[j] == true){
+        mask[j] = true;
+        type_ids.push(data.data['Sub Type'][j])
+        full_ids.push(data.data['Full ID'][j])
+        people.push(data.data['Person Name'][j])
+        times.push(data.data['Time'][j])
+        outcomes.push(data.data['Outcome'][j])
+        pathways.push(data.data['level_1'][j])
+        res.push(data.data[col][j])
     }
-    const good_data = data.data[col].filter((_,y)=>mask[y])
-    let bins = slider.value
-    let scale = d3.scaleLinear().domain([0,m]).nice()
-    let binner_old = d3.bin().domain(scale.domain()).thresholds(m*bins)
-    let binner = d3.bin()
-    let d = binner(good_data)
-    let right = d.map(x=>x.x1)
-    let left = d.map(x=>x.x0)
-    let bottom = new Array(d.length).fill(0)
-    let top = d.map(x=>x.length);
-    hist[modules[i]].data['right'] = right;
-    hist[modules[i]].data['left'] = left;
-    hist[modules[i]].data['bottom'] = bottom;
-    hist[modules[i]].data['top'] = top;
-    hist[modules[i]].change.emit()
-    means.push(d3.mean(good_data))
-    devs.push(d3.deviation(good_data))
-    pathways_2.push(modules[i])
 }
+
+function subtractArray(arr, int) {
+    return arr.map(el => el-int);
+}
+
+const good_data = data.data[col].filter((_,y)=>mask[y])
+
+let m = Math.max(...good_data);
+
+let bins = slider.value
+let scale = d3.scaleLinear().domain([0,m]).nice()
+let binner_old = d3.bin().domain(scale.domain()).thresholds(m*bins)
+let binner = d3.bin()
+let d = binner(subtractArray(good_data, 320640000))
+let right = d.map(x=>x.x1)
+let left = d.map(x=>x.x0)
+let bottom = new Array(d.length).fill(0)
+let top = d.map(x=>x.length);
+hist.data['right'] = right;
+hist.data['left'] = left;
+hist.data['bottom'] = bottom;
+hist.data['top'] = top;
+hist.change.emit()
+means.push(d3.mean(good_data))
+devs.push(d3.deviation(good_data))
+
 dt.data['Sub Type'] = type_ids;
 dt.data['Full ID'] = full_ids;
 dt.data['Person Name'] = people;
@@ -199,7 +200,6 @@ dt.data['Rate'] = res;
 dt.change.emit()
 std.data['mean'] = means;
 std.data['std'] = devs;
-std.data['clock'] = pathways_2;
 std.change.emit()
     ''')
     for widget in widgets:
@@ -226,7 +226,6 @@ def Filter():
     while min_date <= today:
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
-    modules = np.unique(ds.data['level_1']).tolist()
     # widget titles and data for those widgets has to be manually entered, as well as the type
     columns = ['Major Type', 'Sub Type', 'Full ID', 'Person Name', 'Outcome', 'Start Date', 'End Date']
     data = [ds.data['Major Type'].tolist(), ds.data['Sub Type'].tolist(), ds.data['Full ID'].tolist(), ds.data['Person Name'].tolist(), ds.data['Outcome'], date_range, date_range]
@@ -272,10 +271,9 @@ def Filter():
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
     # calls the function that creates the plotting data
-    hds, dt, std = Histogram('Rate', ds, view, widgets.values(), modules, slider)
+    hds, dt, std = Histogram('Rate', ds, view, widgets.values(), slider)
     # tells the figure object what data source to use
-    for i in range(len(modules)):
-        p.quad(top='top', bottom='bottom', left='left', right='right', source=hds[modules[i]], legend_label=modules[i], color = colors[i])
+    p.quad(top='top', bottom='bottom', left='left', right='right', source=hds, color = colors[0])
 
     # creates data tables
     table_columns = [
@@ -289,7 +287,6 @@ def Filter():
                     ]
     data_table = DataTable(source=dt, columns=table_columns, width=925, autosize_mode='fit_columns')
     table_columns_2 = [
-                    TableColumn(field='clock', title='clock'),
                     TableColumn(field='mean', title='Mean'),
                     TableColumn(field='std', title='Standard Deviation'),
                     ]
@@ -328,9 +325,9 @@ if (this.value.length != 0) {
 
     # gets the second half of the webpage where the residuals are displayed
     # since it's a separate function, the data can be filtered separately
-    layout = Gaussian()
+    #layout = Gaussian()
     #converts the bokeh items to json and sends them to the webpage
-    plot_json = json.dumps(json_item(row(column(row(w[0:3]), row(w[3:5]), row(w[5:]), slider, p, data_table, data_table_2), layout)))
+    plot_json = json.dumps(json_item(row(column(row(w[0:3]), row(w[3:5]), row(w[5:]), slider, p, data_table, data_table_2))))
     return plot_json
 
 
