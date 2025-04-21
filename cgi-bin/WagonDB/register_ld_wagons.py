@@ -107,7 +107,8 @@ BATCH_BOARD_DATES = {
     "WE-10A1:A" : "2024-06-01", "WE-20A1:A" : "2024-06-01", "WE-20B1:A" : "2024-06-01", "WW-10A1:A" : "2024-06-01", "WW-20A1:A" : "2024-06-01",
     "WE-11A1:1" : "2024-09-01", "WE-12A1:1" : "2024-09-01", "WW-11A1:1" : "2024-09-01", "WW-12A1:1" : "2024-09-01",
     "WE-12A1:B" : "2025-02-28", "WW-12A1:B" : "2025-02-28",
-    "WE-21A1:B" : "2025-03-04", "WE-21B1:B" : "2025-03-04", "WW-21B1:B" : "2025-03-04"
+    "WE-21A1:B" : "2025-03-04", "WE-21B1:B" : "2025-03-04", "WW-21B1:B" : "2025-03-04", "WW-21A1:B" : "2025-03-04",
+    "WE-10B1:C" : "2025-04-17", "WE-11B2:C" : "2025-04-17", "WE-11C1:C" : "2025-04-17", "WW-11C1:C" : "2025-04-17", "WE-21C6:C" : "2025-04-17", "WW-20C1:C" : "2025-04-17", "WW-21E1:C" : "2025-04-17",
 }
 
 def get_date(typecode, batch):
@@ -177,7 +178,7 @@ def run(csv_file):
             manufacturer = get_manufacturer(cur, barcode)
             batch = get_batch(cur, barcode)
             name_label = get_name(barcode)
-            production_date = get_date(label_typecode)
+            production_date = get_date(label_typecode, batch)
             comment = get_description(batch)
 
             writer.writerow([
