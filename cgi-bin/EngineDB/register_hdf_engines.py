@@ -254,7 +254,7 @@ def engine_file(csv_file):
 
                 # Retrieve LDO ID
                 ldo = get_ldo_id(cur, barcode)
-                if not ldo:
+                if not ldo: 
                     logger.info(f"Skipping {barcode}, no LDO found.")
                     continue  # Skip if no LDO found
 

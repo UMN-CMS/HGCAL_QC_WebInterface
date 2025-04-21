@@ -220,7 +220,7 @@ def engine_file(csv_file):
 	        "BATCH_NUMBER", "COMMENT_DESCRIPTION", "MADE-FROM-TYPECODE[0]", 
                 "MADE-FROM-SN[0]", "MADE-FROM-TYPECODE[1]", "MADE-FROM-SN[1]",
                 "MADE-FROM-TYPECODE[2]", "MADE-FROM-SN[2]", "MADE-FROM-TYPECODE[3]",
-	        "MADE-FROM-SN[3]", "MADE-FROM-TYPECODE[4]", "MADE-FROM-SN[4]", 
+	        "MADE-FROM-SN[3]", "MADE-FROM-TYPECODE[4]", "MADE-FROM-SN[4]",
             ])
 
             success = 0
@@ -252,7 +252,7 @@ def engine_file(csv_file):
                 if not ldo:
                     logger.info(f"Skipping {barcode}, no LDO found.")
                     continue  # Skip if no LDO found
-
+#
                 made_from_components.append(("IC-LDH", ldo))
 
                # Retrieve Bare Code
