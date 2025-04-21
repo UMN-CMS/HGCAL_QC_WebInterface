@@ -191,7 +191,7 @@ def run(csv_file):
 
         logger.info(f"CSV file for {success} LD wagons created successfully.")
         if ofile is not None:
-            close(ofile)
+            ofile.close()
 
     except Exception as e:
         logger.error(f"Critical error in run function: {e}")
