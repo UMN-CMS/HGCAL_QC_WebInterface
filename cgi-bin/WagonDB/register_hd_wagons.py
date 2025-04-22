@@ -23,7 +23,7 @@ def filter_boards(cur) -> list:
     """Fetch and filter board IDs that start with '320WW' or '320WE'."""
     try:
         cur.execute('SELECT full_id FROM Board')
-        return [board[0] for board in cur.fetchall() if board[0].startswith('320WW') or board[0].startswith('320WE')]
+        return [board[0] for board in cur.fetchall() if board[0].startswith('320WH')]
     except Exception as e:
         logger.error(f"Error fetching board IDs: {e}")
         return []
@@ -47,7 +47,7 @@ def check_if_registered(cur, barcode):
         return None
 
 def get_typecode(cur, barcode):
-    """Function to make a typcode (e.g WE-10A1)."""
+    """Function to make a typcode (e.g WH-30A1)."""
     try:
         cur.execute('SELECT type_id FROM Board WHERE full_id = %s', (barcode,))
         type_id_result = cur.fetchone()
@@ -101,14 +101,13 @@ def get_manufacturer(cur, barcode):
 
 def get_name(barcode):
     """Generate a name label for the barcode."""
-    return f"LD Wagon {barcode[4]} {barcode}"
+    return f"HD Wagon {barcode}"
 
 BATCH_BOARD_DATES = {
-    "WE-10A1:A" : "2024-06-01", "WE-20A1:A" : "2024-06-01", "WE-20B1:A" : "2024-06-01", "WW-10A1:A" : "2024-06-01", "WW-20A1:A" : "2024-06-01",
-    "WE-11A1:1" : "2024-09-01", "WE-12A1:1" : "2024-09-01", "WW-11A1:1" : "2024-09-01", "WW-12A1:1" : "2024-09-01",
-    "WE-12A1:B" : "2025-02-28", "WW-12A1:B" : "2025-02-28",
-    "WE-21A1:B" : "2025-03-04", "WE-21B1:B" : "2025-03-04", "WW-21B1:B" : "2025-03-04", "WW-21A1:B" : "2025-03-04",
-    "WE-10B1:C" : "2025-04-17", "WE-11B2:C" : "2025-04-17", "WE-11C1:C" : "2025-04-17", "WW-11C1:C" : "2025-04-17", "WE-21C6:C" : "2025-04-17", "WW-20C1:C" : "2025-04-17", "WW-21E1:C" : "2025-04-17",
+    "WH-30A0:2" : "2024-08-09",
+    "WH-31A0:1" : "2024-12-02",
+    "WH-30B0:1" : "2025-01-20",
+    "WH-20A0:1" : "2025-01-27", "WH-21A0:1" : "2025-01-27",
 }
 
 def get_date(typecode, batch):
@@ -150,7 +149,7 @@ def run(csv_file):
         cur = db.cursor()
         ofile = None
 
-        all_ld_wagons = filter_boards(cur)
+        all_hd_wagons = filter_boards(cur)
 
         if csv_file is None:
             writer = csv.writer(sys.stdout)
@@ -167,7 +166,7 @@ def run(csv_file):
 
         success = 0
         
-        for barcode in all_ld_wagons:
+        for barcode in all_hd_wagons:
             logger.info(f"Processing barcode: {barcode}")
             
             if check_if_registered(cur, barcode):
@@ -189,13 +188,9 @@ def run(csv_file):
 
             success += 1
 
-        logger.info(f"CSV file for {success} LD wagons created successfully.")
+        logger.info(f"CSV file for {success} HD wagons created successfully.")
         if ofile is not None:
-<<<<<<< HEAD
             ofile.close()
-=======
-            close(ofile)
->>>>>>> origin/main
 
     except Exception as e:
         logger.error(f"Critical error in run function: {e}")
@@ -207,5 +202,5 @@ if __name__ == '__main__':
 
     if args.output is None:        
         print("Content-type: text/csv")
-        print('Content-disposition: attachment; filename="ld_wagons_register.csv"\n')
+        print('Content-disposition: attachment; filename="hd_wagons_register.csv"\n')
     run(args.output)
