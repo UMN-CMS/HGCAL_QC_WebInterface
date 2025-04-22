@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 LOCATION = "UMN"
 INSTITUTION = "UMN"
 
-MANU_RENAMES = { "Poly" : "PolyElectronics" }
+MANU_RENAMES = { "Poly" : "PolyElectronics",
+                 "Piranha" : "Piranha EMS"}
 
 
 # Helper Functions
@@ -191,11 +192,7 @@ def run(csv_file):
 
         logger.info(f"CSV file for {success} LD wagons created successfully.")
         if ofile is not None:
-<<<<<<< HEAD
             ofile.close()
-=======
-            close(ofile)
->>>>>>> origin/main
 
     except Exception as e:
         logger.error(f"Critical error in run function: {e}")
