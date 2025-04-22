@@ -3,7 +3,7 @@
 import cgi, html
 import base
 import home_page_list
-import add_test_functions_wagon
+import add_test_functions
 import hashlib
 import connect
 

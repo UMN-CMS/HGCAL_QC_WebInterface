@@ -139,7 +139,7 @@ for (let j = 0; j < data.get_length(); j++) {
     
         // converts date to a readable format
         let temp_date = new Date(data.data['Time'][j]);
-        if (String(date).includes('Daylight')) {
+        if (String(temp_date).includes('Daylight')) {
             temp_date = new Date(data.data['Time'][j] + 18000000);
         } else {
             temp_date = new Date(data.data['Time'][j] + 21600000);

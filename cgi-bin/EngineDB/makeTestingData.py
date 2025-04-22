@@ -570,6 +570,51 @@ def get_crossover_link():
 
     return csv_file
 
+def get_eye_opening():
+    csv_file = io.StringIO()
+
+    header = ['Test ID', 'lpGBT', 'Area', 'Height', 'Width']
+    writer = csv.DictWriter(csv_file, fieldnames=header)
+    writer.writeheader()
+
+    cur.execute('select test_type from Test_Type where name="Eye Opening"')
+    type_id = cur.fetchall()[0][0]
+
+    cur.execute('select board_id from Board')
+    boards_list = cur.fetchall()
+    Tests = []
+    for b in boards_list:
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],type_id))
+        test_id = cur.fetchone()
+        if test_id:
+            Tests.append(test_id)
+
+    Attach_Data = []
+    for i in Tests:
+        try:
+            Attach_Data.append(json.loads(i[1])['test_data'])
+        except KeyError:
+            Attach_Data.append(json.loads(i[1]))
+
+    for n in range(len(Attach_Data)):
+        try:
+            try:
+                data = Attach_Data[n]['DAQ']
+                writer.writerow({'Test ID': Tests[n][0], 'lpGBT': 'DAQ', 'Area': data['area'], 'Height': data['max_width_y'], 'Width': data['max_width']})
+            except KeyError:
+                data1 = Attach_Data[n]['DAQ1']
+                data2 = Attach_Data[n]['DAQ2']
+                writer.writerow({'Test ID': Tests[n][0], 'lpGBT': 'DAQ1', 'Area': data1['area'], 'Height': data1['max_width_y'], 'Width': data1['max_width']})
+                writer.writerow({'Test ID': Tests[n][0], 'lpGBT': 'DAQ2', 'Area': data2['area'], 'Height': data2['max_width_y'], 'Width': data2['max_width']})
+
+        except KeyError:
+            continue
+
+    csv_file.seek(0)
+
+    return csv_file
+
+
 
 def get_attachments():
     csv_file = io.StringIO()

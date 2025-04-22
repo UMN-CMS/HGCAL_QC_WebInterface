@@ -196,6 +196,7 @@ def top(static):
             <li><a class="dropdown-item" href="X_PWRData.py">Startup Current and Voltage</a></li>
             <li><a class="dropdown-item" href="EClockData.py">E Clock Rates</a></li>
             <li><a class="dropdown-item" href="ADC_functionality.py">ADC Functionality</a></li>
+            <li><a class="dropdown-item" href="EyeOpeningData.py">Eye Opening</a></li>
             <li><a class="dropdown-item" href="ELinkQualityData.py?elink=0">E Link Quality</a></li>
             <li><a class="dropdown-item" href="CurrentDrawData.py">Current Draw</a></li>
             <li><a class="dropdown-item" href="CrossoverLinkData.py">Crossover Link Quality</a></li>

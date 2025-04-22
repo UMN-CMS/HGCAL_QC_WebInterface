@@ -2,7 +2,7 @@
 
 import cgi, html
 import base
-import add_test_functions_engine
+import add_test_functions
 import os
 import connect
 
@@ -22,6 +22,6 @@ password = html.escape(form.getvalue("password"))
 base.header(title='Add New Test Template')
 base.top(False)
 
-test_id=add_test_functions_engine.add_new_test(test_name, required, test_desc_short, test_desc_long, password)
+test_id=add_test_functions.add_new_test(test_name, required, test_desc_short, test_desc_long, password)
     
 base.bottom(False)

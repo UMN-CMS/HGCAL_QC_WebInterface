@@ -18,52 +18,57 @@ p = form.getvalue('person_id')
 #cgi header
 print("Content-type: text/html\n")
 
-base.header(title='Test Stand Debug')
+base.header(title='Test Stands')
 base.top(False)
 
 # set up page header
 print('<div class="row">')
-print('<div class="col-md-12 ps-5 pt-4 mx-2 my-2"><h2>Test Stand Debug</h2></div>')
+print('<div class="col-md-12 ps-5 pt-4 mx-2 my-2"><h2>List of Current Tester Setups</h2></div>')
 print('<div class="col-md-11 ps-5 py-2 my-2"><table class="table table-hover">')
 print('<thead class="table-dark">')
 print('<tr>')
-print('<th> Board ID </th>')
-print('<th> Test </th>')
-print('<th> Date </th>')
-print('<th> Outcome </th>')
-print('<th> Attachment </th>')
-print('<th> Test Stand Info </th>')
+print('<th> Test Stand </th>')
+print('<th> ZCU </th>')
+print('<th> Test Bridge 1 </th>')
+print('<th> Test Bridge 2 </th>')
+print('<th> Interposer </th>')
+print('<th> DAQ 1 VTRX </th>')
+print('<th> DAQ 2 VTRX </th>')
 print('</tr>')
 print('</thead>')
 print('<tbody>')
-# gets info from Test and sorts by date, newest first
-cur.execute('select board_id,test_type_id,day,successful,test_id,config_id from Test where config_id is not NULL order by day desc, test_id desc')
+cur.execute('select teststand_id, name from Teststand')
 for c in cur.fetchall():
-    print('<tr>')
-    cur.execute('select full_id from Board where board_id=%s' % c[0])
-    sn = cur.fetchone()
-    # links board page
-    print('<td> <a href=module.py?board_id=%(id)s&full_id=%(sn)s> %(sn)s </a></td>' %{'id':c[0], 'sn':sn[0]})
+    if c[1] == 'None':
+        continue
 
-    cur.execute('select name from Test_Type where test_type=%s' %c[1])
-    test_name = cur.fetchone()
-    print('<td>%s</td>' % test_name)
-    print('<td>%s</td>' % c[2])
-    
-    # successful is either a 1 or a 0 in the DB, this converts
-    if c[3] == 1:
-        print('<td> Successful </td>')
-    else:
-        print('<td> Unsuccessful </td>')
-    
-    # gets attachment and links it
-    cur.execute('select attach_id from Attachments where test_id=%s' % c[4])
-    attach_id = cur.fetchone()
-    print('<td><a href="get_attach.py?attach_id=%s">Attach</a></td>' % attach_id)
- 
-    print('<td><a href="get_teststand_info.py?config_id=%s">Configuration</a></td>' % c[5])
+    parts = {}
+    print('<tr>')
+    print('<td>%s</td>' % c[1])
+    cur.execute('select component_id, role_id from Tester_Configuration where teststand_id=%s' % c[0])
+    parts['Interposer'] = ''
+    for t in cur.fetchall():
+        cur.execute('select full_id from Tester_Component where component_id=%s' % t[0])
+        sn = cur.fetchall()[0][0]
+
+        cur.execute('select description from Tester_Roles where role_id=%s' % t[1])
+        role = cur.fetchall()[0][0]
+        if 'Interposer' in role:
+            p = role.split()
+            parts['Interposer'] += p[0] + ': ' + sn + '<br>'
+        else:
+            parts[role] = sn
+
+    print('<td>%s</td>' % parts['ZCU'])
+    print('<td>%s</td>' % parts['Test Bridge 1'])
+    print('<td>%s</td>' % parts['Test Bridge 2'])
+    print('<td>%s</td>' % parts['Interposer'])
+    print('<td>%s</td>' % parts['DAQ 1 VTRX'])
+    print('<td>%s</td>' % parts['DAQ 2 VTRX'])
+
 
     print('</tr>')
+
 print('</tbody></table></div></div>')
 
 base.bottom(False)

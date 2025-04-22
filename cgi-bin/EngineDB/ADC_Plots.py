@@ -124,30 +124,48 @@ return indices;
 
 ''')
 
-colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10][2], d3['Category10'][10][3], d3['Category10'][10][4], d3['Category10'][10][5], d3['Category10'][10][6], d3['Category10'][10][7], d3['Category10'][10][8], d3['Category10'][10][9], brewer['Accent'][8][0], brewer['Accent'][8][3], brewer['Dark2'][8][0], brewer['Dark2'][8][2], brewer['Dark2'][8][3], brewer['Dark2'][8][4], brewer['Dark2'][8][5], brewer['Dark2'][8][6], d3['Category20'][20][1], d3['Category20'][20][9], d3['Category20c'][20][19]]
+colors = [d3['Category10'][10][0],
+d3['Category10'][10][1], 
+d3['Category10'][10][2], 
+d3['Category10'][10][3], 
+d3['Category10'][10][4], 
+d3['Category10'][10][5], 
+d3['Category10'][10][6], 
+d3['Category10'][10][7], 
+d3['Category10'][10][8], 
+d3['Category10'][10][9], 
+brewer['Accent'][8][0], 
+brewer['Accent'][8][3], 
+brewer['Dark2'][8][0], 
+brewer['Dark2'][8][2], 
+brewer['Dark2'][8][3], 
+brewer['Dark2'][8][4], 
+brewer['Dark2'][8][5], 
+brewer['Dark2'][8][6], 
+d3['Category20'][20][1], 
+d3['Category20'][20][9], 
+d3['Category20c'][20][19],
+d3['Category20c'][20][12],
+d3['Category20c'][20][4],
+d3['Category20c'][20][0],
+d3['Category20b'][20][16],
+d3['Category20b'][20][8],
+]
 
 
 def Histograms(data_resist, data_volt, data_temp, data_adc, view, widgets, resist_modules, volt_modules, temp_modules, adc_modules, slider):
     # the dictionary has a dictionary for each quantity
     hist = {}
     td = {}
-    hist['adc slope'] = {}
-    hist['adc intercept'] = {}
-    hist['adc r2'] = {}
+    hist['adc slope'] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
+    hist['adc intercept'] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
+    hist['adc r2'] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
     hist['resist'] = {}
-    hist['volt'] = {}
-    hist['temp'] = {}
+    hist['volt'] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
+    hist['temp'] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
     # each quantity has a data source for each of its modules
-    for a in adc_modules:
-        hist['adc slope'][a] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
-        hist['adc intercept'][a] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
-        hist['adc r2'][a] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
     for r in resist_modules:
         hist['resist'][r] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
-    for v in volt_modules:
-        hist['volt'][v] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
-    for t in temp_modules:
-        hist['temp'][t] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
 
     td['resist'] = ColumnDataSource(data={'E Link':[], 'Resistance':[], 'Outcome':[], 'Serial Number':[]})
     td['volt'] = ColumnDataSource(data={'ADC':[], 'Voltage':[], 'Outcome':[], 'Serial Number':[]})
@@ -191,9 +209,9 @@ for (let k = 0; k < resist_modules.length; k++) {
     let mask_resist = new Array(data_resist.data['Resistance'].length).fill(false);
     [...indices_resist].forEach((x)=>{mask_resist[x] = true;})
     
-    const all_data = data_resist.data['Resistance'].filter((_,y)=>mask_resist[y])
-    let m = Math.max(...all_data);
-    let min = Math.min(...all_data);
+    // const all_data = data_resist.data['Resistance'].filter((_,y)=>mask_resist[y])
+    // let m = Math.max(...all_data);
+    // let min = Math.min(...all_data);
 
     for (let j = 0; j < data_resist.data['E Link'].length; j++) {
         if (mask_resist[j] == true && data_resist.data['E Link'][j] == resist_modules[k]) {
@@ -209,8 +227,10 @@ for (let k = 0; k < resist_modules.length; k++) {
 
     // filter and bin data
     const good_data = data_resist.data['Resistance'].filter((_,y)=>mask_resist[y])
+    let m = Math.max(...good_data);
+    let min = Math.min(...good_data);
     let scale = d3.scaleLinear().domain([min,m]).nice()
-    let binner = d3.bin().domain(scale.domain()).thresholds(m*bins)
+    let binner = d3.bin().domain(scale.domain()).thresholds(10*bins)
     let d = binner(good_data)
 
     quantities.push('Resistance')
@@ -237,49 +257,44 @@ td['resist'].data['Resistance'] = resist;
 td['resist'].data['Outcome'] = r_outcomes;
 td['resist'].change.emit()
 
-// same thing for voltage
+let mask_volt = new Array(data_volt.data['Voltage'].length).fill(false);
+[...indices_volt].forEach((x)=>{mask_volt[x] = true;})
+
+const all_data = data_volt.data['Voltage'].filter((_,y)=>mask_volt[y])
+let m = Math.max(...all_data);
+let min = Math.min(...all_data);
+
 for (let k = 0; k < volt_modules.length; k++) {
-    let mask_volt = new Array(data_volt.data['Voltage'].length).fill(false);
-    [...indices_volt].forEach((x)=>{mask_volt[x] = true;})
-
-    const all_data = data_volt.data['Voltage'].filter((_,y)=>mask_volt[y])
-    let m = Math.max(...all_data);
-    let min = Math.min(...all_data);
-
     for (let j = 0; j < data_volt.data['ADC'].length; j++) {
         if (mask_volt[j] == true && data_volt.data['ADC'][j] == volt_modules[k]) {
-            mask_volt[j] = true;
             v_sns.push(data_volt.data['Full ID'][j])
             adcs.push(data_volt.data['ADC'][j])
             volt.push(data_volt.data['Voltage'][j])
             v_outcomes.push(data_volt.data['Outcome'][j])
-        } else {
-            mask_volt[j] = false;
         }
     }
-
-    const good_data = data_volt.data['Voltage'].filter((_,y)=>mask_volt[y])
-    let scale = d3.scaleLinear().domain([min,m]).nice()
-    let binner = d3.bin().domain(scale.domain()).thresholds(m*bins*2)
-    let d = binner(good_data)
-
-    quantities.push('Voltage')
-    modules.push(volt_modules[k])
-    means.push(d3.mean(good_data))
-    stds.push(d3.deviation(good_data))
-
-    let right = d.map(x=>x.x1)
-    let left = d.map(x=>x.x0)
-    let bottom = new Array(d.length).fill(0)
-    let top = d.map(x=>x.length);
-
-    hist['volt'][volt_modules[k]].data['right'] = right;
-    hist['volt'][volt_modules[k]].data['left'] = left;
-    hist['volt'][volt_modules[k]].data['top'] = top;
-    hist['volt'][volt_modules[k]].data['bottom'] = bottom;
-    hist['volt'][volt_modules[k]].change.emit()
-
 }
+
+const good_data = data_volt.data['Voltage'].filter((_,y)=>mask_volt[y])
+let scale = d3.scaleLinear().domain([min,m]).nice()
+let binner = d3.bin().domain(scale.domain()).thresholds(m*bins*5)
+let d = binner(good_data)
+
+quantities.push('Voltage')
+modules.push('')
+means.push(d3.mean(good_data))
+stds.push(d3.deviation(good_data))
+
+let right = d.map(x=>x.x1)
+let left = d.map(x=>x.x0)
+let bottom = new Array(d.length).fill(0)
+let top = d.map(x=>x.length);
+
+hist['volt'].data['right'] = right;
+hist['volt'].data['left'] = left;
+hist['volt'].data['top'] = top;
+hist['volt'].data['bottom'] = bottom;
+hist['volt'].change.emit()
 
 td['volt'].data['Serial Number'] = v_sns;
 td['volt'].data['ADC'] = adcs;
@@ -287,49 +302,44 @@ td['volt'].data['Voltage'] = volt;
 td['volt'].data['Outcome'] = v_outcomes;
 td['volt'].change.emit()
 
-// same thing for temperature
+let mask_temp = new Array(data_temp.data['Temperature'].length).fill(false);
+[...indices_temp].forEach((x)=>{mask_temp[x] = true;})
+
+const all_data_t = data_temp.data['Temperature'].filter((_,y)=>mask_temp[y])
+let m_t = Math.max(...all_data_t);
+let min_t = Math.min(...all_data_t);
+
 for (let k = 0; k < temp_modules.length; k++) {
-    let mask_temp = new Array(data_temp.data['Temperature'].length).fill(false);
-    [...indices_temp].forEach((x)=>{mask_temp[x] = true;})
-
-    const all_data = data_temp.data['Temperature'].filter((_,y)=>mask_temp[y])
-    let m = Math.max(...all_data);
-    let min = Math.min(...all_data);
-
     for (let j = 0; j < data_temp.get_length(); j++) {
         if (mask_temp[j] == true && data_temp.data['Chip'][j] == temp_modules[k]) {
-            mask_temp[j] = true;
             t_sns.push(data_temp.data['Full ID'][j])
             locations.push(data_temp.data['Chip'][j])
             temp.push(data_temp.data['Temperature'][j])
             t_outcomes.push(data_temp.data['Outcome'][j])
-        } else {
-            mask_temp[j] = false;
         }
     }
-
-    const good_data = data_temp.data['Temperature'].filter((_,y)=>mask_temp[y])
-    let scale = d3.scaleLinear().domain([min,m]).nice()
-    let binner = d3.bin().domain(scale.domain()).thresholds(m*bins)
-    let d = binner(good_data)
-
-    quantities.push('Temperature')
-    modules.push(temp_modules[k])
-    means.push(d3.mean(good_data))
-    stds.push(d3.deviation(good_data))
-
-    let right = d.map(x=>x.x1)
-    let left = d.map(x=>x.x0)
-    let bottom = new Array(d.length).fill(0)
-    let top = d.map(x=>x.length);
-
-    hist['temp'][temp_modules[k]].data['right'] = right;
-    hist['temp'][temp_modules[k]].data['left'] = left;
-    hist['temp'][temp_modules[k]].data['top'] = top;
-    hist['temp'][temp_modules[k]].data['bottom'] = bottom;
-    hist['temp'][temp_modules[k]].change.emit()
-
 }
+
+const good_data_t = data_temp.data['Temperature'].filter((_,y)=>mask_temp[y])
+let scale_t = d3.scaleLinear().domain([min_t,m_t]).nice()
+let binner_t = d3.bin().domain(scale_t.domain()).thresholds(m_t)
+let d_t = binner_t(good_data_t)
+
+quantities.push('Temperature')
+modules.push('')
+means.push(d3.mean(good_data_t))
+stds.push(d3.deviation(good_data_t))
+
+right = d_t.map(x=>x.x1)
+left = d_t.map(x=>x.x0)
+bottom = new Array(d_t.length).fill(0)
+top = d_t.map(x=>x.length);
+
+hist['temp'].data['right'] = right;
+hist['temp'].data['left'] = left;
+hist['temp'].data['top'] = top;
+hist['temp'].data['bottom'] = bottom;
+hist['temp'].change.emit()
 
 td['temp'].data['Serial Number'] = t_sns;
 td['temp'].data['Chip'] = locations;
@@ -337,24 +347,23 @@ td['temp'].data['Temperature'] = temp;
 td['temp'].data['Outcome'] = t_outcomes;
 td['temp'].change.emit()
 
-// iterate over all the adc modules
+// can use the same mask for all
+let mask_adc = new Array(data_adc.data['slope'].length).fill(false);
+[...indices_adc].forEach((x)=>{mask_adc[x] = true;})
+
+const all_data_slope = data_adc.data['slope'].filter((_,y)=>mask_adc[y])
+let m_s = Math.max(...all_data_slope);
+let min_s = Math.min(...all_data_slope);
+
+const all_data_int = data_adc.data['intercept'].filter((_,y)=>mask_adc[y])
+let m_i = Math.max(...all_data_int);
+let min_i = Math.min(...all_data_int);
+
+const all_data_r = data_adc.data['rsquared'].filter((_,y)=>mask_adc[y])
+let m_r = Math.max(...all_data_r);
+let min_r = Math.min(...all_data_r);
+
 for (let k = 0; k < adc_modules.length; k++) {
-    // can use the same mask for all
-    let mask_adc = new Array(data_adc.data['slope'].length).fill(false);
-    [...indices_adc].forEach((x)=>{mask_adc[x] = true;})
-
-    const all_data_slope = data_adc.data['slope'].filter((_,y)=>mask_adc[y])
-    let m_s = Math.max(...all_data_slope);
-    let min_s = Math.min(...all_data_slope);
-
-    const all_data_int = data_adc.data['intercept'].filter((_,y)=>mask_adc[y])
-    let m_i = Math.max(...all_data_int);
-    let min_i = Math.min(...all_data_int);
-
-    const all_data_r = data_adc.data['rsquared'].filter((_,y)=>mask_adc[y])
-    let m = Math.max(...all_data_r);
-    let min = Math.min(...all_data_r);
-
     for (let j = 0; j < data_adc.get_length(); j++) {
         if (mask_adc[j] == true && data_adc.data['ADC'][j] == adc_modules[k]) {
             mask_adc[j] = true;
@@ -364,78 +373,76 @@ for (let k = 0; k < adc_modules.length; k++) {
             intercept.push(data_adc.data['intercept'][j])
             r_squared.push(data_adc.data['rsquared'][j])
             a_outcomes.push(data_adc.data['Outcome'][j])
-        } else {
-            mask_adc[j] = false;
         }
     }
-
-    // create slope data
-    const good_data_slope = data_adc.data['slope'].filter((_,y)=>mask_adc[y])
-    let scale_s = d3.scaleLinear().domain([min_s,m_s]).nice()
-    let binner_s = d3.bin().domain(scale_s.domain()).thresholds(m_s*bins*5)
-    let d_s = binner_s(good_data_slope)
-
-    quantities.push('Slope')
-    modules.push(adc_modules[k])
-    means.push(d3.mean(good_data_slope))
-    stds.push(d3.deviation(good_data_slope))
-
-    let right_s = d_s.map(x=>x.x1)
-    let left_s = d_s.map(x=>x.x0)
-    let bottom_s = new Array(d_s.length).fill(0)
-    let top_s = d_s.map(x=>x.length);
-
-    hist['adc slope'][adc_modules[k]].data['right'] = right_s;
-    hist['adc slope'][adc_modules[k]].data['left'] = left_s;
-    hist['adc slope'][adc_modules[k]].data['top'] = top_s;
-    hist['adc slope'][adc_modules[k]].data['bottom'] = bottom_s;
-    hist['adc slope'][adc_modules[k]].change.emit()
-
-    // create intercept data
-    const good_data_int = data_adc.data['intercept'].filter((_,y)=>mask_adc[y])
-    let scale_i = d3.scaleLinear().domain([min_i,m_i]).nice()
-    let binner_i = d3.bin().domain(scale_i.domain()).thresholds(m_i*bins)
-    let d_i = binner_i(good_data_int)
-
-    quantities.push('Intercept')
-    modules.push(adc_modules[k])
-    means.push(d3.mean(good_data_int))
-    stds.push(d3.deviation(good_data_int))
-
-    let right_i = d_i.map(x=>x.x1)
-    let left_i = d_i.map(x=>x.x0)
-    let bottom_i = new Array(d_i.length).fill(0)
-    let top_i = d_i.map(x=>x.length);
-
-    hist['adc intercept'][adc_modules[k]].data['right'] = right_i;
-    hist['adc intercept'][adc_modules[k]].data['left'] = left_i;
-    hist['adc intercept'][adc_modules[k]].data['top'] = top_i;
-    hist['adc intercept'][adc_modules[k]].data['bottom'] = bottom_i;
-    hist['adc intercept'][adc_modules[k]].change.emit()
-
-    // create r squared data
-    const good_data_r = data_adc.data['rsquared'].filter((_,y)=>mask_adc[y])
-    let scale = d3.scaleLinear().domain([min,m]).nice()
-    let binner = d3.bin().domain(scale.domain()).thresholds(m*bins*5)
-    let d = binner(good_data_r)
-
-    quantities.push('R Squared')
-    modules.push(adc_modules[k])
-    means.push(d3.mean(good_data_r))
-    stds.push(d3.deviation(good_data_r))
-
-    let right = d.map(x=>x.x1)
-    let left = d.map(x=>x.x0)
-    let bottom = new Array(d.length).fill(0)
-    let top = d.map(x=>x.length);
-
-    hist['adc r2'][adc_modules[k]].data['right'] = right;
-    hist['adc r2'][adc_modules[k]].data['left'] = left;
-    hist['adc r2'][adc_modules[k]].data['top'] = top;
-    hist['adc r2'][adc_modules[k]].data['bottom'] = bottom;
-    hist['adc r2'][adc_modules[k]].change.emit()
-
 }
+
+// create slope data
+const good_data_slope = data_adc.data['slope'].filter((_,y)=>mask_adc[y])
+let scale_s = d3.scaleLinear().domain([min_s,m_s]).nice()
+let binner_s = d3.bin().domain(scale_s.domain()).thresholds(m_s*bins*5)
+let d_s = binner_s(good_data_slope)
+
+quantities.push('Slope')
+modules.push('')
+means.push(d3.mean(good_data_slope))
+stds.push(d3.deviation(good_data_slope))
+
+let right_s = d_s.map(x=>x.x1)
+let left_s = d_s.map(x=>x.x0)
+let bottom_s = new Array(d_s.length).fill(0)
+let top_s = d_s.map(x=>x.length);
+
+hist['adc slope'].data['right'] = right_s;
+hist['adc slope'].data['left'] = left_s;
+hist['adc slope'].data['top'] = top_s;
+hist['adc slope'].data['bottom'] = bottom_s;
+hist['adc slope'].change.emit()
+
+// create intercept data
+const good_data_int = data_adc.data['intercept'].filter((_,y)=>mask_adc[y])
+let scale_i = d3.scaleLinear().domain([min_i,m_i]).nice()
+let binner_i = d3.bin().domain(scale_i.domain()).thresholds(m_i*bins)
+let d_i = binner_i(good_data_int)
+
+quantities.push('Intercept')
+modules.push('')
+means.push(d3.mean(good_data_int))
+stds.push(d3.deviation(good_data_int))
+
+let right_i = d_i.map(x=>x.x1)
+let left_i = d_i.map(x=>x.x0)
+let bottom_i = new Array(d_i.length).fill(0)
+let top_i = d_i.map(x=>x.length);
+
+hist['adc intercept'].data['right'] = right_i;
+hist['adc intercept'].data['left'] = left_i;
+hist['adc intercept'].data['top'] = top_i;
+hist['adc intercept'].data['bottom'] = bottom_i;
+hist['adc intercept'].change.emit()
+
+// create r squared data
+const good_data_r = data_adc.data['rsquared'].filter((_,y)=>mask_adc[y])
+scale = d3.scaleLinear().domain([min,m]).nice()
+binner = d3.bin().domain(scale.domain()).thresholds(m*bins*5)
+d = binner(good_data_r)
+
+quantities.push('R Squared')
+modules.push('')
+means.push(d3.mean(good_data_r))
+stds.push(d3.deviation(good_data_r))
+
+right = d.map(x=>x.x1)
+left = d.map(x=>x.x0)
+bottom = new Array(d.length).fill(0)
+top = d.map(x=>x.length);
+
+hist['adc r2'].data['right'] = right;
+hist['adc r2'].data['left'] = left;
+hist['adc r2'].data['top'] = top;
+hist['adc r2'].data['bottom'] = bottom;
+hist['adc r2'].change.emit()
+
 // update data tables
 
 td['adc'].data['Serial Number'] = a_sns;
@@ -586,28 +593,29 @@ src4.change.emit()
         width = 925
         )
 
-    for n in range(len(adc_modules)): 
-        q_1.quad(top='top', bottom='bottom', left='left', right='right', source=hist['adc slope'][adc_modules[n]], legend_label=adc_modules[n], color = colors[n])
-        q_1.legend.click_policy='hide'
-        q_1.legend.label_text_font_size = '8pt' 
-        q_2.quad(top='top', bottom='bottom', left='left', right='right', source=hist['adc intercept'][adc_modules[n]], legend_label=adc_modules[n], color = colors[n])
-        q_2.legend.click_policy='hide'
-        q_2.legend.label_text_font_size = '8pt' 
-        q_3.quad(top='top', bottom='bottom', left='left', right='right', source=hist['adc r2'][adc_modules[n]], legend_label=adc_modules[n], color = colors[n])
-        q_3.legend.click_policy='hide'
-        q_3.legend.label_text_font_size = '8pt' 
+    q_1.quad(top='top', bottom='bottom', left='left', right='right', source=hist['adc slope'], color = colors[0])
+    q_1.legend.click_policy='hide'
+    q_1.legend.label_text_font_size = '8pt' 
+    q_2.quad(top='top', bottom='bottom', left='left', right='right', source=hist['adc intercept'], color = colors[4])
+    q_2.legend.click_policy='hide'
+    q_2.legend.label_text_font_size = '8pt' 
+    q_3.quad(top='top', bottom='bottom', left='left', right='right', source=hist['adc r2'], color = colors[8])
+    q_3.legend.click_policy='hide'
+    q_3.legend.label_text_font_size = '8pt' 
+
     for n in range(len(resist_modules)): 
         p_1.quad(top='top', bottom='bottom', left='left', right='right', source=hist['resist'][resist_modules[n]], legend_label=resist_modules[n], color = colors[n])
         p_1.legend.click_policy='hide'
         p_1.legend.label_text_font_size = '8pt' 
-    for n in range(len(volt_modules)): 
-        p_2.quad(top='top', bottom='bottom', left='left', right='right', source=hist['volt'][volt_modules[n]], legend_label=volt_modules[n], color = colors[n])
-        p_2.legend.click_policy='hide'
-        p_2.legend.label_text_font_size = '8pt' 
-    for n in range(len(temp_modules)): 
-        p_3.quad(top='top', bottom='bottom', left='left', right='right', source=hist['temp'][temp_modules[n]], legend_label=temp_modules[n], color = colors[n])
-        p_3.legend.click_policy='hide'
-        p_3.legend.label_text_font_size = '8pt' 
+
+    p_2.quad(top='top', bottom='bottom', left='left', right='right', source=hist['volt'], color = colors[3])
+    p_2.legend.click_policy='hide'
+    p_2.legend.label_text_font_size = '8pt' 
+
+    p_3.quad(top='top', bottom='bottom', left='left', right='right', source=hist['temp'], color = colors[2])
+    p_3.legend.click_policy='hide'
+    p_3.legend.label_text_font_size = '8pt' 
+
     table_columns_resist = [
                     TableColumn(field='Serial Number', title='Full ID'),
                     TableColumn(field='E Link', title='E link'),
@@ -681,7 +689,7 @@ if (this.value.length != 0) {
 '''))
     w[1].js_on_change('value', update_options_2)
     
-    L = ADC_Gaussian()
+    #L = ADC_Gaussian()
 
     layout = row(column(row(w[0:3]),
                     row(w[3:5]), 
@@ -693,7 +701,7 @@ if (this.value.length != 0) {
                     data_table_1,
                     data_table_2,
                     data_table_3,
-                    data_table_4),L)
+                    data_table_4))
     plot_json = json.dumps(json_item(layout))
     return plot_json
 

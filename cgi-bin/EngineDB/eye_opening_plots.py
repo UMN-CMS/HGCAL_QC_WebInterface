@@ -39,11 +39,8 @@ AllData = AllData.rename(columns={'Successful':'Outcome'})
 AllData['Outcome'] = AllData['Outcome'].replace(0, 'Unsuccessful')
 AllData['Outcome'] = AllData['Outcome'].replace(1, 'Successful')
 
-csvs = mTD.get_elink_quality()
-EC = {}
-for i in range(42):
-    tempEC = pd.read_csv(csvs[i])
-    EC[str(i)] = tempEC.dropna()
+tempCL = pd.read_csv(mTD.get_eye_opening())
+EO = tempCL.dropna()
 
 
 # custom javascript filter to control which data is displayed using the widgets
@@ -125,64 +122,104 @@ colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10]
 
 
 #creates a matrix of filterable data to be used in the plot
-def Histogram(data, view, widgets, phases):
+def Histogram(data, view, widgets):
     # creates a dictionary for the histogram data to go in
-    hist_data = ColumnDataSource(data={'x': phases, 'Bit Errors': []})
+    area = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
+    height = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
+    width = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
 
     # creates a dictionary for the filtered data to be put in data tables
-    dt = ColumnDataSource(data={'Sub Type':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'Outcome':[], 'Phase':[], 'Bit Errors':[]})
+    dt = ColumnDataSource(data={'Sub Type':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'Outcome':[], 'lpGBT':[], 'Area':[], 'Height':[], 'Width':[]})
     # custom javascript to be run to actually create the plotted data client side
     # all done in javascript so it runs on the website and can update without refreshing the page
-    x = CustomJS(args=dict(hist=hist_data, data=data, view=view, phases=phases, dt=dt),code='''
+    x = CustomJS(args=dict(area=area, height=height, width=width, dt=dt, data=data, view=view),code='''
 const type_ids=[];
 const full_ids=[];
 const people=[];
 const times=[];
 const outcomes=[];
-const pathways=[];
-const res=[];
-const bit_errors = [];
-for (let i = 0; i < phases.length; i++) {
-    const indices = view.filters[0].compute_indices(data);
-    let mask = new Array(data.data['Bit Errors'].length).fill(false);
-    [...indices].forEach((x)=>{mask[x] = true;})
-    for (let j = 0; j < data.get_length(); j++) {
-        if (data.data['Phase'][j] == phases[i] && mask[j] == true){
-            mask[j] = true;
-            type_ids.push(data.data['Sub Type'][j])
-            full_ids.push(data.data['Full ID'][j])
-            people.push(data.data['Person Name'][j])
-            times.push(data.data['Time'][j])
-            outcomes.push(data.data['Outcome'][j])
-            pathways.push(data.data['Phase'][j])
-            res.push(data.data['Bit Errors'][j])
-        } else {
-            mask[j] = false;
-        }
+const areas=[];
+const heights=[];
+const widths=[];
+const lpGBTs=[];
+
+const indices = view.filters[0].compute_indices(data);
+let mask = new Array(data.data['Area'].length).fill(false);
+[...indices].forEach((x)=>{mask[x] = true;})
+
+for (let j = 0; j < data.get_length(); j++) {
+    if (mask[j] == true){
+        type_ids.push(data.data['Sub Type'][j])
+        full_ids.push(data.data['Full ID'][j])
+        people.push(data.data['Person Name'][j])
+        times.push(data.data['Time'][j])
+        outcomes.push(data.data['Outcome'][j])
+        areas.push(data.data['Area'][j])
+        heights.push(data.data['Height'][j])
+        widths.push(data.data['Width'][j])
+        lpGBTs.push(data.data['lpGBT'][j])
     }
-    const good_data = data.data['Bit Errors'].filter((_,y)=>mask[y])
-    bit_errors.push(d3.mean(good_data)/1000000)
 }
-hist.data['Bit Errors'] = bit_errors;
-hist.change.emit()
+
+const area_data = data.data['Area'].filter((_,y)=>mask[y])
+let area_binner = d3.bin()
+let d_area = area_binner(area_data)
+let right_area = d_area.map(x=>x.x1)
+let left_area = d_area.map(x=>x.x0)
+let bottom_area = new Array(d_area.length).fill(0)
+let top_area = d_area.map(x=>x.length);
+area.data['right'] = right_area;
+area.data['left'] = left_area;
+area.data['bottom'] = bottom_area;
+area.data['top'] = top_area;
+area.change.emit()
+
+const height_data = data.data['Height'].filter((_,y)=>mask[y])
+let height_binner = d3.bin()
+let d_height = height_binner(height_data)
+let right_height = d_height.map(x=>x.x1)
+let left_height = d_height.map(x=>x.x0)
+let bottom_height = new Array(d_height.length).fill(0)
+let top_height = d_height.map(x=>x.length);
+height.data['right'] = right_height;
+height.data['left'] = left_height;
+height.data['bottom'] = bottom_height;
+height.data['top'] = top_height;
+height.change.emit()
+
+const width_data = data.data['Width'].filter((_,y)=>mask[y])
+let width_binner = d3.bin()
+let d_width = width_binner(width_data)
+let right_width = d_width.map(x=>x.x1)
+let left_width = d_width.map(x=>x.x0)
+let bottom_width = new Array(d_width.length).fill(0)
+let top_width = d_width.map(x=>x.length);
+width.data['right'] = right_width;
+width.data['left'] = left_width;
+width.data['bottom'] = bottom_width;
+width.data['top'] = top_width;
+width.change.emit()
+
 dt.data['Sub Type'] = type_ids;
 dt.data['Full ID'] = full_ids;
 dt.data['Person Name'] = people;
 dt.data['Time'] = times;
 dt.data['Outcome'] = outcomes;
-dt.data['Phase'] = pathways;
-dt.data['Bit Errors'] = res;
+dt.data['Area'] = areas;
+dt.data['Height'] = heights;
+dt.data['Width'] = widths;
+dt.data['lpGBT'] = lpGBTs;
 dt.change.emit()
 
     ''')
     for widget in widgets:
         widget.js_on_change('value', x)
-    return hist_data, dt
+    return area, height, width, dt
 
 # takes in the selected phase based on the webpage
-def ELinkFilter(sel_elink):
+def Filter():
     # create a CDS with all the data to be used
-    df_temp = AllData.merge(EC[sel_elink], on='Test ID', how='left')
+    df_temp = AllData.merge(EO, on='Test ID', how='left')
     df_temp = df_temp.dropna()
     ds = ColumnDataSource(df_temp)
 
@@ -198,7 +235,7 @@ def ELinkFilter(sel_elink):
     while min_date <= today:
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
-    phases = np.unique(ds.data['Phase']).tolist()
+
     # widget titles and data for those widgets has to be manually entered, as well as the type
     columns = ['Major Type', 'Sub Type', 'Full ID', 'Person Name', 'Outcome', 'Start Date', 'End Date']
     data = [ds.data['Major Type'].tolist(), ds.data['Sub Type'].tolist(), ds.data['Full ID'].tolist(), ds.data['Person Name'].tolist(), ds.data['Outcome'], date_range, date_range]
@@ -234,17 +271,35 @@ def ELinkFilter(sel_elink):
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
     # calls the function that creates the plotting data
-    hds, dt = Histogram(ds, view, widgets.values(), phases)
+    area, height, width, dt = Histogram(ds, view, widgets.values())
     # creates the figure object
-    p = figure(
-        title='E Link Quality for ' + sel_elink,
-        x_axis_label='Phase',
-        y_axis_label='Number of Bit Errors (x1m)',
+    a = figure(
+        title='Areas',
+        x_axis_label='Area',
+        y_axis_label='Number of Boards',
+        tools='pan,wheel_zoom,box_zoom,reset,save',
+        width = 925
+        )
+
+    h = figure(
+        title='Heights',
+        x_axis_label='Height',
+        y_axis_label='Number of Boards',
+        tools='pan,wheel_zoom,box_zoom,reset,save',
+        width = 925
+        )
+
+    d = figure(
+        title='Widths',
+        x_axis_label='Width',
+        y_axis_label='Number of Boards',
         tools='pan,wheel_zoom,box_zoom,reset,save',
         width = 925
         )
     # tells the figure object what data source to use
-    p.vbar(x='x', top='Bit Errors', source=hds, color=colors[0], width=0.8)
+    a.quad(top='top', bottom='bottom', left='left', right='right', source=area, color = colors[0])
+    h.quad(top='top', bottom='bottom', left='left', right='right', source=height, color = colors[1])
+    d.quad(top='top', bottom='bottom', left='left', right='right', source=width, color = colors[2])
 
     # creates data tables
     table_columns = [
@@ -253,8 +308,10 @@ def ELinkFilter(sel_elink):
                     TableColumn(field='Person Name', title='Person Name'),
                     TableColumn(field='Time', title='Date', formatter=DateFormatter()),
                     TableColumn(field='Outcome', title='Outcome'),
-                    TableColumn(field='Phase', title='Phase'),
-                    TableColumn(field='Bit Errors', title='Bit Errors'),
+                    TableColumn(field='Area', title='Area'),
+                    TableColumn(field='Height', title='Height'),
+                    TableColumn(field='Width', title='Width'),
+                    TableColumn(field='lpGBT', title='lpGBT'),
                     ]
     data_table = DataTable(source=dt, columns=table_columns, width=925, autosize_mode='fit_columns')
 
@@ -292,7 +349,7 @@ if (this.value.length != 0) {
     # since it's a separate function, the data can be filtered separately
     #layout = Gaussian(sel_elink)
     #converts the bokeh items to json and sends them to the webpage
-    plot_json = json.dumps(json_item(row(column(row(w[0:3]), row(w[3:5]), row(w[5:]), p, data_table))))
+    plot_json = json.dumps(json_item(column(row(w[0:3]), row(w[3:5]), row(w[5:]), a, h, d, data_table)))
     return plot_json
 
 

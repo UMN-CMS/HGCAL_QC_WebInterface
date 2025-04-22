@@ -1,3 +1,12 @@
+#!./cgi_runner.sh
+
+import sys
+import pandas as pd
+import csv
+import numpy as np
+from datetime import datetime as dt
+import datetime
+from bokeh.plotting import figure
 from bokeh.models import (
     ColumnDataSource, 
     CustomJS, 
@@ -24,6 +33,7 @@ import datetime
 import makeTestingData as mTD
 
 df = pd.read_csv(mTD.get_board_for_filter(), parse_dates=['Date Completed'])
+LD_wagon_tests, HD_wagon_tests, zipper_tests = mTD.get_tests_required()
 
 filter_code=('''
 const is_selected_map = new Map([
@@ -63,35 +73,6 @@ for (let i = 0; i < source.get_length(); i++) {
         indices.push(true);
     } else {
         indices.push(false);
-    }
-}
-const dates = new Map(
-    Object.keys(dr_widgets).map(
-        (col) => {
-            let pos = dr_widgets[col].possible_vals;
-            let wi = dr_widgets[col].widget;
-            let t = dr_widgets[col].type;
-            return [col, new Map(pos.map((x, i) => [x, is_selected_map.get(t)(wi, pos, x, i)]))];
-        })
-);
-const d_keys = Array.from(dates.get('Start Date').keys());
-let start_date = 0;
-let end_date = 0;
-for (let i = 0; i < d_keys.length; i++) {
-    if (dates.get('Start Date').get(d_keys[i]) == true) {
-        let sd = d_keys[i];
-        start_date = new Date(sd);
-    }
-    if (dates.get('End Date').get(d_keys[i]) == true) {
-        let ed = d_keys[i];
-        end_date = new Date(ed);
-    }
-}
-for (let i = 0; i < source.get_length(); i++) {
-    if (source.data['Date Completed'][i] >= start_date && source.data['Date Completed'][i] <= end_date && indices[i] == true) {
-        indices[i] = true;
-    } else {
-        indices[i] = false;
     }
 }
 return indices;
@@ -280,7 +261,7 @@ def Filter():
     #implements the filter on the data source
     view = CDSView(source=ds, filters=[custom_filter])
     #sets up all the objects to be created
-    all_widgets = {**mc_widgets, **dr_widgets}
+    all_widgets = {**mc_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
 
     test_names = np.unique(ds.data['Test Name'].tolist()).tolist()
@@ -331,12 +312,59 @@ def Filter():
                     TableColumn(field='Location', title='Location', formatter=bigger_font),
                     ]
 
-    for name in test_names:
-        table_columns.append(TableColumn(field=name, title=name, formatter=color_status))
+    test_columns = {}
+    def_cols = [
+                    TableColumn(field='Sub Type', title='Sub Type', formatter=bigger_font),
+                    TableColumn(field='Full ID', title='Full ID', formatter=board),
+                    TableColumn(field='Location', title='Location', formatter=bigger_font),
+                    ]
 
-    data_table = DataTable(source=td, columns=table_columns, row_height = 40, autosize_mode='fit_columns', width_policy = 'fit', height=600)
+    for name in test_names:
+        col = TableColumn(field=name, title=name, formatter=color_status)
+        table_columns.append(col)
+        test_columns[name] = col
+
+    data_table = DataTable(source=td, columns=table_columns, row_height = 40, autosize_mode='fit_columns', height=600, width=1900)
+
+    show_columns = CustomJS(args=dict(table=data_table, test_names=test_names, LD_wagon_tests=LD_wagon_tests, HD_wagon_tests=HD_wagon_tests, zipper_tests=zipper_tests, test_columns=test_columns, def_cols=def_cols), code=('''
+const visible_columns = [];
+for (let i = 0; i < def_cols.length; i++) {
+    visible_columns.push(def_cols[i])
+}
+if (this.value.length != 0) {
+    for (let j = 0; j < this.value.length; j++) {
+        if (this.value[j] == 'WW' || this.value[j] == 'WE'){
+            for (let k = 0; k < LD_wagon_tests.length; k++){
+                if (!(visible_columns.includes(test_columns[LD_wagon_tests[k]]))){
+                    visible_columns.push(test_columns[LD_wagon_tests[k]])
+                }
+            }
+        }
+        if (this.value[j] == 'WH'){
+            for (let k = 0; k < HD_wagon_tests.length; k++){
+                if (!(visible_columns.includes(test_columns[HD_wagon_tests[k]]))){
+                    visible_columns.push(test_columns[HD_wagon_tests[k]])
+                }
+            }
+        }
+        if (this.value[j] == 'ZP'){
+            for (let k = 0; k < zipper_tests.length; k++){
+                if (!(visible_columns.includes(test_columns[zipper_tests[k]]))){
+                    visible_columns.push(test_columns[zipper_tests[k]])
+                }
+            }
+        }
+    }
+} else {
+    for (let i = 0; i < test_names.length; i++) {
+        visible_columns.push(test_columns[test_names[i]])
+    }
+}
+table.columns = visible_columns
+'''))
 
     w = [*widgets.values()]
+    w[0].js_on_change('value', show_columns)
 
     subtypes = {}
     for major in np.unique(ds.data['Major Type'].tolist()).tolist():
