@@ -2,7 +2,7 @@
 
 import cgi, html
 import base
-import add_test_functions_wagon
+import add_test_functions
 import os
 from connect import connect
 

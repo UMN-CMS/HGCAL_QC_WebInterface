@@ -8,7 +8,7 @@ import html
 import json
 import sys
 
-import add_test_functions_engine
+import add_test_functions
 import base
 import connect
 

@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 LOCATION = "UMN"
 INSTITUTION = "UMN"
 
-MANU_RENAMES = { "Poly" : "PolyElectronics" }
+MANU_RENAMES = { "Poly" : "PolyElectronics",
+                 "Piranha" : "Piranha EMS"}
 
 
 # Helper Functions

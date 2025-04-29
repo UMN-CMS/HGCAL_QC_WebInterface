@@ -47,12 +47,16 @@ def Portage_fetch(test_type_id, board_sn):
     # gets list of comments
     cur.execute('select comments,day from Test where test_type_id=%(t)s and board_id=%(b)s order by day desc, test_id desc' %{'b':board_id, 't':test_type_id})
     comments = cur.fetchall()
+
+    cur.execute('select config_id,day from Test where test_type_id=%(t)s and board_id=%(b)s order by day desc, test_id desc' %{'b':board_id, 't':test_type_id})
+    config = cur.fetchall()
+
     # gets list of test ids
     cur.execute('select test_id,day from Test where test_type_id=%(t)s and board_id=%(b)s order by day desc, test_id desc' %{'b':board_id, 't':test_type_id})
     test_id = []
     for t in cur.fetchall():
         test_id.append(t[0])
-    return person_name, date, successful, comments, test_id
+    return person_name, date, successful, comments, test_id, config
 
 def Portage_fetch_revokes(sn):
     # gets board id from the serial number
@@ -160,7 +164,7 @@ def add_test_tab(barcode, board_id, static):
 def ePortageTest(test_type_id, board_sn, test_name, revokes, static):
     # displays test info for each test type, is called for each type individually
     # gets info for test
-    person_name, date, successful, comments, test_id = Portage_fetch(test_type_id, board_sn) 
+    person_name, date, successful, comments, test_id, config = Portage_fetch(test_type_id, board_sn) 
     # separates each test name with a line
     print('<hr>')
     print('<div class="row">')
@@ -210,10 +214,12 @@ def ePortageTest(test_type_id, board_sn, test_name, revokes, static):
             for afile in attachments:
                 # links attachment
                 if static:
-                    print('<tr><td>Attachment: <a href="attach_%s.html">%s</a><td colspan=2><i>%s</i></tr>' % (afile[0], afile[3], afile[2]))
+                    print('<tr><td>Attachment: <a href="attach_%s.html">%s</a><td colspan=2><i>%s</i>' % (afile[0], afile[3], afile[2]))
                 else:
-                    print('<tr><td>Attachment: <a href="get_attach.py?attach_id=%s">%s</a><td colspan=2><i>%s</i></tr>' % (afile[0],afile[3],afile[2]))
-
+                    print('<tr><td>Attachment: <a href="get_attach.py?attach_id=%s">%s</a><td colspan=2><i>%s</i>' % (afile[0],afile[3],afile[2]))
+            if config[i][0] is not None:
+                print('<td><a href="get_config_info.py?config_id=%s">Test Stand</a></td>' % config[i][0])
+            print('</tr>')
             print('</tbody>')
             print('</table>')
                     
@@ -262,10 +268,11 @@ def ePortageTest(test_type_id, board_sn, test_name, revokes, static):
             for afile in attachments:
                 # links attachment
                 if static:
-                    print('<tr><td>Attachment: <a href="attach_%s.html">%s</a><td colspan=2><i>%s</i></tr>' % (afile[0], afile[3], afile[2]))
+                    print('<tr><td>Attachment: <a href="attach_%s.html">%s</a><td colspan=2><i>%s</i>' % (afile[0], afile[3], afile[2]))
                 else:
-                    print('<tr><td>Attachment: <a href="get_attach.py?attach_id=%s">%s</a><td colspan=2><i>%s</i></tr>' % (afile[0],afile[3],afile[2]))
-
+                    print('<tr><td>Attachment: <a href="get_attach.py?attach_id=%s">%s</a><td colspan=2><i>%s</i>' % (afile[0],afile[3],afile[2]))
+            if config[i][0] is not None:
+                print('<td><a href="get_config_info.py?config_id=%s">Test Stand</a></td>' % config[i][0])
             print('</tbody>')
             print('</table>')
 

@@ -4,7 +4,7 @@ import cgi, html
 import cgitb; cgitb.enable()
 import base
 import home_page_list
-import add_test_functions_engine
+import add_test_functions
 
 
 #cgi header
@@ -25,8 +25,8 @@ base.header(title='Board Grade')
 base.top(False)
 
 if bc:
-    add_test_functions_engine.add_board_grade_form(bc)
+    add_test_functions.add_board_grade_form(bc)
 else:
-    add_test_functions_engine.add_board_grade_form()
+    add_test_functions.add_board_grade_form()
 
 base.bottom(False)

@@ -1,3 +1,8 @@
+static/ldo_scanner/
+*.json
+*.pyc
+*.prof
+
 #Binary and Image
 *.exe
 *.png

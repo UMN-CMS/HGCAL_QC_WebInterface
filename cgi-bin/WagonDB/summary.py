@@ -28,6 +28,7 @@ def run(static):
     print('<th> LD West Wagons </th>')
     print('<th> LD East Wagons </th>')
     print('<th> HD Wagons </th>')
+    print('<th> Zippers </th>')
     print('</tr>')
     print('</thead>')
     print('<tbody>')
@@ -51,6 +52,15 @@ def run(static):
         west_subtypes.append(new[0][0])
     west_subtypes = np.unique(west_subtypes).tolist()
 
+    zp_subtypes = []
+    cur.execute('select board_id from Board where full_id like "%ZP%"')
+    temp = cur.fetchall()
+    for t in temp:
+        cur.execute('select type_id from Board where board_id="%s"' % t[0])
+        new = cur.fetchall()
+        zp_subtypes.append(new[0][0])
+    zp_subtypes = np.unique(zp_subtypes).tolist()
+
     hd_subtypes = []
     cur.execute('select board_id from Board where full_id like "%WH%"')
     temp = cur.fetchall()
@@ -60,7 +70,9 @@ def run(static):
         hd_subtypes.append(new[0][0])
     hd_subtypes = np.unique(hd_subtypes).tolist()
 
-    for s in range(len(west_subtypes)):
+    m = max([len(zp_subtypes), len(west_subtypes), len(east_subtypes), len(hd_subtypes)])
+
+    for s in range(m):
         print('<tr>')
         # links each subtype to it's own page
         if static:
@@ -81,7 +93,10 @@ def run(static):
             print('</td>')
         else:
             print('<td>')
-            print('<a href="summary_board.py?type_id=%(id)s">%(id)s</a>' %{'id':west_subtypes[s]})
+            try:
+                print('<a href="summary_board.py?type_id=%(id)s">%(id)s</a>' %{'id':west_subtypes[s]})
+            except:
+                pass
             print('</td>')
             print('<td>')
             try:
@@ -92,6 +107,12 @@ def run(static):
             print('<td>')
             try:
                 print('<a href="summary_board.py?type_id=%(id)s">%(id)s</a>' %{'id':hd_subtypes[s]})
+            except:
+                pass
+            print('</td>')
+            print('<td>')
+            try:
+                print('<a href="summary_board.py?type_id=%(id)s">%(id)s</a>' %{'id':zp_subtypes[s]})
             except:
                 pass
             print('</td>')

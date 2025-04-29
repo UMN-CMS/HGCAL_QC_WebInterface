@@ -311,9 +311,9 @@ def add_test(person_id, test_type, serial_num, success, comments, config_id):
 
 
 # Adds a tester person
-def add_tester(person_name, passwd):
+def add_tester(person_name, passwd, db):
     try:
-        db = connect_admin(passwd, 'Engine')
+        db = connect_admin(passwd, db)
     except Exception as e:
         print(e)
         print("Administrative access denied")
