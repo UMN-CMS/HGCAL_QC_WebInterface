@@ -139,7 +139,7 @@ def Histogram(data, view, widgets, modules, slider):
         hist_data[i] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
 
     std = ColumnDataSource(data={'columns':[], 'fit mean':[], 'fit std':[], 'data mean':[], 'data std':[]})
-    dt = ColumnDataSource(data={'Sub Type':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'Outcome':[], 'E Link':[], 'Fit Eye Opening':[], 'Data Eye Opening':[], 'Fit Quality':[], 'Module': [], 'Mod Elink': []})
+    dt = ColumnDataSource(data={'Sub Type':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'Outcome':[], 'E Link':[], 'Fit Eye Opening':[], 'Data Eye Opening':[], 'Fit Quality':[]})
     # custom javascript to be run to actually create the plotted data on the website
     # all done in javascript so it runs on the website and can update without refreshing the page
     x = CustomJS(args=dict(hist_fit=hist_fit, hist_data=hist_data, data=data, view=view, modules=modules, slider=slider, std=std, dt=dt),code='''
@@ -154,8 +154,6 @@ const elinks = [];
 const fits = [];
 const datas = [];
 const qualities = [];
-const mods = [];
-const mlinks = [];
 const fit_means = [];
 const data_means = [];
 const fit_stds = [];
@@ -180,8 +178,6 @@ for (let i = 0; i < modules.length; i++) {
             fits.push(data.data['Fit Eye Opening'][j])
             datas.push(data.data['Data Eye Opening'][j])
             qualities.push(data.data['Fit Quality'][j])
-            mods.push(data.data['Module'][j])
-            mlinks.push(data.data['Mod Elink'][j])
         } else {
             mask[j] = false;
         }
@@ -246,8 +242,6 @@ dt.data['E Link'] = elinks;
 dt.data['Fit Eye Opening'] = fits;
 dt.data['Data Eye Opening'] = datas;
 dt.data['Fit Quality'] = qualities;
-dt.data['Module'] = mods;
-dt.data['Mod Elink'] = mlinks;
 dt.change.emit()
     ''')
     for widget in widgets:
@@ -381,8 +375,6 @@ src.change.emit()
                     TableColumn(field='Time', title='Date', formatter=DateFormatter()),
                     TableColumn(field='Outcome', title='Outcome'), 
                     TableColumn(field='E Link', title='E Link'),
-                    TableColumn(field='Module', title='Module'),
-                    TableColumn(field='Mod Elink', title='Mod Elink'),
                     TableColumn(field='Fit Eye Opening', title='Fit Eye Opening'),
                     TableColumn(field='Data Eye Opening', title='Data Eye Opening'),
                     TableColumn(field='Fit Quality', title='Fit Quality'),
