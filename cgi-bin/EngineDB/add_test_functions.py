@@ -311,9 +311,9 @@ def add_test(person_id, test_type, serial_num, success, comments, config_id):
 
 
 # Adds a tester person
-def add_tester(person_name, passwd, db):
+def add_tester(person_name, passwd):
     try:
-        db = connect_admin(passwd, db)
+        db = connect_admin(passwd, 'Engine')
     except Exception as e:
         print(e)
         print("Administrative access denied")
@@ -721,8 +721,10 @@ def register_boards_form():
     print('</div>')
 
     print('<div class="row">')
-    print('<div class="col-md-6 pt-2 ps-5 mx-2 my-2">')
+    print('<div class="col-md-3 pt-2 ps-5 mx-2 my-2">')
     print('<input type="submit" class="btn btn-dark" value="Submit">')
+    print('</div>')
+    print('<div class="col-md-3 pt-2 ps-5 mx-2 my-2">')
     print('</div>')
     print('</div>')
 

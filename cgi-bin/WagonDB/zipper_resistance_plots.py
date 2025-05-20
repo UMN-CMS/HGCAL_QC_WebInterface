@@ -27,6 +27,7 @@ from bokeh.models import (
 from bokeh.embed import json_item
 from bokeh.palettes import d3, brewer
 from bokeh.layouts import column, row
+from bokeh.models.widgets import HTMLTemplateFormatter
 import json
 import makeTestingData as mTD
 
@@ -128,11 +129,19 @@ def Histogram(columns, data, views, widgets, subtypes, serial_numbers, slider):
         hist[s] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
 
     td = ColumnDataSource(data={'Subtype': subtypes, 'mean': [], 'std':[]})
+    dt = ColumnDataSource(data={'Sub Type':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'Outcome':[], 'Resistance':[]})
 
-    x = CustomJS(args=dict(col=columns, hist=hist, data=data, views=views, subtypes=subtypes, slider=slider, td=td),code='''
+    x = CustomJS(args=dict(col=columns, hist=hist, data=data, views=views, subtypes=subtypes, slider=slider, td=td, dt=dt),code='''
 // create arrays for table
 const means = [];
 const devs = [];
+
+const subs = [];
+const fulls = [];
+const people = [];
+const times = [];
+const outcomes = [];
+const resists = [];
 
 // iterate over subtypes
 for (let s = 0; s < subtypes.length; s++) {
@@ -141,8 +150,18 @@ for (let s = 0; s < subtypes.length; s++) {
     let mask = new Array(data[subtypes[s]].data[col].length).fill(false);
     [...indices].forEach((x)=>{mask[x] = true;})
 
+    for (let i = 0; i < mask.length; i++) {
+        if (mask[i] == true) {
+            subs.push(data[subtypes[s]].data['Sub Type'][i])
+            fulls.push(data[subtypes[s]].data['Full ID'][i])
+            people.push(data[subtypes[s]].data['Person Name'][i])
+            times.push(data[subtypes[s]].data['Time'][i])
+            outcomes.push(data[subtypes[s]].data['Outcome'][i])
+            resists.push(data[subtypes[s]].data['Resistance'][i])
+        }
+    }
+
     const good_data = data[subtypes[s]].data[col].filter((_,y)=>mask[y])
-    console.log(good_data)
     let bins = slider.value
     let min = Math.min(...good_data);
     let m = Math.max(...good_data);
@@ -164,6 +183,13 @@ for (let s = 0; s < subtypes.length; s++) {
     means.push(d3.mean(good_data))
     devs.push(d3.deviation(good_data))
 }
+dt.data['Sub Type'] = subs;
+dt.data['Full ID'] = fulls;
+dt.data['Person Name'] = people;
+dt.data['Time'] = times;
+dt.data['Outcome'] = outcomes;
+dt.data['Resistance'] = resists;
+dt.change.emit()
 
 td.data['mean'] = means;
 td.data['std'] = devs;
@@ -173,7 +199,7 @@ td.change.emit()
     for widget in widgets:
         widget.js_on_change('value', x)
     slider.js_on_change('value', x)
-    return hist, td
+    return hist, dt, td
 
 def Filter():
     df_temp = AllData.merge(IDR, on='Test ID', how='left')
@@ -240,7 +266,7 @@ for (let i = 0; i < subtypes.length; i++) {
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
 
-    hist, td = Histogram('Resistance', data_sources, views, widgets.values(), subtypes, serial_numbers, slider)
+    hist, dt, td = Histogram('Resistance', data_sources, views, widgets.values(), subtypes, serial_numbers, slider)
     # holds all the plot objects by subtype
     p = figure(
         title='Zipper Resistance by Subtype ',
@@ -252,8 +278,27 @@ for (let i = 0; i < subtypes.length; i++) {
 
     for idx,s in enumerate(subtypes):
         p.quad(top='top', bottom='bottom', left='left', right='right', source=hist[s], legend_label=s, color = colors[idx])
-        p.legend.click_policy='hide'
-        p.legend.label_text_font_size = '8pt' 
+    p.legend.click_policy='hide'
+    p.legend.label_text_font_size = '8pt' 
+
+    module_template = '''
+<div>
+<a href="module.py?full_id=<%= value %>"target="_blank">
+<%= value %>
+</a>
+</div> 
+'''
+    board = HTMLTemplateFormatter(template=module_template)
+
+    tc2 = [
+            TableColumn(field='Sub Type', title='Sub Type'),
+            TableColumn(field='Full ID', title='Full ID', formatter=board),
+            TableColumn(field='Person Name', title='Tester'),
+            TableColumn(field='Time', title='Date', formatter=DateFormatter()),
+            TableColumn(field='Outcome', title='Outcome'),
+            TableColumn(field='Resistance', title='Resistance'),
+            ]
+    t2 = DataTable(source=dt, columns=tc2, autosize_mode='fit_columns')
 
     table_columns = [
                     TableColumn(field='Subtype', title='Subtype'),
@@ -265,7 +310,7 @@ for (let i = 0; i < subtypes.length; i++) {
     w = [*widgets.values()]
 
     # column and row objects only take it lists, need to make arguments lists
-    layout = column(row(w[0:2]), row(w[2:5]), slider, p, data_table)
+    layout = column(row(w[0:2]), row(w[2:5]), slider, p, data_table, t2)
     plot_json = json.dumps(json_item(layout))
     return plot_json
 

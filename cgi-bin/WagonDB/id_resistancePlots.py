@@ -131,7 +131,7 @@ def Histogram(columns, data, views, widgets, subtypes, serial_numbers, slider):
     dt = {}
     for s in subtypes:
         hist[s] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
-        dt[s] = ColumnDataSource(data={'Full ID': [], 'Resistance': []})
+        dt[s] = ColumnDataSource(data={'Full ID': [], 'Person Name': [], 'Time': [], 'Outcome': [], 'Resistance': []})
 
     td = ColumnDataSource(data={'Subtype': subtypes, 'mean': [], 'std':[]})
 
@@ -144,6 +144,9 @@ const devs = [];
 for (let s = 0; s < subtypes.length; s++) {
     const sns = [];
     const resists = [];
+    const people = [];
+    const times = [];
+    const outcomes = [];
 
     const indices = views[subtypes[s]].filters[0].compute_indices(data[subtypes[s]]);
     let mask = new Array(data[subtypes[s]].data[col].length).fill(false);
@@ -153,6 +156,9 @@ for (let s = 0; s < subtypes.length; s++) {
         if (mask[i] == true) {
             sns.push(data[subtypes[s]].data['Full ID'][i])
             resists.push(data[subtypes[s]].data[col][i])
+            people.push(data[subtypes[s]].data['Person Name'][i])
+            times.push(data[subtypes[s]].data['Time'][i])
+            outcomes.push(data[subtypes[s]].data['Outcome'][i])
         }
     }
 
@@ -176,6 +182,9 @@ for (let s = 0; s < subtypes.length; s++) {
     hist[subtypes[s]].change.emit()
 
     dt[subtypes[s]].data['Full ID'] = sns;
+    dt[subtypes[s]].data['Person Name'] = people;
+    dt[subtypes[s]].data['Time'] = times;
+    dt[subtypes[s]].data['Outcome'] = outcomes;
     dt[subtypes[s]].data['Resistance'] = resists;
     dt[subtypes[s]].change.emit()
 
@@ -288,6 +297,9 @@ for (let i = 0; i < subtypes.length; i++) {
 
         tc2 = [
                 TableColumn(field='Full ID', title='Full ID', formatter=board),
+                TableColumn(field='Person Name', title='Tester'),
+                TableColumn(field='Time', title='Date'),
+                TableColumn(field='Outcome', title='Outcome'),
                 TableColumn(field='Resistance', title='Resistance'),
                 ]
         tables[s] = DataTable(source=dt[s], columns=tc2, autosize_mode='fit_columns')

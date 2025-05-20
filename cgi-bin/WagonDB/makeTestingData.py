@@ -324,7 +324,7 @@ def get_rm():
 def get_bert():
     csv_file = io.StringIO()
 
-    header = ['Test ID', 'E Link', 'Midpoint', 'Eye Opening', 'Passed', 'Midpoint Errors']
+    header = ['Test ID', 'E Link', 'Fit Eye Opening', 'Data Eye Opening', 'Module', 'Mod Elink', 'Fit Quality']
     writer = csv.DictWriter(csv_file, fieldnames=header)
     writer.writeheader()
 
@@ -342,7 +342,10 @@ def get_bert():
 
     Attach_Data = []
     for i in TestIDs:
-        Attach_Data.append(json.loads(i[1]))
+        try:
+            Attach_Data.append(json.loads(i[1])['test_data'])
+        except KeyError:
+            Attach_Data.append(json.loads(i[1]))
 
     # a nicer, more pythonic way of writing the data
     # does the stacking ahead of time with the E Links
@@ -351,9 +354,12 @@ def get_bert():
             keys = Attach_Data[n].keys()
             for j in keys:
                 try:
-                    writer.writerow({'Test ID':TestIDs[n][0], 'E Link':j, 'Midpoint':Attach_Data[n][j]['Midpoint'], 'Eye Opening':Attach_Data[n][j]['Eye Opening'], 'Passed':Attach_Data[n][j]['passed'], 'Midpoint Errors':Attach_Data[n][j]['Midpoint Errors']})
-                except:
-                    pass
+                    writer.writerow({'Test ID':TestIDs[n][0], 'E Link':j, 'Fit Eye Opening':Attach_Data[n][j]['Fit Eye Opening'], 'Data Eye Opening':Attach_Data[n][j]['Data Eye Opening'], 'Module':Attach_Data[n][j]['Module'], 'Mod Elink':Attach_Data[n][j]['Mod_Elink'], 'Fit Quality':Attach_Data[n][j]['Fit Quality']})
+                except KeyError:
+                    try:
+                        writer.writerow({'Test ID':TestIDs[n][0], 'E Link':j, 'Fit Eye Opening':Attach_Data[n][j]['Fit Eye Opening'], 'Data Eye Opening':Attach_Data[n][j]['Data Eye Opening'], 'Module':Attach_Data[n][j]['Module'], 'Mod Elink':'CLK', 'Fit Quality':Attach_Data[n][j]['Fit Quality']})
+                    except KeyError:
+                        continue
 
     csv_file.seek(0)
 
@@ -559,6 +565,44 @@ def get_zipper_rm():
     writer.writeheader()
     for i in range(len(Tests_a)):
         writer.writerow({'Test ID':Tests_a[i], 'Resistance':Resistance[i]})
+
+    csv_file.seek(0)
+
+    return csv_file
+
+def get_zipper_bert():
+    csv_file = io.StringIO()
+
+    header = ['Test ID', 'E Link', 'Fit Eye Opening', 'Data Eye Opening', 'Fit Quality']
+    writer = csv.DictWriter(csv_file, fieldnames=header)
+    writer.writeheader()
+
+    cur.execute('select test_type from Test_Type where name="Zipper Bit Error Rate Test"')
+    test_type_id = cur.fetchall()[0][0]
+
+    cur.execute('select board_id from Board where full_id like "320Z%"')
+    boards_list = cur.fetchall()
+    TestIDs = []
+    for b in boards_list:
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],test_type_id))
+        test_id = cur.fetchone()
+        if test_id:
+            TestIDs.append(test_id)
+
+    Attach_Data = []
+    for i in TestIDs:
+        Attach_Data.append(json.loads(i[1]))
+
+    # a nicer, more pythonic way of writing the data
+    # does the stacking ahead of time with the E Links
+    # when the attached data is in a nicer format like this test, this is the better way to do it
+    for n in range(len(Attach_Data)):
+            keys = Attach_Data[n]
+            for j,k in enumerate(keys):
+                try:
+                    writer.writerow({'Test ID':TestIDs[n][0], 'E Link':f'Link {j}', 'Fit Eye Opening':k['Fit Eye Opening'], 'Data Eye Opening':k['Data Eye Opening'], 'Fit Quality':k['Fit Quality']})
+                except KeyError:
+                    continue
 
     csv_file.seek(0)
 

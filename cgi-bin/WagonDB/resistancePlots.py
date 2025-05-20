@@ -309,7 +309,7 @@ def Filter():
     table_columns = [
                     TableColumn(field='Sub Type', title='Sub Type'),
                     TableColumn(field='Full ID', title='Full ID', formatter=board),
-                    TableColumn(field='Person Name', title='Person Name'),
+                    TableColumn(field='Person Name', title='Tester'),
                     TableColumn(field='Time', title='Date', formatter=DateFormatter()),
                     TableColumn(field='Outcome', title='Outcome'),
                     TableColumn(field='level_1', title='Pathway'),
