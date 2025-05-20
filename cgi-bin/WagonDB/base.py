@@ -203,6 +203,7 @@ def top(static):
             <li><a class="dropdown-item" href="ResistanceMeasurementData.py">Resistance Measurement</a></li>
             <li><a class="dropdown-item" href="IDResistorData.py">ID Resistance</a></li>
             <li><a class="dropdown-item" href="BitErrorRateData.py">Bit Error Rate</a></li>
+            <li><a class="dropdown-item" href="ZipperResistanceData.py">Zipper Resistance Measurement</a></li>
           </ul>
         </li>
         <li class="nav-item">

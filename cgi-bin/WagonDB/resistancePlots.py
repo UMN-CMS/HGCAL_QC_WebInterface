@@ -27,6 +27,7 @@ from bokeh.models import (
 from bokeh.embed import json_item
 from bokeh.palettes import d3, brewer
 from bokeh.layouts import column, row
+from bokeh.models.widgets import HTMLTemplateFormatter
 import json
 import makeTestingData as mTD
 
@@ -156,6 +157,14 @@ for (let i = 0; i < modules.length; i++) {
     let mask = new Array(data.data[col].length).fill(false);
     [...indices].forEach((x)=>{mask[x] = true;})
 
+    for (let j = 0; j < data.get_length(); j++) {
+        if (data.data[col][j] < 1000 && mask[j] == true){
+            mask[j] = true;
+        } else {
+            mask[j] = false;
+        }
+    }
+
     const all_data = data.data[col].filter((_,y)=>mask[y])
     let m = Math.max(...all_data);
 
@@ -175,6 +184,7 @@ for (let i = 0; i < modules.length; i++) {
     }
     // filter and bin data
     const good_data = data.data[col].filter((_,y)=>mask[y])
+
     let bins = slider.value
     let scale = d3.scaleLinear().domain([0,m]).nice()
     let binner = d3.bin().domain(scale.domain()).thresholds(m*bins)
@@ -286,10 +296,19 @@ def Filter():
     for i in range(len(modules)):
         p.quad(top='top', bottom='bottom', left='left', right='right', source=hds[modules[i]], legend_label=modules[i], color = colors[i])
 
+    module_template = '''
+<div>
+<a href="module.py?full_id=<%= value %>"target="_blank">
+<%= value %>
+</a>
+</div> 
+'''
+    board = HTMLTemplateFormatter(template=module_template)
+
     # creates data tables
     table_columns = [
                     TableColumn(field='Sub Type', title='Sub Type'),
-                    TableColumn(field='Full ID', title='Full ID'),
+                    TableColumn(field='Full ID', title='Full ID', formatter=board),
                     TableColumn(field='Person Name', title='Person Name'),
                     TableColumn(field='Time', title='Date', formatter=DateFormatter()),
                     TableColumn(field='Outcome', title='Outcome'),
@@ -329,9 +348,9 @@ if (this.value.length != 0) {
     w[1].js_on_change('value', update_options_2)
     # gets the second half of the webpage where the residuals are displayed
     # since it's a separate function, the data can be filtered separately
-    layout = Gaussian()
+    #layout = Gaussian()
     #converts the bokeh items to json and sends them to the webpage
-    plot_json = json.dumps(json_item(row(column(row(w[0:3]), row(w[3:5]), row(w[5:]), slider, p, data_table, data_table_2), layout)))
+    plot_json = json.dumps(json_item(row(column(row(w[0:3]), row(w[3:5]), row(w[5:]), slider, p, data_table, data_table_2))))
     return plot_json
 
 ################################################################################################################

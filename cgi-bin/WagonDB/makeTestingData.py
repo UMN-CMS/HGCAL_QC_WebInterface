@@ -52,7 +52,7 @@ def get_id_res():
     test_type_id = cur.fetchall()[0][0]
 
     # gets the test ids for that test type
-    cur.execute('select board_id from Board')
+    cur.execute('select board_id from Board where full_id like "320W%"')
     boards_list = cur.fetchall()
     Tests = []
     for b in boards_list:
@@ -148,7 +148,7 @@ def get_rm():
     cur.execute('select test_type from Test_Type where name="Resistance Measurement"')
     test_type_id = cur.fetchall()[0][0]
 
-    cur.execute('select board_id from Board')
+    cur.execute('select board_id from Board where full_id like "320W%"')
     boards_list = cur.fetchall()
     Tests = []
     for b in boards_list:
@@ -158,8 +158,11 @@ def get_rm():
             Tests.append(test_id)
 
     Attach_Data = []
+    Tests_a = []
     for i in Tests:
-        Attach_Data.append(json.loads(i[1]))
+        if i[0] not in [4792, 5092, 5127]:
+            Attach_Data.append(json.loads(i[1]))
+            Tests_a.append(i[0])
 
     RTD_VMON_1 = []
     ECON_HG_1 = []
@@ -311,8 +314,8 @@ def get_rm():
                 PG_ECON_3.append(np.nan)
 
     writer.writeheader()
-    for i in range(len(Tests)):
-        writer.writerow({'Test ID':Tests[i][0], 'RTD -> VMON_LVS Module 1':RTD_VMON_1[i], 'ECON_RE_Sb -> HGCROC_RE_Sb Module 1':ECON_HG_1[i], 'PWR_EN -> PG_LDO Module 1':PWR_PG_1[i], 'RTD -> HGCROC_RE_Sb Module 1':RTD_HG_1[i], 'HGCROC_RE_Hb -> HGCROC_RE_Sb Module 1':HG_HG_1[i], 'PG_DCDC -> ECON_RE_Hb Module 1':PG_ECON_1[i], 'RTD -> VMON_LVS Module 2':RTD_VMON_2[i], 'ECON_RE_Sb -> HGCROC_RE_Sb Module 2':ECON_HG_2[i], 'PWR_EN -> PG_LDO Module 2':PWR_PG_2[i], 'RTD -> HGCROC_RE_Sb Module 2':RTD_HG_2[i], 'HGCROC_RE_Hb -> HGCROC_RE_Sb Module 2':HG_HG_2[i], 'PG_DCDC -> ECON_RE_Hb Module 2':PG_ECON_2[i], 'RTD -> VMON_LVS Module 3':RTD_VMON_3[i], 'ECON_RE_Sb -> HGCROC_RE_Sb Module 3':ECON_HG_3[i], 'PWR_EN -> PG_LDO Module 3':PWR_PG_3[i], 'RTD -> HGCROC_RE_Sb Module 3':RTD_HG_3[i], 'HGCROC_RE_Hb -> HGCROC_RE_Sb Module 3':HG_HG_3[i], 'PG_DCDC -> ECON_RE_Hb Module 3':PG_ECON_3[i]})
+    for i in range(len(Tests_a)):
+        writer.writerow({'Test ID':Tests_a[i], 'RTD -> VMON_LVS Module 1':RTD_VMON_1[i], 'ECON_RE_Sb -> HGCROC_RE_Sb Module 1':ECON_HG_1[i], 'PWR_EN -> PG_LDO Module 1':PWR_PG_1[i], 'RTD -> HGCROC_RE_Sb Module 1':RTD_HG_1[i], 'HGCROC_RE_Hb -> HGCROC_RE_Sb Module 1':HG_HG_1[i], 'PG_DCDC -> ECON_RE_Hb Module 1':PG_ECON_1[i], 'RTD -> VMON_LVS Module 2':RTD_VMON_2[i], 'ECON_RE_Sb -> HGCROC_RE_Sb Module 2':ECON_HG_2[i], 'PWR_EN -> PG_LDO Module 2':PWR_PG_2[i], 'RTD -> HGCROC_RE_Sb Module 2':RTD_HG_2[i], 'HGCROC_RE_Hb -> HGCROC_RE_Sb Module 2':HG_HG_2[i], 'PG_DCDC -> ECON_RE_Hb Module 2':PG_ECON_2[i], 'RTD -> VMON_LVS Module 3':RTD_VMON_3[i], 'ECON_RE_Sb -> HGCROC_RE_Sb Module 3':ECON_HG_3[i], 'PWR_EN -> PG_LDO Module 3':PWR_PG_3[i], 'RTD -> HGCROC_RE_Sb Module 3':RTD_HG_3[i], 'HGCROC_RE_Hb -> HGCROC_RE_Sb Module 3':HG_HG_3[i], 'PG_DCDC -> ECON_RE_Hb Module 3':PG_ECON_3[i]})
 
     csv_file.seek(0)
 
@@ -328,7 +331,7 @@ def get_bert():
     cur.execute('select test_type from Test_Type where name="Bit Error Rate Test"')
     test_type_id = cur.fetchall()[0][0]
 
-    cur.execute('select board_id from Board')
+    cur.execute('select board_id from Board where full_id like "320W%"')
     boards_list = cur.fetchall()
     TestIDs = []
     for b in boards_list:
@@ -514,6 +517,48 @@ def get_check_in():
             writer.writerow({'Board ID': c[0], 'Check In Time': c[1], 'Check Out Time': checkout_date[0][0]})
         else:
             writer.writerow({'Board ID': c[0], 'Check In Time': c[1], 'Check Out Time': datetime.datetime.fromtimestamp(0)})
+
+    csv_file.seek(0)
+
+    return csv_file
+
+def get_zipper_rm():
+    csv_file = io.StringIO()
+
+    header = ['Test ID','Resistance']
+    writer = csv.DictWriter(csv_file, fieldnames = header)
+
+    cur.execute('select test_type from Test_Type where name="Zipper Resistance Measurement"')
+    test_type_id = cur.fetchall()[0][0]
+
+    cur.execute('select board_id from Board where full_id like "320Z%"')
+    boards_list = cur.fetchall()
+    Tests = []
+    for b in boards_list:
+        cur.execute('select Test.test_id, Attachments.attach from Test left join Attachments on Test.test_id=Attachments.test_id where Test.board_id=%s and Test.test_type_id=%s order by Test.day desc, Test.test_id desc' % (b[0],test_type_id))
+        test_id = cur.fetchone()
+        if test_id:
+            Tests.append(test_id)
+
+    Attach_Data = []
+    for i in Tests:
+        Attach_Data.append(json.loads(i[1]))
+    Resistance = []
+    Tests_a = []
+    for idx,i in enumerate(Attach_Data):
+        try:
+            Resistance.append(i["test_data"]['wagon type chip']['WAGON_TYPE -> GND'])
+            Tests_a.append(Tests[idx][0])
+        except KeyError:
+            try:
+                Resistance.append(i['wagon type chip']['WAGON_TYPE -> GND'])
+                Tests_a.append(Tests[idx][0])
+            except KeyError:
+                pass
+
+    writer.writeheader()
+    for i in range(len(Tests_a)):
+        writer.writerow({'Test ID':Tests_a[i], 'Resistance':Resistance[i]})
 
     csv_file.seek(0)
 

@@ -25,7 +25,6 @@ from bokeh.models import (
     NumericInput,
 )
 from bokeh.embed import json_item
-from bokeh.models.widgets import HTMLTemplateFormatter
 from bokeh.palettes import d3, brewer
 from bokeh.layouts import column, row
 import json
@@ -41,7 +40,7 @@ AllData = AllData.rename(columns={'Successful':'Outcome'})
 AllData['Outcome'] = AllData['Outcome'].replace(0, 'Unsuccessful')
 AllData['Outcome'] = AllData['Outcome'].replace(1, 'Successful')
 
-tempIDR = pd.read_csv(mTD.get_id_res())
+tempIDR = pd.read_csv(mTD.get_zipper_rm())
 IDR = tempIDR.dropna()
 
 filter_code=('''
@@ -118,50 +117,37 @@ return indices;
 
 ''')
 
-#create a color pallete to be used on graphs
 colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10][2], d3['Category10'][10][3], d3['Category10'][10][4], d3['Category10'][10][5], d3['Category10'][10][6], d3['Category10'][10][7], d3['Category10'][10][8], d3['Category10'][10][9], brewer['Accent'][8][0], brewer['Accent'][8][3], brewer['Dark2'][8][0], brewer['Dark2'][8][2], brewer['Dark2'][8][3], brewer['Dark2'][8][4], brewer['Dark2'][8][5], brewer['Dark2'][8][6]]
 
 for i in range(0,20):
     colors.append(d3['Category20c'][20][i])
 
 def Histogram(columns, data, views, widgets, subtypes, serial_numbers, slider):
-    # each subtype gets its own subpage, this is done by changing which plot is visible
-    # each serial number is then iterated over and plotted individually as a legend entry
     hist = {}
-    dt = {}
     for s in subtypes:
         hist[s] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
-        dt[s] = ColumnDataSource(data={'Full ID': [], 'Resistance': []})
 
     td = ColumnDataSource(data={'Subtype': subtypes, 'mean': [], 'std':[]})
 
-    x = CustomJS(args=dict(col=columns, hist=hist, data=data, views=views, subtypes=subtypes, slider=slider, td=td, dt=dt),code='''
+    x = CustomJS(args=dict(col=columns, hist=hist, data=data, views=views, subtypes=subtypes, slider=slider, td=td),code='''
 // create arrays for table
 const means = [];
 const devs = [];
 
 // iterate over subtypes
 for (let s = 0; s < subtypes.length; s++) {
-    const sns = [];
-    const resists = [];
 
     const indices = views[subtypes[s]].filters[0].compute_indices(data[subtypes[s]]);
     let mask = new Array(data[subtypes[s]].data[col].length).fill(false);
     [...indices].forEach((x)=>{mask[x] = true;})
 
-    for (let i = 0; i < mask.length; i++) {
-        if (mask[i] == true) {
-            sns.push(data[subtypes[s]].data['Full ID'][i])
-            resists.push(data[subtypes[s]].data[col][i])
-        }
-    }
-
     const good_data = data[subtypes[s]].data[col].filter((_,y)=>mask[y])
-    let bins = 2*slider.value
+    console.log(good_data)
+    let bins = slider.value
     let min = Math.min(...good_data);
     let m = Math.max(...good_data);
     let scale = d3.scaleLinear().domain([min-0.5,m+0.5]).nice()
-    let binner = d3.bin().domain(scale.domain()).thresholds(bins)
+    let binner = d3.bin().domain(scale.domain()).thresholds(m*bins)
     let d = binner(good_data)
     let right = d.map(x=>x.x1)
     let left = d.map(x=>x.x0)
@@ -175,10 +161,6 @@ for (let s = 0; s < subtypes.length; s++) {
     hist[subtypes[s]].data['top'] = top;
     hist[subtypes[s]].change.emit()
 
-    dt[subtypes[s]].data['Full ID'] = sns;
-    dt[subtypes[s]].data['Resistance'] = resists;
-    dt[subtypes[s]].change.emit()
-
     means.push(d3.mean(good_data))
     devs.push(d3.deviation(good_data))
 }
@@ -186,11 +168,12 @@ for (let s = 0; s < subtypes.length; s++) {
 td.data['mean'] = means;
 td.data['std'] = devs;
 td.change.emit()
+
 ''')
     for widget in widgets:
         widget.js_on_change('value', x)
     slider.js_on_change('value', x)
-    return hist, dt, td
+    return hist, td
 
 def Filter():
     df_temp = AllData.merge(IDR, on='Test ID', how='left')
@@ -253,45 +236,24 @@ for (let i = 0; i < subtypes.length; i++) {
     views = {}
     for s in subtypes:
         views[s] = CDSView(source=data_sources[s], filters=[custom_filter])
-    slider = Slider(start=1, end=16, value=8, step=1, title='Granularity')
+    slider = Slider(start=1, end=16, value=4, step=1, title='Granularity')
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
 
-    module_template = '''
-<div>
-<a href="module.py?full_id=<%= value %>"target="_blank">
-<%= value %>
-</a>
-</div> 
-'''
-    board = HTMLTemplateFormatter(template=module_template)
-
-    hist, dt, td = Histogram('Resistance', data_sources, views, widgets.values(), subtypes, serial_numbers, slider)
+    hist, td = Histogram('Resistance', data_sources, views, widgets.values(), subtypes, serial_numbers, slider)
     # holds all the plot objects by subtype
-    plots = {}
-    tables = {}
-    for idx,s in enumerate(subtypes):
-        p = figure(
-            title='ID Resistance by Subtype ',
-            x_axis_label='Resistance',
-            y_axis_label='Number of Boards',
-            tools='pan,wheel_zoom,box_zoom,reset,save',
-            width = 925
-            )
+    p = figure(
+        title='Zipper Resistance by Subtype ',
+        x_axis_label='Resistance',
+        y_axis_label='Number of Boards',
+        tools='pan,wheel_zoom,box_zoom,reset,save',
+        width = 925
+        )
 
-        p.quad(top='top', bottom='bottom', left='left', right='right', source=hist[s], color = colors[4])
+    for idx,s in enumerate(subtypes):
+        p.quad(top='top', bottom='bottom', left='left', right='right', source=hist[s], legend_label=s, color = colors[idx])
         p.legend.click_policy='hide'
         p.legend.label_text_font_size = '8pt' 
-        p.visible = False
-
-        plots[s] = p
-
-        tc2 = [
-                TableColumn(field='Full ID', title='Full ID', formatter=board),
-                TableColumn(field='Resistance', title='Resistance'),
-                ]
-        tables[s] = DataTable(source=dt[s], columns=tc2, autosize_mode='fit_columns')
-        tables[s].visible = False
 
     table_columns = [
                     TableColumn(field='Subtype', title='Subtype'),
@@ -300,30 +262,10 @@ for (let i = 0; i < subtypes.length; i++) {
                     ]
     data_table = DataTable(source=td, columns=table_columns, autosize_mode='fit_columns')
 
-    display_plot = CustomJS(args=dict(plots=plots, tables=tables), code=('''
-for (let [name,plot] of Object.entries(plots)){
-    if (name == this.value){
-        plot.visible = true
-    } else {
-        plot.visible = false
-    }
-}
-for (let [name,plot] of Object.entries(tables)){
-    if (name == this.value){
-        plot.visible = true
-    } else {
-        plot.visible = false
-    }
-}
-'''))
-    
-    select = Select(title='Sub Type', options=subtypes)
-    select.js_on_change('value', display_plot)
-
     w = [*widgets.values()]
 
     # column and row objects only take it lists, need to make arguments lists
-    layout = column(row(w[0:2] + [select]), row(w[2:5]), slider, column(list(plots.values())), data_table, column(list(tables.values())))
+    layout = column(row(w[0:2]), row(w[2:5]), slider, p, data_table)
     plot_json = json.dumps(json_item(layout))
     return plot_json
 

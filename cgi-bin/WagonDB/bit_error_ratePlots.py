@@ -27,6 +27,7 @@ from bokeh.models import (
 from bokeh.embed import json_item
 from bokeh.palettes import d3, brewer
 from bokeh.layouts import column, row
+from bokeh.models.widgets import HTMLTemplateFormatter
 import json
 import makeTestingData as mTD
 
@@ -127,7 +128,6 @@ for (let i = 0; i < source.get_length(); i++) {
     }
 }
 return indices;
-
 ''')
 
 #create a color pallete to be used on graphs
@@ -141,7 +141,7 @@ def Histogram(mp_data, eo_data, view, widgets, modules, slider):
         hist_data_mp[i] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
         hist_data_eo[i] = ColumnDataSource(data={'top':[], 'bottom':[], 'left':[], 'right':[]})
 
-    std = ColumnDataSource(data={'columns':[], 'Midpoint Mean':[], 'Midpoint std':[], 'std':[]})
+    std = ColumnDataSource(data={'columns':[], 'Midpoint Mean':[], 'Midpoint std':[], 'mean':[], 'std':[]})
     dt = ColumnDataSource(data={'Sub Type':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'Outcome':[], 'E Link':[], 'Midpoint':[], 'Eye Opening':[], 'Midpoint Errors':[]})
     # custom javascript to be run to actually create the plotted data on the website
     # all done in javascript so it runs on the website and can update without refreshing the page
@@ -159,6 +159,7 @@ const midpoints = [];
 const eye_openings = [];
 const errors = [];
 const means = [];
+const eye_means = [];
 const std_2 = [];
 // iterate over all the E Links
 for (let i = 0; i < modules.length; i++) {
@@ -238,6 +239,7 @@ for (let i = 0; i < modules.length; i++) {
     columns.push(modules[i])
     means.push(d3.mean(mp_good_data))
     std_2.push(d3.deviation(mp_good_data))
+    eye_means.push(d3.mean(eo_good_data))
     std_ar.push(d3.deviation(eo_good_data))
 }
 // update data sources
@@ -245,6 +247,7 @@ for (let i = 0; i < modules.length; i++) {
 std.data['columns'] = columns;
 std.data['Midpoint Mean'] = means;
 std.data['Midpoint std'] = std_2;
+std.data['mean'] = eye_means;
 std.data['std'] = std_ar;
 std.change.emit()
 dt.data['Sub Type'] = type_ids;
@@ -369,18 +372,28 @@ src2.change.emit()
     q.legend.click_policy='hide'
     q.legend.label_text_font_size = '8pt'
 
+    module_template = '''
+<div>
+<a href="module.py?full_id=<%= value %>"target="_blank">
+<%= value %>
+</a>
+</div> 
+'''
+    board = HTMLTemplateFormatter(template=module_template)
+
     # creates the data tables
     # they work the same way in terms of updating with the data source
     table_columns = [
                     TableColumn(field='columns', title='E Link'), 
                     TableColumn(field='Midpoint Mean', title='Midpoint Mean'),
                     TableColumn(field='Midpoint std', title='Midpoint Standard Deviation'),
-                    TableColumn(field='std', title='Standard Deviation'),
+                    TableColumn(field='mean', title='Eye Mean'),
+                    TableColumn(field='std', title='Eye Standard Deviation'),
                     ]
     table = DataTable(source=std, columns=table_columns, autosize_mode='fit_columns')
     table_columns2 = [
                     TableColumn(field='Sub Type', title='Sub Type'),
-                    TableColumn(field='Full ID', title='Full ID'),
+                    TableColumn(field='Full ID', title='Full ID', formatter=board),
                     TableColumn(field='Person Name', title='Person Name'),
                     TableColumn(field='Time', title='Date', formatter=DateFormatter()),
                     TableColumn(field='Outcome', title='Outcome'), 
@@ -423,9 +436,9 @@ if (this.value.length != 0) {
 
     # gets the second half of the webpage with the residual plots
     # by having it in it's own function with it's own widgets it can be controlled separately
-    layout = Gaussian()
+    #layout = Gaussian()
     # turns all the bokeh items into json and returns them
-    plot_json = json.dumps(json_item(row(column(row(w[0:3]), row(w[3:5]), row(w[5:]), slider, p, q, table, data_table), layout)))
+    plot_json = json.dumps(json_item(row(column(row(w[0:3]), row(w[3:5]), row(w[5:]), slider, p, q, table, data_table))))
     return plot_json
 
 
