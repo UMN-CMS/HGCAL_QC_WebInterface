@@ -32,8 +32,11 @@ from datetime import datetime as dt
 import datetime
 import makeTestingData as mTD
 
-df = pd.read_csv(mTD.get_board_for_filter(), parse_dates=['Date Completed'])
-LD_wagon_tests, HD_wagon_tests, zipper_tests = mTD.get_tests_required()
+BoardData = pd.read_csv(mTD.get_board())
+StatusData = pd.read_csv('./cache/current_board_status.csv')
+mergetemp = TestData.merge(BoardData, on='Board ID', how='left')
+AllData = mergetemp.merge(StatusData, on='Full ID', how='left')
+AllData.dropna()
 
 filter_code=('''
 const is_selected_map = new Map([

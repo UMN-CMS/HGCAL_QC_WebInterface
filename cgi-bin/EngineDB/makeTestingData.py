@@ -598,17 +598,17 @@ def get_eye_opening():
 
     for n in range(len(Attach_Data)):
         try:
+            data = Attach_Data[n]['DAQ']
+            writer.writerow({'Test ID': Tests[n][0], 'lpGBT': 'DAQ', 'Area': data['area'], 'Height': data['max_width_y'], 'Width': data['max_width']})
+
+        except KeyError:
             try:
-                data = Attach_Data[n]['DAQ']
-                writer.writerow({'Test ID': Tests[n][0], 'lpGBT': 'DAQ', 'Area': data['area'], 'Height': data['max_width_y'], 'Width': data['max_width']})
-            except KeyError:
                 data1 = Attach_Data[n]['DAQ1']
                 data2 = Attach_Data[n]['DAQ2']
                 writer.writerow({'Test ID': Tests[n][0], 'lpGBT': 'DAQ1', 'Area': data1['area'], 'Height': data1['max_width_y'], 'Width': data1['max_width']})
                 writer.writerow({'Test ID': Tests[n][0], 'lpGBT': 'DAQ2', 'Area': data2['area'], 'Height': data2['max_width_y'], 'Width': data2['max_width']})
-
-        except KeyError:
-            continue
+            except KeyError:
+                continue
 
     csv_file.seek(0)
 

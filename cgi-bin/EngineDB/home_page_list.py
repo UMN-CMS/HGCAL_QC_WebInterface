@@ -43,169 +43,137 @@ def fetch_list_tests():
 
 def render_list_tests():
 
+    cur.execute('''
+        select B.full_id, B.type_id, B.board_id, BT.name as nickname, BT.type_id as bt_type_id 
+        from Board B
+        join Board_type BT on B.type_id=BT.type_sn
+        order by B.type_id
+    ''')
+    all_boards = cur.fetchall()
+
+    boards_by_type_sn = {}
+    board_info = {}
+    for full_id, type_sn, board_id, nickname, bt_type_id in all_boards:
+        boards_by_type_sn.setdefault(type_sn, []).append(full_id)
+        board_info[full_id] = {
+                'board_id': board_id,
+                'type_sn': type_sn,
+                'bt_type_id': bt_type_id,
+                'nickname': nickname,
+        }
+
+    cur.execute('''
+        select T.board_id, T.test_type_id, T.successful
+        from Test T
+        join (
+            select board_id, test_type_id, MAX(test_id) as latest_test_id
+            from Test
+            group by board_id, test_type_id
+        ) latest on T.test_id = latest.latest_test_id
+    ''')
+
+    test_results = {}
+    for board_id, test_type_id, successful in cur.fetchall():
+        test_results.setdefault(board_id, {})[test_type_id] = successful
+
+    cur.execute('''
+        select TTS.type_id, TT.test_type, TT.name
+        from Type_test_stitch TTS
+        join Test_Type TT on TTS.test_type_id = TT.test_type
+    ''')
+    stitch_types_by_subtype = {}
+    for type_id, test_type_id, test_name in cur.fetchall():
+        stitch_types_by_subtype.setdefault(type_id, []).append((test_type_id, test_name))
+
+    cur.execute('select board_id from Check_Out')
+    shipped_board_ids = set(row[0] for row in cur.fetchall())
+
     print('<div class="col-md-11 mx-4 my-4"><table class="table table-bordered table-hover table-active">')
-    print('<tr><th>Subtype<th>Total Checked In<th>Awaiting Testing<th>QC Passed Minus Thermal Cycle<th>QC Passed, Awaiting Registration<th>Ready for Shipping<th>Shipped<th>Have Failures</tr>')
+    print('<tr><th>Subtype<th>Total Checked In<th>Awaiting Testing<th>QC Passed Minus Thermal Cycle<th>QC Passed, Awaiting Registration<th>Ready for Shipping<th>Shipped<th>Failed QC</tr>')
 
-    cur.execute('select distinct type_id from Board order by type_id')
-    subtypes = cur.fetchall()
-    for s in subtypes:
+    for type_sn, boards in boards_by_type_sn.items():
+        nickname = board_info[boards[0]]['nickname']
+        bt_type_id = board_info[boards[0]]['bt_type_id']
+        stitch_types = stitch_types_by_subtype.get(bt_type_id, [])
+
+        status_map = {}
         print('<tr>')
-        print('<td>%s</td>' % s[0])
-        cur.execute('select full_id from Board where type_id="%s"' % s[0])
-        boards_list = cur.fetchall()
+        print('<td>%s</td>' % type_sn)
+        #print('<td>%s</td>' % nickname)
+
         print('<td>')
-
-
         print('<div class="list-group list-group-flush">')
-        print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#boardstable%s">%s</a>' % (s[0], len(boards_list)))
+        print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#boardstable%s">%s</a>' % (type_sn, len(boards)))
         print('</div>')
 
-        cur.execute('select type_id from Board_type where type_sn="%s"' % s[0])
-        type_id = cur.fetchall()[0][0]
-        cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
-        temp = cur.fetchall()
-        stitch_types = []
-        for test in temp:
-            stitch_types.append(test[0])
-        
-        boards = {}
-        print('<div class="collapse" id="boardstable%s">' % s[0])
+        print('<div class="collapse" id="boardstable%s">' % type_sn)
         print('<div class="list-group list-group-flush">')
-        for b in boards_list:
-            print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': b[0]})
+        for full_id in boards:
+            board_id = board_info[full_id]['board_id']
             failed = {}
             outcomes = {}
-            # makes an array of falses the length of the number of tests
-            for t in stitch_types:
-                outcomes[t] = False
-                failed[t] = False
+            for test_type_id, test_name in stitch_types:
+                result = test_results.get(board_id, {}).get(test_type_id)
+                outcomes[test_name] = result == 1
+                failed[test_name] = result == 0
 
-            cur.execute('select board_id from Board where full_id="%s"' % b)
-            board_id = cur.fetchall()[0][0]
-            cur.execute('select test_type_id, successful from Test where board_id=%s order by day desc, test_id desc' % board_id)
-            temp = cur.fetchall()
-            ids = []
-            for t in temp:
-                if t[0] in stitch_types:
-                    if t[0] not in ids:
-                        if t[1] == 1:
-                            outcomes[t[0]] = True
-                        else:
-                            failed[t[0]] = True
-                    ids.append(t[0])
+            num_tests_passed = sum(outcomes.values())
+            num_tests_req = len(outcomes)
+            num_tests_failed = sum(failed.values())
 
-            num_tests_passed = list(outcomes.values()).count(True)
-            num_tests_req = len(outcomes.values())
-            num_tests_failed = list(failed.values()).count(True)
-
-            cur.execute('select board_id from Check_Out where board_id=%s' % board_id)
-            checked_out = cur.fetchall()
-            if checked_out:
-                boards[b[0]] = 'Shipped'
+            if board_id in shipped_board_ids:
+                status = 'Shipped'
+            elif num_tests_failed != 0:
+                status = 'Failed'
+            elif num_tests_passed == num_tests_req:
+                status = 'Passed'
+            elif (
+                outcomes.get('Thermal Cycle') is False and 
+                sum(v for k,v in outcomes.items() if k != 'Thermal Cycle' and k != 'Registered') == num_tests_req - 2
+            ):
+                status = 'Thermal'
+            elif (num_tests_passed == num_tests_req - 1 and not outcomes.get('Registered', False)):
+                status = 'Not Registered'
             else:
-                if num_tests_failed != 0:
-                    boards[b[0]] = 'Failed'
-                else:
-                    if num_tests_passed == num_tests_req:
-                        boards[b[0]] = 'Passed'
-                    else:
-                        # thermal cycle has a test id of 24 and registered has a test id of 26
-                        if (num_tests_passed == num_tests_req-1 and outcomes[24] == False) or (num_tests_passed == num_tests_req - 2 and outcomes[24] == False and outcomes[26] == False):
-                            boards[b[0]] = 'Thermal'
-                        elif (num_tests_passed == num_tests_req-1 and outcomes[26] == False):
-                            boards[b[0]] = 'Not Registered'
-                        else:
-                            boards[b[0]] = 'Awaiting'
+                status = 'Awaiting'
+
+            status_map[full_id] = status
+
+            print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': full_id})
                 
-
-
-        print('</div>')
-        print('</div>')
-
+        print('</div></div>')
         print('</td>')
 
-        awaiting = [k for k,v in boards.items() if v == 'Awaiting']
-        thermal = [k for k,v in boards.items() if v == 'Thermal']
-        not_registered = [k for k,v in boards.items() if v == 'Not Registered']
-        passed = [k for k,v in boards.items() if v == 'Passed']
-        shipped = [k for k,v in boards.items() if v == 'Shipped']
-        failed = [k for k,v in boards.items() if v == 'Failed']
+        awaiting = [k for k,v in status_map.items() if v == 'Awaiting']
+        thermal = [k for k,v in status_map.items() if v == 'Thermal']
+        not_registered = [k for k,v in status_map.items() if v == 'Not Registered']
+        passed = [k for k,v in status_map.items() if v == 'Passed']
+        shipped = [k for k,v in status_map.items() if v == 'Shipped']
+        failed = [k for k,v in status_map.items() if v == 'Failed']
 
-        print('<td>')
-        print('<div class="list-group list-group-flush">')
-        print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#awaiting%s">%s</a>' % (s[0], len(awaiting)))
-        print('</div>')
-        print('<div class="collapse" id="awaiting%s">' % s[0])
-        print('<div class="list-group list-group-flush">')
-        for b in awaiting:
-            print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': b})
-        print('</div>')
-        print('</div>')
-        print('</td>')
+        def print_status_column(status_id, items):
+            print('<td>')
+            print('<div class="list-group list-group-flush">')
+            print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#%s%s">%s</a>' % (status_id, type_sn, len(items)))
+            print('</div>')
+            print('<div class="collapse" id="%s%s">' % (status_id, type_sn))
+            print('<div class="list-group list-group-flush">')
+            for b in items:
+                print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': b})
+            print('</div></div>')
+            print('</td>')
 
-        print('<td>')
-        print('<div class="list-group list-group-flush">')
-        print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#thermal%s">%s</a>' % (s[0], len(thermal)))
-        print('</div>')
-        print('<div class="collapse" id="thermal%s">' % s[0])
-        print('<div class="list-group list-group-flush">')
-        for b in thermal:
-            print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': b})
-        print('</div>')
-        print('</div>')
-        print('</td>')
-
-        print('<td>')
-        print('<div class="list-group list-group-flush">')
-        print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#not_reg%s">%s</a>' % (s[0], len(not_registered)))
-        print('</div>')
-        print('<div class="collapse" id="not_reg%s">' % s[0])
-        print('<div class="list-group list-group-flush">')
-        for b in not_registered:
-            print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': b})
-        print('</div>')
-        print('</div>')
-        print('</td>')
-
-        print('<td>')
-        print('<div class="list-group list-group-flush">')
-        print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#passed%s">%s</a>' % (s[0], len(passed)))
-        print('</div>')
-        print('<div class="collapse" id="passed%s">' % s[0])
-        print('<div class="list-group list-group-flush">')
-        for b in passed:
-            print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': b})
-        print('</div>')
-        print('</div>')
-        print('</td>')
-
-        print('<td>')
-        print('<div class="list-group list-group-flush">')
-        print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#shipped%s">%s</a>' % (s[0], len(shipped)))
-        print('</div>')
-        print('<div class="collapse" id="shipped%s">' % s[0])
-        print('<div class="list-group list-group-flush">')
-        for b in shipped:
-            print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': b})
-        print('</div>')
-        print('</div>')
-        print('</td>')
-
-        print('<td>')
-        print('<div class="list-group list-group-flush">')
-        print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#failed%s">%s</a>' % (s[0], len(failed)))
-        print('</div>')
-        print('<div class="collapse" id="failed%s">' % s[0])
-        print('<div class="list-group list-group-flush">')
-        for b in failed:
-            print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': b})
-        print('</div>')
-        print('</div>')
-        print('</td>')
+        print_status_column('awaiting', awaiting)
+        print_status_column('thermal', thermal)
+        print_status_column('not_reg', not_registered)
+        print_status_column('passed', passed)
+        print_status_column('shipped', shipped)
+        print_status_column('failed', failed)
 
         print('</tr>')
 
     print('</table></div>')
+                
 
     print('<div class="col-md-11 mx-4 my-4">')
     print('<form action="create_CSV_for_factory_workflow.py" method="post">')

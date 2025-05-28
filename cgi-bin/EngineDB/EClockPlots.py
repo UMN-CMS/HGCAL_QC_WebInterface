@@ -27,6 +27,7 @@ from bokeh.models import (
 from bokeh.embed import json_item
 from bokeh.palettes import d3, brewer
 from bokeh.layouts import column, row
+from bokeh.models.widgets import HTMLTemplateFormatter
 import json
 import makeTestingData as mTD
 
@@ -275,10 +276,19 @@ def Filter():
     # tells the figure object what data source to use
     p.quad(top='top', bottom='bottom', left='left', right='right', source=hds, color = colors[0])
 
+    module_template = '''
+<div>
+<a href="module.py?full_id=<%= value %>"target="_blank">
+<%= value %>
+</a>
+</div> 
+'''
+    board = HTMLTemplateFormatter(template=module_template)
+
     # creates data tables
     table_columns = [
                     TableColumn(field='Sub Type', title='Sub Type'),
-                    TableColumn(field='Full ID', title='Full ID'),
+                    TableColumn(field='Full ID', title='Full ID', formatter=board),
                     TableColumn(field='Person Name', title='Person Name'),
                     TableColumn(field='Time', title='Date', formatter=DateFormatter()),
                     TableColumn(field='Outcome', title='Outcome'),

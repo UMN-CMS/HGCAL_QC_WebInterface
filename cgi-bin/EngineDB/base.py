@@ -267,7 +267,7 @@ def bottom(static):
         <h5 class="text-uppercase">HGCAL Board Test</h5>
 
         <p>
-            Maintained by the UMN CMS Group. For inquiries or to report a bug, contact Bryan Crossman at cros0400@umn.edu
+            Maintained by the UMN CMS Group. For inquiries or to report a bug, contact experts at cms-factory-experts@umn.edu
         </p>
       </div>
 

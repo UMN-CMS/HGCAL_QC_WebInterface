@@ -528,6 +528,23 @@ def get_check_in():
 
     return csv_file
 
+def get_check_out():
+    csv_file = io.StringIO()
+
+    columns = ['Board ID', 'Person ID', 'Shipping Location', 'Time']
+    writer = csv.writer(csv_file)
+    writer.writerow(columns)
+
+    cur.execute('select board_id, person_id, comment, checkout_date from Check_Out')
+    check_out = cur.fetchall()
+    for c in check_out:
+        loc = c[2].split()[-1]
+        writer.writerow((c[0], c[1], loc, c[3]))
+
+    csv_file.seek(0)
+
+    return csv_file
+
 def get_zipper_rm():
     csv_file = io.StringIO()
 
@@ -666,64 +683,75 @@ def write_board_statuses_file():
             
         min_date += datetime.timedelta(days=1)
 
+    last = next(reversed(status))
     for day in status.keys():
         day1 = datetime.datetime.strptime(day, '%Y-%m-%d') + datetime.timedelta(days=1)
         day1 = datetime.datetime.combine(day1, datetime.time.min).strftime('%Y-%m-%d %H:%M:%S')
         cur.execute('select board_id from Check_In where checkin_date < "%s"' % day1)
         boards = cur.fetchall()
 
-        for b in boards:
-            if b[0] == 0:
-                continue
-            cur.execute('select full_id from Board where board_id="%s"' % b[0])
-            sn = cur.fetchall()[0][0]
-            failed = {}
-            outcomes = {}
-            # makes an array of falses the length of the number of tests
-            for t in stitch_types[sn[3:9]]:
-                outcomes[t] = False
-                failed[t] = False
+        with open('/home/webapp/pro/HGCAL_QC_WebInterface/cgi-bin/WagonDB/cache/current_board_status.csv', 'w') as csv_file:
 
-            cur.execute('select test_type_id, successful, day from Test where board_id=%s and day<"%s" order by day desc, test_id desc' % (b[0], day1))
-            temp = cur.fetchall()
-            ids = []
-            for t in temp:
-                if t[0] not in ids:
-                    if t[1] == 1:
-                        outcomes[t[0]] = True
-                    else:
-                        failed[t[0]] = True
-                ids.append(t[0])
+            header = ['Sub Type', 'Full ID', 'Status']
+            writer = csv.writer(csv_file)
+            writer.writerow(header)
 
-            num = list(outcomes.values()).count(True)
-            total = len(outcomes.values())
-            failed_num = list(failed.values()).count(True)
+            for b in boards:
+                if b[0] == 0:
+                    continue
+                cur.execute('select full_id from Board where board_id="%s"' % b[0])
+                sn = cur.fetchall()[0][0]
+                failed = {}
+                outcomes = {}
+                # makes an array of falses the length of the number of tests
+                for t in stitch_types[sn[3:9]]:
+                    outcomes[t] = False
+                    failed[t] = False
 
-            cur.execute('select board_id from Check_Out where board_id=%s' % b[0])
-            checked_out = cur.fetchall()
-            if checked_out:
-                s = 'Shipped'
-            else:
-                if failed_num != 0:
-                    s = 'Failed'
+                cur.execute('select test_type_id, successful, day from Test where board_id=%s and day<"%s" order by day desc, test_id desc' % (b[0], day1))
+                temp = cur.fetchall()
+                ids = []
+                for t in temp:
+                    if t[0] not in ids:
+                        if t[1] == 1:
+                            outcomes[t[0]] = True
+                        else:
+                            failed[t[0]] = True
+                    ids.append(t[0])
+
+                num = list(outcomes.values()).count(True)
+                total = len(outcomes.values())
+                failed_num = list(failed.values()).count(True)
+
+                cur.execute('select board_id from Check_Out where board_id=%s' % b[0])
+                checked_out = cur.fetchall()
+                if checked_out:
+                    s = 'Shipped'
                 else:
-                    if num == total:
-                        s = 'Passed'
-                    elif (num == total-1 and outcomes[7] == False):
-                        s = 'Not Registered'
+                    if failed_num != 0:
+                        s = 'Failed QC'
                     else:
-                        s = 'Awaiting'
-            
-            
+                        if num == total:
+                            s = 'Ready for Shipping'
+                        elif (num == total-1 and outcomes[7] == False):
+                            s = 'Passed QC, Awaiting Registration'
+                        else:
+                            s = 'Awaiting Testing'
+                
+                
 
-            try:
-                status[day][sn[3:5]][sn[3:9]][s] += 1
-            except:
-                status[day][sn[3:5]][sn[3:9]][s] = 1
-            try:
-                status[day][sn[3:5]][sn[3:9]]['Total'] += 1
-            except:
-                status[day][sn[3:5]][sn[3:9]]['Total'] = 1
+                try:
+                    status[day][sn[3:5]][sn[3:9]][s] += 1
+                except:
+                    status[day][sn[3:5]][sn[3:9]][s] = 1
+                try:
+                    status[day][sn[3:5]][sn[3:9]]['Total'] += 1
+                except:
+                    status[day][sn[3:5]][sn[3:9]]['Total'] = 1
+
+                if day == last:
+                    writer.writerow([sn[3:9], sn, s])
+
 
     with open('/home/webapp/pro/HGCAL_QC_WebInterface/cgi-bin/WagonDB/cache/store_board_status.pkl', "wb") as f:
         pickle.dump(status, f)

@@ -27,6 +27,7 @@ from bokeh.models import (
 from bokeh.embed import json_item
 from bokeh.palettes import d3, brewer
 from bokeh.layouts import column, row
+from bokeh.models.widgets import HTMLTemplateFormatter
 import json
 import makeTestingData as mTD
 
@@ -423,7 +424,7 @@ hist['adc intercept'].change.emit()
 
 // create r squared data
 const good_data_r = data_adc.data['rsquared'].filter((_,y)=>mask_adc[y])
-scale = d3.scaleLinear().domain([min,m]).nice()
+scale = d3.scaleLinear().domain([min_r,m_r]).nice()
 binner = d3.bin().domain(scale.domain()).thresholds(m*bins*5)
 d = binner(good_data_r)
 
@@ -616,8 +617,17 @@ src4.change.emit()
     p_3.legend.click_policy='hide'
     p_3.legend.label_text_font_size = '8pt' 
 
+    module_template = '''
+<div>
+<a href="module.py?full_id=<%= value %>"target="_blank">
+<%= value %>
+</a>
+</div> 
+'''
+    board = HTMLTemplateFormatter(template=module_template)
+
     table_columns_resist = [
-                    TableColumn(field='Serial Number', title='Full ID'),
+                    TableColumn(field='Serial Number', title='Full ID', formatter=board),
                     TableColumn(field='E Link', title='E link'),
                     TableColumn(field='Resistance', title='Resistance'),
                     TableColumn(field='Outcome', title='Outcome'),
@@ -625,7 +635,7 @@ src4.change.emit()
     data_table_1 = DataTable(source=td['resist'], columns=table_columns_resist, autosize_mode='fit_columns')
 
     table_columns_volt = [
-                    TableColumn(field='Serial Number', title='Full ID'),
+                    TableColumn(field='Serial Number', title='Full ID', formatter=board),
                     TableColumn(field='ADC', title='ADC'),
                     TableColumn(field='Voltage', title='Voltage'),
                     TableColumn(field='Outcome', title='Outcome'),
@@ -633,7 +643,7 @@ src4.change.emit()
     data_table_2 = DataTable(source=td['volt'], columns=table_columns_volt, autosize_mode='fit_columns')
 
     table_columns_temp = [
-                    TableColumn(field='Serial Number', title='Full ID'),
+                    TableColumn(field='Serial Number', title='Full ID', formatter=board),
                     TableColumn(field='Chip', title='Chip'),
                     TableColumn(field='Temperature', title='Temperature'),
                     TableColumn(field='Outcome', title='Outcome'),
@@ -641,7 +651,7 @@ src4.change.emit()
     data_table_3 = DataTable(source=td['temp'], columns=table_columns_temp, autosize_mode='fit_columns')
 
     table_columns_adc = [
-                    TableColumn(field='Serial Number', title='Full ID'),
+                    TableColumn(field='Serial Number', title='Full ID', formatter=board),
                     TableColumn(field='ADC', title='ADC'),
                     TableColumn(field='Slope', title='Slope'),
                     TableColumn(field='Intercept', title='Intercept'),
