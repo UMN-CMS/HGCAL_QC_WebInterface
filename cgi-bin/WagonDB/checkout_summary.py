@@ -154,8 +154,8 @@ td.change.emit()
     return td
 
 def Filter():
-    ds = ColumnDataSource(AllData)
-    df = AllData
+    ds = ColumnDataSource(AllData.dropna())
+    df = AllData.dropna()
 
     # create the widgets to be used
     mc_widgets = {}
@@ -265,15 +265,6 @@ if (this.value.length != 0) {
 '''))
     w[0].js_on_change('value', update_options)
     
-    update_options_2 = CustomJS(args=dict(serial_numbers=serial_numbers, widget=w[2], all_serials=all_serials), code=('''
-if (this.value.length != 0) {
-    widget.options = serial_numbers[this.value]
-} else {
-    widget.options = all_serials
-}
-'''))
-    w[1].js_on_change('value', update_options_2)
-
     return json.dumps(json_item(row(column(row(w[0:5]), data_table))))
 
 

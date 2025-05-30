@@ -148,8 +148,14 @@ def top(static):
         <li class="nav-item">
           <a class="nav-link" href="search.py">Search Tests</a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" href="search_boards.py">Search Boards</a>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Search Boards
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <li><a class="dropdown-item" href="search_boards.py?major_type=LD">Search LD Engines</a></li>
+            <li><a class="dropdown-item" href="search_boards.py?major_type=HD">Search HD Engines</a></li>
+          </ul>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="register_boards_form.py">Register Boards</a>
@@ -267,7 +273,7 @@ def bottom(static):
         <h5 class="text-uppercase">HGCAL Board Test</h5>
 
         <p>
-            Maintained by the UMN CMS Group. For inquiries or to report a bug, contact experts at cms-factory-experts@umn.edu
+            Maintained by the UMN CMS Group. For inquiries or to report a bug, contact an expert at cms-factory-experts@umn.edu
         </p>
       </div>
 

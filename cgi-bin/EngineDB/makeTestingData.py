@@ -614,6 +614,155 @@ def get_eye_opening():
 
     return csv_file
 
+def get_check_out():
+    csv_file = io.StringIO()
+
+    columns = ['Board ID', 'Person ID', 'Shipping Location', 'Time']
+    writer = csv.writer(csv_file)
+    writer.writerow(columns)
+
+    cur.execute('select board_id, person_id, comment, checkout_date from Check_Out')
+    check_out = cur.fetchall()
+    for c in check_out:
+        loc = c[2].split()[-1]
+        writer.writerow((c[0], c[1], loc, c[3]))
+
+    csv_file.seek(0)
+
+    return csv_file
+
+def get_stitch_types():
+    cur.execute('''
+        select BT.type_sn, TTS.type_id, TT.test_type, TT.name
+        from Type_test_stitch TTS
+        join Board_type BT on BT.type_id=TTS.type_id
+        join Test_Type TT on TTS.test_type_id = TT.test_type
+    ''')
+    stitch_types_by_subtype = {}
+    for type_sn, type_id, test_type_id, test_name in cur.fetchall():
+        stitch_types_by_subtype.setdefault(type_sn, []).append((test_type_id, test_name))
+
+    return stitch_types_by_subtype
+
+def get_board_states():
+
+    cur.execute('''
+        select B.full_id, B.type_id, B.board_id, BT.name as nickname, BT.type_id as bt_type_id, B.location, C.checkin_date  
+        from Board B
+        join Board_type BT on B.type_id=BT.type_sn
+        join Check_In C on B.board_id=C.board_id
+        order by B.type_id
+    ''')
+    all_boards = cur.fetchall()
+
+    boards_by_major_type = {}
+    board_info = {}
+    for full_id, type_sn, board_id, nickname, bt_type_id, location, checkin_date in all_boards:
+        boards_by_major_type.setdefault(type_sn[0:2], []).append(full_id)
+        board_info[full_id] = {
+                'board_id': board_id,
+                'type_sn': type_sn,
+                'bt_type_id': bt_type_id,
+                'nickname': nickname,
+                'check_in_time': checkin_date,
+                'location': location,
+        }
+
+    cur.execute('''
+        select T.board_id, T.test_type_id, T.successful
+        from Test T
+        join (
+            select board_id, test_type_id, MAX(test_id) as latest_test_id
+            from Test
+            group by board_id, test_type_id
+        ) latest on T.test_id = latest.latest_test_id
+    ''')
+
+    test_results = {}
+    for board_id, test_type_id, successful in cur.fetchall():
+        test_results.setdefault(board_id, {})[test_type_id] = successful
+
+    cur.execute('''
+        select TTS.type_id, TT.test_type, TT.name
+        from Type_test_stitch TTS
+        join Test_Type TT on TTS.test_type_id = TT.test_type
+    ''')
+    stitch_types_by_subtype = {}
+    for type_id, test_type_id, test_name in cur.fetchall():
+        stitch_types_by_subtype.setdefault(type_id, []).append((test_type_id, test_name))
+
+    cur.execute('select board_id from Check_Out')
+    shipped_board_ids = set(row[0] for row in cur.fetchall())
+
+    csvs_to_return = []
+
+    for major_type, boards in boards_by_major_type.items():
+        bt_type_id = board_info[boards[0]]['bt_type_id']
+        stitch_types = stitch_types_by_subtype.get(bt_type_id, [])
+
+        csv_file = io.StringIO()
+
+        writer = csv.writer(csv_file)
+        header = ['Subtype', 'Nickname', 'Full ID', 'Check In Time', 'Location']
+
+        for test_type_id, test_name in stitch_types:
+            header.append(test_name)
+
+        header.append('Status')
+        writer.writerow(header)
+
+        for full_id in boards:
+            row = [
+                    board_info[full_id]['type_sn'],
+                    board_info[full_id]['nickname'],
+                    full_id, 
+                    board_info[full_id]['check_in_time'],
+                    board_info[full_id]['location'],
+                    ]
+            board_id = board_info[full_id]['board_id']
+            failed = {}
+            outcomes = {}
+            for test_type_id, test_name in stitch_types:
+                result = test_results.get(board_id, {}).get(test_type_id)
+                outcomes[test_name] = result == 1
+                failed[test_name] = result == 0
+                if result == 1:
+                    row.append('Passed')
+                elif result == 0:
+                    row.append('Failed')
+                else:
+                    row.append('Not Run')
+
+
+            num_tests_passed = sum(outcomes.values())
+            num_tests_req = len(outcomes)
+            num_tests_failed = sum(failed.values())
+
+            if board_id in shipped_board_ids:
+                status = 'Shipped'
+            elif num_tests_failed != 0:
+                status = 'Failed QC'
+            elif num_tests_passed == num_tests_req:
+                status = 'Ready for Shipping'
+            elif (
+                outcomes.get('Thermal Cycle') is False and 
+                sum(v for k,v in outcomes.items() if k != 'Thermal Cycle' and k != 'Registered') == num_tests_req - 2
+            ):
+                status = 'Passed QC Minus Thermal Cycle'
+            elif (num_tests_passed == num_tests_req - 1 and not outcomes.get('Registered', False)):
+                status = 'Passed QC, Awaiting Registration'
+            else:
+                status = 'Awaiting Testing'
+
+            row.append(status)
+            writer.writerow(row)
+
+        csv_file.seek(0)
+        csvs_to_return.append(csv_file)
+
+    return csvs_to_return
+
+
 
 
 def get_attachments():
