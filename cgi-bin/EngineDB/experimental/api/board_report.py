@@ -122,7 +122,10 @@ async def getTests(db, test_ids):
     return data
 
 
-async def getBoardStates(subtypes=None, start_date=None, end_date=None, qc_states=None):
+async def getBoardStates(
+    subtypes=None, start_date=None, end_date=None, qc_states=None, include_attach=None
+):
+    include_attach = include_attach or []
     ret = {}
     for db in await getBothConnections():
         boards = await getBoards(db, subtypes, start_date, end_date)
@@ -155,6 +158,7 @@ async def getBoardStates(subtypes=None, start_date=None, end_date=None, qc_state
                 v["test_state"] = (
                     TestState.PASSED if test["successful"] else TestState.FAILED
                 )
+                v["test_id"] = test["test_id"]
             except KeyError as e:
                 pass
 
@@ -175,6 +179,10 @@ async def getBoardStates(subtypes=None, start_date=None, end_date=None, qc_state
                 if any(x in qc_states for x in v["qc_states"]):
                     to_add[k] = v
             thisdata = to_add
+
+        if include_attach:
+            await addAttachments(db, thisdata, include_attach)
+
         ret.update(thisdata)
 
     return ret
@@ -191,7 +199,7 @@ def filterStates(data, filter_states):
     return ret
 
 
-async def addAttachments(data, include_tests=None):
+async def addAttachments(db, data, include_tests=None):
     all_ids = []
     for d in data.values():
         all_ids += [
@@ -199,7 +207,9 @@ async def addAttachments(data, include_tests=None):
             for k, x in d["test_status"].items()
             if "test_id" in x and (not include_tests or k in include_tests)
         ]
-    attachments = await getTests(all_ids)
+    if not all_ids:
+        return
+    attachments = await getTests(db, all_ids)
     for d in data.values():
         for v in d["test_status"].values():
             if "test_id" in v:
@@ -233,11 +243,11 @@ async def boardReport(
     qc_states=None,
 ):
 
-    data = await getBoardStates(limit_subtypes, checkin_start, checkin_end, qc_states)
+    data = await getBoardStates(
+        limit_subtypes, checkin_start, checkin_end, qc_states, include_attach
+    )
     if filter_states:
         data = await filterStates(data, filter_states)
-    if include_attach and data:
-        await addAttachments(data, include_attach)
     return data
 
 

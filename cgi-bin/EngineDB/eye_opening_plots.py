@@ -27,6 +27,7 @@ from bokeh.models import (
 from bokeh.embed import json_item
 from bokeh.palettes import d3, brewer
 from bokeh.layouts import column, row
+from bokeh.models.widgets import HTMLTemplateFormatter
 import json
 import makeTestingData as mTD
 
@@ -130,9 +131,10 @@ def Histogram(data, view, widgets):
 
     # creates a dictionary for the filtered data to be put in data tables
     dt = ColumnDataSource(data={'Sub Type':[], 'Full ID':[], 'Person Name':[], 'Time':[], 'Outcome':[], 'lpGBT':[], 'Area':[], 'Height':[], 'Width':[]})
+    std = ColumnDataSource(data={'value':[], 'mean':[], 'std':[]})
     # custom javascript to be run to actually create the plotted data client side
     # all done in javascript so it runs on the website and can update without refreshing the page
-    x = CustomJS(args=dict(area=area, height=height, width=width, dt=dt, data=data, view=view),code='''
+    x = CustomJS(args=dict(area=area, height=height, width=width, dt=dt, data=data, view=view, std=std),code='''
 const type_ids=[];
 const full_ids=[];
 const people=[];
@@ -200,6 +202,11 @@ width.data['bottom'] = bottom_width;
 width.data['top'] = top_width;
 width.change.emit()
 
+std.data['value'] = ["Area", "Height", "Width"];
+std.data['mean'] = [d3.mean(area_data), d3.mean(height_data), d3.mean(width_data)]
+std.data['std'] = [d3.deviation(area_data), d3.deviation(height_data), d3.deviation(width_data)]
+std.change.emit()
+
 dt.data['Sub Type'] = type_ids;
 dt.data['Full ID'] = full_ids;
 dt.data['Person Name'] = people;
@@ -214,7 +221,7 @@ dt.change.emit()
     ''')
     for widget in widgets:
         widget.js_on_change('value', x)
-    return area, height, width, dt
+    return area, height, width, dt, std
 
 # takes in the selected phase based on the webpage
 def Filter():
@@ -271,7 +278,7 @@ def Filter():
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
     # calls the function that creates the plotting data
-    area, height, width, dt = Histogram(ds, view, widgets.values())
+    area, height, width, dt, std = Histogram(ds, view, widgets.values())
     # creates the figure object
     a = figure(
         title='Areas',
@@ -301,10 +308,19 @@ def Filter():
     h.quad(top='top', bottom='bottom', left='left', right='right', source=height, color = colors[1])
     d.quad(top='top', bottom='bottom', left='left', right='right', source=width, color = colors[2])
 
+    module_template = '''
+<div>
+<a href="module.py?full_id=<%= value %>"target="_blank">
+<%= value %>
+</a>
+</div> 
+'''
+    board = HTMLTemplateFormatter(template=module_template)
+
     # creates data tables
     table_columns = [
                     TableColumn(field='Sub Type', title='Sub Type'),
-                    TableColumn(field='Full ID', title='Full ID'),
+                    TableColumn(field='Full ID', title='Full ID', formatter=board),
                     TableColumn(field='Person Name', title='Person Name'),
                     TableColumn(field='Time', title='Date', formatter=DateFormatter()),
                     TableColumn(field='Outcome', title='Outcome'),
@@ -314,6 +330,13 @@ def Filter():
                     TableColumn(field='lpGBT', title='lpGBT'),
                     ]
     data_table = DataTable(source=dt, columns=table_columns, width=925, autosize_mode='fit_columns')
+
+    tc2 = [
+            TableColumn(field='value', title='Value'),
+            TableColumn(field='mean', title='Mean'),
+            TableColumn(field='std', title='Standard Deviation'),
+            ]
+    table2 = DataTable(source=std, columns=tc2, autosize_mode='fit_columns')
 
     w = [*widgets.values()]
 
@@ -349,7 +372,7 @@ if (this.value.length != 0) {
     # since it's a separate function, the data can be filtered separately
     #layout = Gaussian(sel_elink)
     #converts the bokeh items to json and sends them to the webpage
-    plot_json = json.dumps(json_item(column(row(w[0:3]), row(w[3:5]), row(w[5:]), a, h, d, data_table)))
+    plot_json = json.dumps(json_item(column(row(w[0:3]), row(w[3:5]), row(w[5:]), a, h, d, data_table, table2)))
     return plot_json
 
 

@@ -103,20 +103,20 @@ for (let d = 0; d < days.length; d++) {
                     if (data[days[d]][majors[m]][subs[s]]['Total']) {
                         total = total + data[days[d]][majors[m]][subs[s]]['Total']
                     }
-                    if (data[days[d]][majors[m]][subs[s]]['Awaiting']) {
-                        awaiting = awaiting + data[days[d]][majors[m]][subs[s]]['Awaiting']
+                    if (data[days[d]][majors[m]][subs[s]]['Awaiting Testing']) {
+                        awaiting = awaiting + data[days[d]][majors[m]][subs[s]]['Awaiting Testing']
                     }
-                    if (data[days[d]][majors[m]][subs[s]]['Not Registered']) {
-                        notreg = notreg + data[days[d]][majors[m]][subs[s]]['Not Registered']
+                    if (data[days[d]][majors[m]][subs[s]]['Passed QC, Awaiting Registration']) {
+                        notreg = notreg + data[days[d]][majors[m]][subs[s]]['Passed QC, Awaiting Registration']
                     }
-                    if (data[days[d]][majors[m]][subs[s]]['Passed']) {
-                        passed = passed + data[days[d]][majors[m]][subs[s]]['Passed']
+                    if (data[days[d]][majors[m]][subs[s]]['Ready for Shipping']) {
+                        passed = passed + data[days[d]][majors[m]][subs[s]]['Ready for Shipping']
                     }
                     if (data[days[d]][majors[m]][subs[s]]['Shipped']) {
                         shipped = shipped + data[days[d]][majors[m]][subs[s]]['Shipped']
                     }
-                    if (data[days[d]][majors[m]][subs[s]]['Failed']) {
-                        failed = failed + data[days[d]][majors[m]][subs[s]]['Failed']
+                    if (data[days[d]][majors[m]][subs[s]]['Failed QC']) {
+                        failed = failed + data[days[d]][majors[m]][subs[s]]['Failed QC']
                     }
                 }
             }
@@ -202,7 +202,7 @@ def Filter():
     p.line('dates', 'counts', source=data_notreg, legend_label='Awaiting Registration', color=colors[2], line_width=2, muted_alpha=0.2)
     p.line('dates', 'counts', source=data_passed, legend_label='Passed QC', color=colors[3], line_width=2, muted_alpha=0.2)
     p.line('dates', 'counts', source=data_shipped, legend_label='Shipped', color=colors[4], line_width=2, muted_alpha=0.2)
-    p.line('dates', 'counts', source=data_failed, legend_label='Have Failures', color=colors[5], line_width=2, muted_alpha=0.2)
+    p.line('dates', 'counts', source=data_failed, legend_label='Failed QC', color=colors[5], line_width=2, muted_alpha=0.2)
 
     p.legend.click_policy='hide'
     p.legend.label_text_font_size = '8pt'
