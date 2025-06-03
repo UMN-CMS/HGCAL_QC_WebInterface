@@ -13,14 +13,17 @@ db=connect.connect(0)
 cur=db.cursor()
 
 form = cgi.FieldStorage()
-board_id = base.cleanCGInumber(form.getvalue('board_id'))
-view = form.getvalue('view')
+if form.getvalue('board_id') == 'goldy2.png':
+    fp = '../../static/files/goldy2.png'
+else:
+    board_id = base.cleanCGInumber(form.getvalue('board_id'))
+    view = form.getvalue('view')
 
-cur.execute('select image_name, date from Board_images where board_id=%s and view="%s" order by date desc' % (board_id, view))
-image_name = cur.fetchall()[0][0]
+    cur.execute('select image_name, date from Board_images where board_id=%s and view="%s" order by date desc' % (board_id, view))
+    image_name = cur.fetchall()[0][0]
 
-img_dir = connect.get_image_location()
-fp = img_dir + str(image_name)
+    img_dir = connect.get_image_location()
+    fp = img_dir + str(image_name)
 
 #assuming everything is a PNG...
 sys.stdout.write("Content-Type: image/png\n")

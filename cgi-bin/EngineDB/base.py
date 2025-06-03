@@ -57,7 +57,7 @@ def top(static):
         </div>
         <div class="col-6"></div>
         <div class="col-1">
-            <img src="../../static/files/goldy2.png" style="float:leftt">
+            <img src="get_image.py?board_id=goldy2.png" style="float:leftt">
         </div>
     </div>
     </div>
