@@ -154,8 +154,15 @@ def top(static):
         <li class="nav-item">
           <a class="nav-link" href="search.py">Search Tests</a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" href="search_boards.py">Search Boards</a>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Search Boards
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <li><a class="dropdown-item" href="search_boards.py?major_type=LD">Search LD Wagons</a></li>
+            <li><a class="dropdown-item" href="search_boards.py?major_type=HD">Search HD Wagons</a></li>
+            <li><a class="dropdown-item" href="search_boards.py?major_type=ZP">Search Zippers</a></li>
+          </ul>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="register_boards_form.py">Register Boards</a>
@@ -203,6 +210,8 @@ def top(static):
             <li><a class="dropdown-item" href="ResistanceMeasurementData.py">Resistance Measurement</a></li>
             <li><a class="dropdown-item" href="IDResistorData.py">ID Resistance</a></li>
             <li><a class="dropdown-item" href="BitErrorRateData.py">Bit Error Rate</a></li>
+            <li><a class="dropdown-item" href="ZipperResistanceData.py">Zipper Resistance Measurement</a></li>
+            <li><a class="dropdown-item" href="ZipperBitErrorData.py">Zipper Bit Error Rate</a></li>
           </ul>
         </li>
         <li class="nav-item">
@@ -272,7 +281,7 @@ def bottom(static):
         <h5 class="text-uppercase">HGCAL Board Test</h5>
 
         <p>
-            Maintained by the UMN CMS Group. For inquiries or to report a bug, contact Bryan Crossman at cros0400@umn.edu
+            Maintained by the UMN CMS Group. For inquiries or to report a bug, contact an expert at cms-factory-experts@umn.edu
         </p>
       </div>
 

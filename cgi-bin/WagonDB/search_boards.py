@@ -6,25 +6,28 @@ import base
 import sys
 from filter_boards import Filter
 
-def run(static):
-    base.header(title='Search Boards')
-    base.top(static)
+cgitb.enable()
+#cgi header
+print("Content-type: text/html\n")
 
-    print('''
-    <div id='render' class='bk-root'></div>
-    <script>
-    data = {};
-    Bokeh.embed.embed_item(data, 'render');
-    </script>
-    '''.format(Filter()))
+base.header(title='Search Boards')
+base.top(False)
 
-    base.bottom(static)
+try:
+    form = cgi.FieldStorage()
+    major = form.getvalue('major_type')
+except:
+    major = None
 
-    
-if __name__ == '__main__':
-    cgitb.enable()
-    #cgi header
-    print("Content-type: text/html\n")
-    
-    run(False)
+layout = Filter(major)
+
+print('''
+<div id='render' class='bk-root'></div>
+<script>
+data = {};
+Bokeh.embed.embed_item(data, 'render');
+</script>
+'''.format(layout))
+
+base.bottom(False)
 

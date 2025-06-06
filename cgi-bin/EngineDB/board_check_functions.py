@@ -88,6 +88,11 @@ def board_checkout(board_id, person_id, comments):
             sql = "INSERT INTO Check_Out (checkin_id, board_id, person_id, comment, checkout_date) VALUES (%s, %s, %s, '%s', NOW())" % (checkin_id, board_id, person_id, comments)        
             cur.execute(sql)
 
+            location = comments
+           
+            sql = "UPDATE Board SET location='%s' WHERE board_id=%i" % (location, board_id)
+            cur.execute(sql)
+
             db.commit()
             
             cur.execute('select checkin_id from Check_Out where board_id=%s' % board_id)

@@ -381,7 +381,7 @@ def board_info(sn, static):
     print('<th colspan=2>Comments</th>')
     print('<th colspan=1>Date Received</th>')
     print('<th colspan=1>Manufacturer</th>')
-    print('<th colspan=2>Status</th>')
+    print('<th colspan=1>Date Shipped</th>')
     print('</tr>')
     print('<tr>')
     print('<td colspan=2>%s</td>' % info_com)
@@ -406,10 +406,10 @@ def board_info(sn, static):
     if board_id in ids:
         cur.execute('select checkout_date,comment from Check_Out where board_id=%s' % board_id)
         checkout = cur.fetchall()[0]
-        print('<td>%s</td>' % checkout[1])
+        #print('<td>%s</td>' % checkout[1])
         print('<td>%s</td>' % checkout[0])
     else:
-        print('<td colspan=2> Board has not been shipped. </td>')
+        print('<td colspan=1> Board has not been shipped. </td>')
         
     print('</tr>')
     print('</tbody>')
