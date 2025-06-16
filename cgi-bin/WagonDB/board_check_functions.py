@@ -19,6 +19,8 @@ def board_checkout_form_sn(full):
     print("</div>")
     print("</div>")
 
+    print('<input type="hidden" name="webpage" value="True">')
+
     print("<div class='row'>")
     print('<div class = "col-md-3 pt-2 ps-5 mx-2 my-2">')
     print('<label for="sn">Full ID</label>')
@@ -39,17 +41,17 @@ def board_checkout_form_sn(full):
 
     print("<div class='row'>")
     print('<div class="col-md-9 pt-2 ps-5 mx-2 my-2">')
-    print('<label>Comments</label><p>')
-    print('<textarea rows="5" cols="50" name="comments"></textarea>')
-    print('</div>')
-    print('</div>')
-
-    print("<div class='row'>")
-    print('<div class="col-md-9 pt-2 ps-5 mx-2 my-2">')
     print('<label>Location</label><p>')
     print('<textarea rows="1" cols="20" name="location"></textarea>')
     print('</div>')
     print('</div>')
+
+    print("<div class='row'>")
+    print('<div class = "col-md-3 pt-2 ps-5 mx-2 my-2">')
+    print("<label for='password'>Admin Password</label>")
+    print("<input type='password' name='password'>")
+    print("</div>")
+    print("</div>")
 
     print("<div class='row'>")
     print('<div class = "col-md-6 pt-2 ps-5 mx-2 my-2">')

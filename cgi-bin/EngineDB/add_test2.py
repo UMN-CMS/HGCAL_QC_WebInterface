@@ -7,6 +7,7 @@ import base
 import add_test_functions
 import os
 import connect
+from connect import connect_admin
 
 base_url = connect.get_base_url()
 
@@ -20,32 +21,39 @@ test_type = base.cleanCGInumber(form.getvalue("test_type"))
 serial_num = html.escape(form.getvalue("serial_number"))
 success = base.cleanCGInumber(form.getvalue("success"))
 comments = form.getvalue("comments")
+password = form.getvalue("password")
 
 if comments:
     comments = html.escape(comments)
 
 base.header(title='Add Test')
-base.top(False)
+base.top()
 
-test_id=add_test_functions.add_test(person_id, test_type, serial_num, success, comments, None)
+try:
+    db = connect_admin(password)
+    cur = db.cursor()
 
-for itest in [1]:
-    afile = form['attach%d'%(itest)]
-    if (afile.name):
-        adesc= form.getvalue("attachdesc%d"%(itest))
-        if adesc:
-            adesc = html.escape(adesc)
-        acomment= form.getvalue("attachcomment%d"%(itest))
-        if acomment:
-            acomment = html.escape(acomment)
-        add_test_functions.add_test_attachment(test_id,afile,adesc,acomment)
-    elif (afile.filename):
-        adesc= form.getvalue("attachdesc%d"%(itest))
-        if adesc:
-            adesc = html.escape(adesc)
-        acomment= form.getvalue("attachcomment%d"%(itest))
-        if acomment:
-            acomment = html.escape(acomment)
-        add_test_functions.add_test_attachment_gui(test_id,afile,adesc,acomment)
+    test_id=add_test_functions.add_test(person_id, test_type, serial_num, success, comments, None)
+
+    for itest in [1]:
+        afile = form['attach%d'%(itest)]
+        if (afile.name):
+            adesc= form.getvalue("attachdesc%d"%(itest))
+            if adesc:
+                adesc = html.escape(adesc)
+            acomment= form.getvalue("attachcomment%d"%(itest))
+            if acomment:
+                acomment = html.escape(acomment)
+            add_test_functions.add_test_attachment(test_id,afile,adesc,acomment)
+        elif (afile.filename):
+            adesc= form.getvalue("attachdesc%d"%(itest))
+            if adesc:
+                adesc = html.escape(adesc)
+            acomment= form.getvalue("attachcomment%d"%(itest))
+            if acomment:
+                acomment = html.escape(acomment)
+            add_test_functions.add_test_attachment_gui(test_id,afile,adesc,acomment)
+except:
+    print("Administrative Access Denied.")
     
-base.bottom(False)
+base.bottom()

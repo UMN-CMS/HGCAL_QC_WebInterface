@@ -5,7 +5,7 @@ import cgitb; cgitb.enable()
 import base
 import board_check_functions
 import os
-from connect import connect, get_base_url
+from connect import connect, get_base_url, connect_admin
 
 base_url = get_base_url()
 db = connect(1)
@@ -40,8 +40,16 @@ except:
     comments = "Shipped to " + location
 
 base.header(title='Board Check Out')
-base.top(False)
+base.top()
 
-board_check_functions.board_checkout(board_id, person_id, comments)
+if form.getvalue('webpage'):
+    try:
+        admin = connect_admin(form.getvalue('password'))
+        cursor = admin.cursor()
+        board_check_functions.board_checkout(board_id, person_id, comments)
+    except:
+        print("Administrative Access Denied.")
+else:
+    board_check_functions.board_checkout(board_id, person_id, comments)
 
-base.bottom(False)
+base.bottom()

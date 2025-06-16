@@ -21,11 +21,11 @@ except:
     bc = None
 
 base.header(title='Board Checkout')
-base.top(False)
+base.top()
 
 if bc:
     board_check_functions.board_checkout_form_sn(bc)
 else:
     board_check_functions.board_checkout_form_sn("")
 
-base.bottom(False)
+base.bottom()

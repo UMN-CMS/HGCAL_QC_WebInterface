@@ -11,6 +11,7 @@ cgitb.enable()
 
 base_url = connect.get_base_url()
 
+# rerouts page
 print("Location: summary.py\n\n")
 #cgi header
 print("Content-type: text/html\n")
@@ -19,12 +20,13 @@ form = cgi.FieldStorage()
 full_id = html.escape(form.getvalue("full_id"))
 board_id = base.cleanCGInumber(form.getvalue("board_id"))
 comments = html.escape(form.getvalue("comments"))
+password = form.getvalue('password')
 
 base.header(title='Add Board Info')
-base.top(False)
+base.top()
 
 # sends board info here to be sent to DB
-module_functions.add_board_info(board_id, str(full_id), comments)
+module_functions.add_board_info(board_id, str(full_id), comments, password)
 
-base.bottom(False)
+base.bottom()
 

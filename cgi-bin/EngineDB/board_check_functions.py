@@ -11,6 +11,7 @@ def board_checkout_form_sn(full):
     db = connect(0)
     cur = db.cursor()
 
+    # creates a form that sends the information to board_checkout2.py on submitting
     print('<form action="board_checkout2.py" method="post" enctype="multipart/form-data">')
     print("<div class='row'>")
     print('<div class = "col-md-6 pt-4 ps-4 mx-2 my-2">')
@@ -18,14 +19,16 @@ def board_checkout_form_sn(full):
     print("</div>")
     print("</div>")
 
+    print('<input type="hidden" name="webpage" value="True">')
+
     print("<div class='row'>")
     print('<div class = "col-md-3 pt-2 ps-5 mx-2 my-2">')
     print('<label for="sn">Full ID</label>')
     print('<input type="text" name="full_id" value="%s">'%full)
     print("</div>")
 
+    # creates a form to select the person checking the board out
     cur.execute("Select person_id, person_name from People;")
-
     print('<div class="col-md-3 pt-2 ps-5 mx-2 my-2">')
     print('<label>Tester')
     print('<select class="form-control" name="person_id">')
@@ -36,26 +39,23 @@ def board_checkout_form_sn(full):
     print('</label>')
     print('</div>')
 
-    #print("<div class='row'>")
-    #print('<div class = "col-md-6 pt-2 ps-5 mx-2 my-2">')
-    #print("<label for='test_type'>Test Type</label>")
-    #cur.execute("select test_type, name from Test_Type order by relative_order ASC;")
-    #print('<select class="form-control" name="test_type">')
-    #for test_type in cur:
-    #    print('<option value="%s">%s</option>' % (test_type[0], test_type[1]))
-    #print('</select>')
-    #print("</div>")
-    #print("</div>")
-
     print("<div class='row'>")
     print('<div class="col-md-9 pt-2 ps-5 mx-2 my-2">')
-    print('<label>Comments</label><p>')
-    print('<textarea rows="5" cols="50" name="comments"></textarea>')
+    print('<label>Location</label><p>')
+    print('<textarea rows="1" cols="20" name="location"></textarea>')
     print('</div>')
     print('</div>')
+
+    print("<div class='row'>")
+    print('<div class = "col-md-3 pt-2 ps-5 mx-2 my-2">')
+    print("<label for='password'>Admin Password</label>")
+    print("<input type='password' name='password'>")
+    print("</div>")
+    print("</div>")
 
     print("<div class='row'>")
     print('<div class = "col-md-6 pt-2 ps-5 mx-2 my-2">')
+    # submits the form on click
     print('<input type="submit" class="btn btn-dark" value="Checkout">')
     print("</div>")
     print("</div>")

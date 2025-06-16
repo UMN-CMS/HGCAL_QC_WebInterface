@@ -13,11 +13,6 @@ cgitb.enable()
 db = connect(0)
 cur=db.cursor()
 
-class TestState(str, enum.Enum):
-    PASSED = "PASSED"
-    FAILED = "FAILED"
-    NOT_RUN = "NOT_RUN"
-
 def fetch_list_tests():
     # gets the number of successful tests and number of boards with successful tests for each test
     cur.execute("select Test_Type.name,COUNT(DISTINCT Test.test_id),COUNT(DISTINCT Test.board_id) from Test,Test_Type WHERE Test.successful=1 and Test.test_type_id=Test_Type.test_type GROUP BY Test.test_type_id ORDER BY Test_Type.relative_order");
@@ -237,17 +232,26 @@ def add_board_info_form(full_id, board_id):
     print('<form method="post" class="sub-card-form" action="add_board_info2.py">')
     print('<div class="row">')
     print('<div class="col-md-12 pt-4 ps-4 mx-2 my-2">')
-    print('<h2>Adding Extra Board Information</h2>')
+    print('<h2>Adding Extra Board Information for %s</h2>' % full_id)
     print('</div>')
     print('</div>')
 
     print('<input type="hidden" name="full_id" value="%s">' % full_id)
     print('<input type="hidden" name="board_id" value="%s">' % board_id)
+
     print('<div class="row">')
     print('<div class = "col-md-10 ps-5 pt-2 mx-2 my-2">')
     print('<input type="text" name="comments" placeholder="Comments">')
     print('</div>')
     print('</div>')
+
+    print("<div class='row'>")
+    print('<div class = "col-md-3 pt-2 ps-5 mx-2 my-2">')
+    print("<label for='password'>Admin Password</label>")
+    print("<input type='password' name='password'>")
+    print("</div>")
+    print("</div>")
+
     print('<div class="row">')
     print('<div class="col-md-1 ps-5 pt-2 mx-2 my-2 sub-card-submit">')
     print('<button type="submit" class="btn btn-dark">Submit</button>')
@@ -287,7 +291,7 @@ def add_module(serial_number, manu, location):
                     db.close()
 
                 else:
-                    cur.execute("INSERT INTO Board (sn, full_id, type_id) VALUES ('%s', '%s', '%s', '%s'); " % (sn, serial_number, type_id, location)) 
+                    cur.execute("INSERT INTO Board (sn, full_id, type_id, location) VALUES ('%s', '%s', '%s', '%s'); " % (sn, serial_number, type_id, location)) 
                     db.commit()
                     db.close()
                 print('Board entered successfully!')

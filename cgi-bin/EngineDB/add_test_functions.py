@@ -311,9 +311,9 @@ def add_test(person_id, test_type, serial_num, success, comments, config_id):
 
 
 # Adds a tester person
-def add_tester(person_name, passwd):
+def add_tester(person_name, passwd, db_name):
     try:
-        db = connect_admin(passwd, 'Engine')
+        db = connect_admin(passwd, db_name)
     except Exception as e:
         print(e)
         print("Administrative access denied")
@@ -424,8 +424,6 @@ def add_test_template(serial_number, suggested_test):
     print('<h2>Add Test for Board %s</h2>' %serial_number)
     print('</div>')
     print('</div>')
-
-    #print('<br><br>')
     
     cur.execute("Select person_id, person_name from People;")
 
@@ -459,17 +457,6 @@ def add_test_template(serial_number, suggested_test):
     print('</label>')
     print('</div>')
     print('</div>')
-    #print          '<br><br>'
-
-    #print          '<div class = "row">'
-    #print              '<div class = "col-md-6">'
-    #print                  '<label> Serial Number:'
-    #print                      '<input name="serial_number" value="%s">'%serial_number
-    #print                  '</label>'
-    #print              '</div>'
-    #print          '</div>'
-
-    #print('<br><br>')
 
     print('<div class="row">')
     print('<div class="col-md-3 pt-2 ps-5 mx-2 my-2">')
@@ -482,8 +469,14 @@ def add_test_template(serial_number, suggested_test):
     print('<textarea rows="5" cols="50" name="comments"></textarea>')
     print('</div>')
     print('</div>')
+
+    print("<div class='row'>")
+    print('<div class = "col-md-3 pt-2 ps-5 mx-2 my-2">')
+    print("<label for='password'>Admin Password</label>")
+    print("<input type='password' name='password'>")
+    print("</div>")
+    print("</div>")
                                     
-    #print('<br><br>')
     print('<div class="row">')
     print('<div class="col-md-6 pt-2 ps-5 mx-2 my-2">')
     print('<input type="submit" class="btn btn-dark" value="Add Test">')

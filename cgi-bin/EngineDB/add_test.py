@@ -14,8 +14,8 @@ serial_num = html.escape(form.getvalue('full_id'))
 suggested_test = base.cleanCGInumber(form.getvalue('suggested'))
 
 base.header(title='Add Test')
-base.top(False)
+base.top()
 
 add_test_functions.add_test_template(serial_num, suggested_test)
 
-base.bottom(False)
+base.bottom()

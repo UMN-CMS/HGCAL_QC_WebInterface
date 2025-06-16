@@ -32,8 +32,8 @@ except:
 comments = form.getvalue("comments")
 
 base.header(title='Board Check In')
-base.top(False)
+base.top()
 
 board_check_functions.board_checkin(board_id, person_id, comments)
 
-base.bottom(False)
+base.bottom()

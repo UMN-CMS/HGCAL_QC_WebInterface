@@ -131,11 +131,6 @@ def add_test_tab(barcode, board_id, static):
         print('</a>')
         print('</div>')
         print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="board_checkin.py?full_id=%(serial)s">' %{'serial':barcode})
-        print('<button class="btn btn-dark"> Checkin Board </button>')
-        print('</a>')
-        print('</div>')
-        print('<div class="col-md-2 ps-5 pt-2 my-2">')
         print('<a href="add_board_image.py?board_id=%(id)d&full_id=%(serial)s">' %{'serial':barcode, 'id':board_id})
         print('<button class="btn btn-dark"> Add Board Image </button>')
         print('</a>')
@@ -145,7 +140,6 @@ def add_test_tab(barcode, board_id, static):
         print('<button class="btn btn-dark"> Update Location </button>')
         print('</a>')
         print('</div>')
-        print('<div class="row">')
         print('<div class="col-md-2 ps-5 pt-2 my-2">')
         print('<a href="board_grade.py?board_id=?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':barcode, 'id':board_id})
         print('<button class="btn btn-dark"> Grade Board </button>')
@@ -535,35 +529,17 @@ def board_info(sn, static):
     print('</div>')
 
 
-def add_board_info(board_id, sn, location, daqid, trig1id, trig2id, info):
-    db = connect(1)
-    cur = db.cursor()
-
-    if not board_id:
-        try:
-            cur.execute("SELECT board_id FROM Board WHERE full_id = '%s';" % sn)
-            rows = cur.fetchall()
-
-            if not rows:
-                home_page_list.add_module(sn)
-                cur.execute("SELECT board_id FROM Board WHERE full_id = '%s';" % sn)
-                board_id = cur.fetchall()[0][0]
-            else:
-                board_id = rows[0][0]
-
-        except mysql.connector.Error as err:
-            print("CONNECTION ERROR")
-            print(err)
-
+def add_board_info(board_id, sn, comments, password):
     try:
-        cur.execute('update Board set comments="%s" where board_id=%s' % (info, board_id))
-
-        db.commit()
-        db.close()
+        db = connect_admin(password)
+        cur = db.cursor()
 
     except mysql.connector.Error as err:
-        print("CONNECTION ERROR")
-        print(err)
+        print("Administrative access denied.")
+        return
+
+    cur.execute('update Board set comments="%s" where board_id=%s' % (info, board_id))
+    db.commit()
 
 def add_revoke(test_id):
     db = connect(0)
