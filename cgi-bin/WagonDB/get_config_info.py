@@ -20,11 +20,11 @@ cur.execute("select role_id, component_id, teststand_id from Tester_Configuratio
 if not cur.with_rows:
     print("Content-type: text/html\n")
     base.header("Attachment Request Error")
-    base.top(False)
+    base.top()
     print('<div class="col-md-6 ps-4 pt-4 mx-2 my-2">')
     print("<h1>Teststand Info not available</h1>")
     print('</div>')
-    base.bottom(False)
+    base.bottom()
 else:    
     thevals=cur.fetchall()
     parts = {}

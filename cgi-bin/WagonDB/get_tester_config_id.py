@@ -14,7 +14,7 @@ print("Content-type: text/html\n")
 cgitb.enable()
 
 base.header(title='Get Current Configuration for a given teststand')
-base.top(False)
+base.top()
 
 form = cgi.FieldStorage()
 
@@ -30,5 +30,5 @@ if test_stand_id:
     print('End')
 
 
-base.bottom(False)
+base.bottom()
 

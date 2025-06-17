@@ -8,22 +8,18 @@ import sys
 import board_status as mp
 import bokeh
 
-def run(static):
-    base.header(title='Board Status Over Time')
-    base.top(static)
-    print('''
-    <div id='exfilter' class='bk-root'></div>
-    <script>
-    data = {};
-    Bokeh.embed.embed_item(data, 'exfilter');
-    </script>
-    '''.format(mp.Filter()))
+#cgi header
+cgitb.enable()
+print("Content-type: text/html\n\n")
 
-    base.bottom(static)
+base.header(title='Board Status Over Time')
+base.top()
+print('''
+<div id='exfilter' class='bk-root'></div>
+<script>
+data = {};
+Bokeh.embed.embed_item(data, 'exfilter');
+</script>
+'''.format(mp.Filter()))
 
-if __name__ == '__main__':
-    #cgi header
-    cgitb.enable()
-    print("Content-type: text/html\n\n")
-
-    run(False)
+base.bottom()

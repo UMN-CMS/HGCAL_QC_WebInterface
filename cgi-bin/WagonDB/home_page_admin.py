@@ -10,7 +10,7 @@ cgitb.enable()
 print("content-type: text/html\n\n")
 
 base.header(title='Wagon Test Home Page')
-base.top()
+base.top(admin=True)
 
 print('<div class="row">')
 print('<div class="col-md-12 pt-4 ps-5 mx-2 my-2">')

@@ -10,8 +10,8 @@ import add_test_functions
 print("Content-type: text/html\n")
 
 base.header(title='Add New Test Template')
-base.top(False)
+base.top()
 
 add_test_functions.add_new_test_template()
 
-base.bottom(False)
+base.bottom()

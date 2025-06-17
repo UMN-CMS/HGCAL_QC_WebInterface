@@ -12,9 +12,6 @@ base.header(title='Get Test Types')
 base.top(Fals)
 
 form = cgi.FieldStorage()
-print("\n\n\n\n\n\n\n\n\n\n\n\n\nABSOLUTELY MASSIVE", form, "\n\n\n\n\n\n\n\n\n")
-
-
 name = html.escape(form.getvalue("tester"))
 
 tests = add_test_functions.verify_person(name)
@@ -26,4 +23,4 @@ print(tests)
 
 print('End')
 
-base.bottom(False)
+base.bottom()

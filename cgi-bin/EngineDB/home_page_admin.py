@@ -8,9 +8,10 @@ import sys
 cgitb.enable()
 #cgi header
 print("content-type: text/html\n\n")
+
 try:
     base.header(title='Engine Test Home Page')
-    base.top()
+    base.top(admin=True)
 
     print('<div class="row">')
     print('<div class="col-md-12 pt-4 ps-5 mx-2 my-2">')

@@ -7,25 +7,19 @@ import module_functions
 import sys
 import X_PWRPlots as mp
 
-def run(static):
-    base.header(title='X PWR')
-    base.top(static)
+cgitb.enable()
+#cgi header
+print("Content-type: text/html\n")
 
-    print('''
-    <div id='exfilter' class='bk-root'></div>
-    <script>
-    data = {};
-    Bokeh.embed.embed_item(data, 'exfilter');
-    </script>
-    '''.format(mp.Filter()))
+base.header(title='X PWR')
+base.top()
 
-    base.bottom(static)
+print('''
+<div id='exfilter' class='bk-root'></div>
+<script>
+data = {};
+Bokeh.embed.embed_item(data, 'exfilter');
+</script>
+'''.format(mp.Filter()))
 
-if __name__ == '__main__':
-    cgitb.enable()
-    #cgi header
-    print("Content-type: text/html\n")
-    
-    run(False)
-    
-
+base.bottom()

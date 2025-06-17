@@ -34,8 +34,8 @@ comments = html.escape(form.getvalue("comment"))
 passwd = html.escape(form.getvalue("password"))
 
 base.header(title='Board Grade')
-base.top(False)
+base.top()
 
 add_test_functions.add_board_grade(passwd, board_id, person_id, grade, comments)
 
-base.bottom(False)
+base.bottom()

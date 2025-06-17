@@ -97,13 +97,13 @@ for (let i = 0; i < d_keys.length; i++) {
         let sd = d_keys[i];
         start_date = new Date(sd);
     }
-    if (dates.get('End Date').get(d_keys[i]) == true) {
+    if (dates.get('Checked In Before').get(d_keys[i]) == true) {
         let ed = d_keys[i];
         end_date = new Date(ed);
     }
 }
 for (let i = 0; i < source.get_length(); i++) {
-    if (source.data['Check In Time'][i] >= start_date && indices[i] == true) {
+    if (source.data['Check In Time'][i] >= start_date && source.data['Check In Time'][i] <= end_date && indices[i] == true) {
         indices[i] = true;
     } else {
         indices[i] = false;
@@ -199,7 +199,7 @@ def Filter(major_type):
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
     # widget titles and data for those widgets has to be manually entered, as well as the type
-    columns = ['Subtype', 'Nickname', 'Location', 'Status', 'Checked In After', 'End Date']
+    columns = ['Subtype', 'Nickname', 'Location', 'Status', 'Checked In After', 'Checked In Before']
     data = [ds.data['Subtype'].tolist(), ds.data['Nickname'].tolist(), ds.data['Location'].tolist(), ds.data['Status'].tolist(), date_range, date_range]
     t = [multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
 
@@ -316,11 +316,11 @@ def Filter(major_type):
     w = [*widgets.values()]
 
     if major_type == 'HD':
-        layout = row(column(row(w[0:4] + [w[-2]]), row(w[4:10]), row(w[10:15]), row(w[15:20]), data_table))
+        layout = row(column(row(w[0:4] + [w[-2], w[-1]]), row(w[4:10]), row(w[10:15]), row(w[15:20]), data_table))
     elif major_type == 'LD':
-        layout = row(column(row(w[0:4] + [w[-2]]), row(w[4:8]), row(w[8:11]), data_table))
+        layout = row(column(row(w[0:4] + [w[-2]]), row(w[4:8] + [w[-1]]), row(w[8:11]), data_table))
     else:
-        layout = row(column(row(w[0:4] + [w[-2]]), row(w[4:8]), data_table))
+        layout = row(column(row(w[0:4] + [w[-2]]), row(w[4:8] + [w[-1]]), data_table))
 
 
     return json.dumps(json_item(layout))

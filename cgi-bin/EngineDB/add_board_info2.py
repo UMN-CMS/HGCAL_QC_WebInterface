@@ -19,10 +19,11 @@ form = cgi.FieldStorage()
 sn = base.cleanCGInumber(form.getvalue("serial_num"))
 board_id = base.cleanCGInumber(form.getvalue("board_id"))
 comments = html.escape(form.getvalue("comments"))
+password = form.getvalue("password")
 
 base.header(title='Add Board Info')
-base.top(False)
+base.top()
 
-module_functions.add_board_info(board_id, str(sn), location, comments)
+module_functions.add_board_info(board_id, str(sn), comments, password)
 
-base.bottom(False)
+base.bottom()

@@ -22,11 +22,11 @@ except:
     board_id = None
 
 base.header(title='Board Check In')
-base.top(False)
+base.top()
 
 if bc:
     board_check_functions.board_checkin_form_sn(bc)
 else:
     board_check_functions.board_checkin_form_sn("")
 
-base.bottom(False)
+base.bottom()

@@ -20,8 +20,8 @@ test_desc_long = html.escape(form.getvalue("test_desc_long"))
 password = html.escape(form.getvalue("password"))
 
 base.header(title='Add New Test Template')
-base.top(False)
+base.top()
 
 test_id=add_test_functions.add_new_test(test_name, required, test_desc_short, test_desc_long, password)
     
-base.bottom(False)
+base.bottom()

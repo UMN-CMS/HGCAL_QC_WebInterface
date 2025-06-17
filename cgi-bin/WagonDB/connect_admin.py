@@ -11,8 +11,9 @@ print("Content-type: text/html\n")
 
 form = cgi.FieldStorage()
 
+# admin connection for the GUI, to reach the admin tools page
 base.header(title='Try Admin Connection')
-base.top(False)
+base.top()
 try:
     password = html.escape(form.getvalue("password"))
 except Exception as e:
@@ -29,4 +30,4 @@ else:
     print('End')
 
 
-base.bottom(False)
+base.bottom()

@@ -9,7 +9,7 @@ from connect import connect
 print("Content-type: text/html\n")
 
 base.header(title='is_new_board')
-base.top(False)
+base.top()
 
 db = connect(0)
 cur = db.cursor()
@@ -24,6 +24,4 @@ print('Begin')
 print(full_id)
 print('End')
 
-
-base.bottom(False)
-
+base.bottom()
