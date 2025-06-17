@@ -19,7 +19,7 @@ p = form.getvalue('person_id')
 print("Content-type: text/html\n")
 
 base.header(title='Test Stands')
-base.top(False)
+base.top()
 
 # set up page header
 print('<div class="row">')
@@ -71,5 +71,5 @@ for c in cur.fetchall():
 
 print('</tbody></table></div></div>')
 
-base.bottom(False)
+base.bottom()
 

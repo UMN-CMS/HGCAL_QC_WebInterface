@@ -14,7 +14,6 @@ full_id = html.escape(form.getvalue("full_id"))
 fileitems = [form['top_view'], form['bottom_view']]
 password = form.getvalue("password")
 
-
 base.header(title='Add Image')
 base.top()
 try:

@@ -58,25 +58,6 @@ def Portage_fetch(test_type_id, board_sn):
         test_id.append(t[0])
     return person_name, date, successful, comments, test_id, config
 
-def Portage_fetch_revokes(sn):
-    # gets board id from the serial number
-    cur.execute('select board_id from Board where full_id="%s"' % sn)
-    board_id = cur.fetchall()[0][0]
-    # gets test ids for this board
-    cur.execute('select test_id from Test where board_id=%s' % board_id)
-    test_ids = cur.fetchall()
-    # gets all revoked test_ids
-    cur.execute('select test_id from TestRevoke')
-    revoked_ids = cur.fetchall()
-    revoked={}
-    # checks all of the test ids to see if that test has been revoked
-    # if so, gets comment and adds it to the dict
-    for t in test_ids:
-        if t[0] in revoked_ids:
-            cur.execute('select comment from TestRevoke where test_id=%s' % t[0])
-            revoked[t[0]] = cur.fetchall()[0][0]
-    return revoked
-
 
 def Portage_fetch_attach(test_id):
     # gets attachment data for the test id
@@ -84,7 +65,7 @@ def Portage_fetch_attach(test_id):
     cur.execute('select attach_id, attachmime, attachdesc, originalname from Attachments where test_id=%s order by attach_id' % test_id)
     return cur.fetchall()
 
-def add_test_tab(barcode, board_id, static):
+def add_test_tab(barcode, board_id):
 
     # adds header
     print('<div class="row">')
@@ -116,46 +97,43 @@ def add_test_tab(barcode, board_id, static):
     print('</h4>')
     print('</div>')
     print('</div>')
-    if static: 
-        pass
-    else:
-        # adds buttons
-        print('<div class="row">')
-        print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="add_test.py?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':barcode, 'id':board_id})
-        print('<button class="btn btn-dark"> Add a New Test </button>')
-        print('</a>')
-        print('</div>')
-        print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="add_board_info.py?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':barcode, 'id':board_id})
-        print('<button class="btn btn-dark"> Add Board Info </button>')
-        print('</a>')
-        print('</div>')
-        print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="board_checkout.py?full_id=%(full_id)s">' %{'full_id':barcode})
-        print('<button class="btn btn-dark"> Checkout Board </button>')
-        print('</a>')
-        print('</div>')
-        print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="add_board_image.py?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':barcode, 'id':board_id})
-        print('<button class="btn btn-dark"> Add Board Image </button>')
-        print('</a>')
-        print('</div>')
-        print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="change_board_location.py?board_id=?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':barcode, 'id':board_id})
-        print('<button class="btn btn-dark"> Update Location </button>')
-        print('</a>')
-        print('</div>')
-        print('<div class="col-md-2 ps-5 pt-2 my-2">')
-        print('<a href="board_grade.py?board_id=?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':barcode, 'id':board_id})
-        print('<button class="btn btn-dark"> Grade Board </button>')
-        print('</a>')
-        print('</div>')
-        print('</div>')
+    # adds buttons
+    print('<div class="row">')
+    print('<div class="col-md-2 ps-5 pt-2 my-2">')
+    print('<a href="add_test.py?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':barcode, 'id':board_id})
+    print('<button class="btn btn-dark"> Add a New Test </button>')
+    print('</a>')
+    print('</div>')
+    print('<div class="col-md-2 ps-5 pt-2 my-2">')
+    print('<a href="add_board_info.py?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':barcode, 'id':board_id})
+    print('<button class="btn btn-dark"> Add Board Info </button>')
+    print('</a>')
+    print('</div>')
+    print('<div class="col-md-2 ps-5 pt-2 my-2">')
+    print('<a href="board_checkout.py?full_id=%(full_id)s">' %{'full_id':barcode})
+    print('<button class="btn btn-dark"> Checkout Board </button>')
+    print('</a>')
+    print('</div>')
+    print('<div class="col-md-2 ps-5 pt-2 my-2">')
+    print('<a href="add_board_image.py?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':barcode, 'id':board_id})
+    print('<button class="btn btn-dark"> Add Board Image </button>')
+    print('</a>')
+    print('</div>')
+    print('<div class="col-md-2 ps-5 pt-2 my-2">')
+    print('<a href="change_board_location.py?board_id=?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':barcode, 'id':board_id})
+    print('<button class="btn btn-dark"> Update Location </button>')
+    print('</a>')
+    print('</div>')
+    print('<div class="col-md-2 ps-5 pt-2 my-2">')
+    print('<a href="board_grade.py?board_id=?board_id=%(id)d&full_id=%(full_id)s">' %{'full_id':barcode, 'id':board_id})
+    print('<button class="btn btn-dark"> Grade Board </button>')
+    print('</a>')
+    print('</div>')
+    print('</div>')
 
 
 
-def ePortageTest(test_type_id, board_sn, test_name, revokes, static):
+def ePortageTest(test_type_id, board_sn, test_name):
     # displays test info for each test type, is called for each type individually
     # gets info for test
     person_name, date, successful, comments, test_id, config = Portage_fetch(test_type_id, board_sn) 
@@ -186,15 +164,8 @@ def ePortageTest(test_type_id, board_sn, test_name, revokes, static):
             print('<td> %(when)s </td>' %{ "when":date[i][0].strftime('%c')})
             # checks if the test was successful
             if successful[i][0] == 1:
-                # checks if the test was revoked
-                if test_id[i] in revokes:
-                    print('<td><b>Revoked</b>: %(comment)s </td>' %{ "comment":revokes[test_id[i]] })
-                else:
-                    print('<td align=left; class="table-success"> Yes </td>')
-                    if static:
-                        pass
-                    else:
-                        print("<td align=right style='{ background-color: yellow; }' ><a href='revoke_success.py?test_id=%(id)s'>Revoke</a></td>" %{ "id":test_id[i]})
+                print('<td align=left; class="table-success"> Yes </td>')
+                print("<td align=right style='{ background-color: yellow; }' ><a href='revoke_success.py?test_id=%(id)s'>Revoke</a></td>" %{ "id":test_id[i]})
 
             else:
                 print('<td colspan=2; class="table-danger">No</td>')
@@ -205,12 +176,12 @@ def ePortageTest(test_type_id, board_sn, test_name, revokes, static):
             print('</tr>')
             # gets attachment(s)
             attachments=Portage_fetch_attach(test_id[i])
-            for afile in attachments:
-                # links attachment
-                if static:
-                    print('<tr><td>Attachment: <a href="attach_%s.html">%s</a><td colspan=2><i>%s</i>' % (afile[0], afile[3], afile[2]))
-                else:
+            try:
+                for afile in attachments:
+                    # links attachment
                     print('<tr><td>Attachment: <a href="get_attach.py?attach_id=%s">%s</a><td colspan=2><i>%s</i>' % (afile[0],afile[3],afile[2]))
+            except:
+                print('<tr><td>Attachment: No attachment<td colspan=2><i>None</i>' % (afile[0],afile[3],afile[2]))
             if config[i][0] is not None:
                 print('<td><a href="get_config_info.py?config_id=%s">Test Stand</a></td>' % config[i][0])
             print('</tr>')
@@ -239,15 +210,8 @@ def ePortageTest(test_type_id, board_sn, test_name, revokes, static):
             print('<td> %(when)s </td>' %{ "when":date[i][0].strftime('%c')})
             # checks if the test was successful
             if successful[i][0] == 1:
-                # checks if the test was revoked
-                if test_id[i] in revokes:
-                    print('<td><b>Revoked</b>: %(comment)s </td>' %{ "comment":revokes[test_id[i]] })
-                else:
-                    print('<td align=left> Yes </td>')
-                    if static:
-                        pass
-                    else:
-                        print("<td align=right style='{ background-color: yellow; }' ><a href='revoke_success.py?test_id=%(id)s'>Revoke</a></td>" %{ "id":test_id[i]})
+                print('<td align=left> Yes </td>')
+                print("<td align=right style='{ background-color: yellow; }' ><a href='revoke_success.py?test_id=%(id)s'>Revoke</a></td>" %{ "id":test_id[i]})
 
             else:
                 print('<td colspan=2>No</td>')
@@ -258,13 +222,13 @@ def ePortageTest(test_type_id, board_sn, test_name, revokes, static):
             print('</tr>')
             # gets attachment(s)
             attachments=Portage_fetch_attach(test_id[i])
-            # TODO add test station info link if it exists
-            for afile in attachments:
-                # links attachment
-                if static:
-                    print('<tr><td>Attachment: <a href="attach_%s.html">%s</a><td colspan=2><i>%s</i>' % (afile[0], afile[3], afile[2]))
-                else:
+            try:
+                for afile in attachments:
+                    # links attachment
                     print('<tr><td>Attachment: <a href="get_attach.py?attach_id=%s">%s</a><td colspan=2><i>%s</i>' % (afile[0],afile[3],afile[2]))
+            except:
+                print('<tr><td>Attachment: No attachment<td colspan=2><i>None</i>' % (afile[0],afile[3],afile[2]))
+
             if config[i][0] is not None:
                 print('<td><a href="get_config_info.py?config_id=%s">Test Stand</a></td>' % config[i][0])
             print('</tbody>')
@@ -277,7 +241,7 @@ def ePortageTest(test_type_id, board_sn, test_name, revokes, static):
     print('</div>')
     print('</div>')
 
-def board_info(sn, static):
+def board_info(sn):
     # gets board id
 
     cur.execute('select board_id from Board where full_id="%s"' % sn)
@@ -456,6 +420,27 @@ def add_revoke(test_id):
     # form that submits the revoke by running revoke_success2.py on submit
     print('<form action="revoke_success2.py" method="post" enctype="multipart/form-data">')
     print('<input type="hidden" name="test_id" value="%s">' % test_id)
+    # gives options for tester
+    cur.execute("Select person_id, person_name from People;")
+
+    print('<div class="row">')
+    print('<div class="col-md-3 pt-2 ps-5 mx-2 my-2">')
+    print('<label>Tester')
+    print('<select class="form-control" name="person_id">')
+    for person_id in cur:
+        print("<option value='%s'>%s</option>" % ( person_id[0] , person_id[1] ))
+                        
+    print('</select>')
+    print('</label>')
+    print('</div>')
+
+    print("<div class='row'>")
+    print('<div class = "col-md-3 pt-2 ps-5 mx-2 my-2">')
+    print("<label for='password'>Admin Password</label>")
+    print("<input type='password' name='password'>")
+    print("</div>")
+    print("</div>")
+
     print('<div class="form-group pt-2 px-5 mx-2 my-2">')
     print('<label for="revokeComments"> Revoke Comments </label>')
     print('<textarea class="form-control" name="revokeComments" rows="3" cols="50"></textarea>')
@@ -465,21 +450,16 @@ def add_revoke(test_id):
     print('<input type="submit" class="btn btn-dark" value="Submit Revoke">')
     print('</form>')
 
-def revoke_success(test_id, comments):
-    # inserts the revoke into the DB
-    # not sure if this one works either
+def revoke_success(test_id, comments, person_id):
+    # revokes the specified test
     db = connect(1)
     cur = db.cursor()
   
-    try:
-        cur.execute('INSERT INTO TestRevoke (test_id, comment) VALUES (%s, "%s")' % (test_id, comments))
+    cur.execute('select board_id, test_type_id from Test where test_id = %s' % test_id)
+    x = cur.fetchall()
 
-        db.commit()
-        db.close()
-
-    except mysql.connector.Error as err:
-        print("CONNECTION ERROR")
-        print(err)
+    cur.execute("insert into Test (person_id, test_type_id, board_id, successful, comments, day) values (%s,%s,%s,%s,%s,NOW())" % (person_id, x[0][1], x[0][0], 0, comments))
+    db.commit()
 
 def get_test_types():
     # used in Testing GUI
@@ -500,7 +480,6 @@ def get_test_types():
 
 def add_board_image(sn, img_file, view):
     # writes the image file
-    # think this is used in the Testing GUI?
     db = connect(1)
     cur = db.cursor() 
 
@@ -512,14 +491,13 @@ def add_board_image(sn, img_file, view):
         rows = cur.fetchall()
 
         # check if board id exists
-        # it will be on Visual Inspection GUI side, new boards are automatically entered when scanned
+        # it will be on the GUI side, new boards are automatically entered when scanned
         if not rows:
             print("Board sn does not exist! Make sure this board has been entered into the database.")
 
         else:
             board_id = rows[0][0]
 
-        #img_path = "/home/ePortage/wagondb"
         img_path = get_image_location()
         # generates random string for the image name
         img_name = str(uuid.uuid4())
@@ -574,8 +552,5 @@ def change_board_location(sn, location):
     except mysql.connector.Error as err:
         print("CONNECTION ERROR")
         print(err)
-
-
-
 
 

@@ -8,7 +8,7 @@ import home_page_list
 print("Content-type: text/html\n")
 
 base.header(title='Add a new module to HGCAL Engine Test')
-base.top(False)
+base.top()
 
 home_page_list.add_module_form()
 
@@ -19,5 +19,5 @@ print('<b><em>(Sorted by Full ID)</em></b>&emsp;<badge class="badge bg-primary">
 print('</div>')
 print('</div>')
 
-base.bottom(False)
+base.bottom()
 

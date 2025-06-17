@@ -11,7 +11,6 @@ base_url = get_base_url()
 db = connect(0)
 cur = db.cursor()
 
-#print("Location: %s/summary.py\n\n" % base_url)
 #cgi header
 print("Content-type: text/html\n")
 

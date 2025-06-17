@@ -19,7 +19,7 @@ form = cgi.FieldStorage()
 print("Content-type: text/html\n")
 
 base.header(title='Board Registration Submission')
-base.top(False)
+base.top()
 
 try:
     person_id = base.cleanCGInumber(form.getvalue('person_id'))
@@ -63,4 +63,4 @@ if upload:
     print('</div>')
     print('</div>')
 
-base.bottom(False)
+base.bottom()

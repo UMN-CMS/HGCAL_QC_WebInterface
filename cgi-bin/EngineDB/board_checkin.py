@@ -11,7 +11,6 @@ import board_check_functions
 print("Content-type: text/html\n")
 
 form = cgi.FieldStorage()
-#url = form.getvalue("url")
 try:
     board_id = base.cleanCGInumber(form.getvalue("board_id"))
 except:

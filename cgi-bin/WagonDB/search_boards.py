@@ -11,7 +11,7 @@ cgitb.enable()
 print("Content-type: text/html\n")
 
 base.header(title='Search Boards')
-base.top(False)
+base.top()
 
 try:
     form = cgi.FieldStorage()
@@ -29,5 +29,5 @@ Bokeh.embed.embed_item(data, 'render');
 </script>
 '''.format(layout))
 
-base.bottom(False)
+base.bottom()
 

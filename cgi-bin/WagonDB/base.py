@@ -94,7 +94,7 @@ def top(admin=False):
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
             <li><a class="dropdown-item" href="summary.py">Board Summary</a></li>
-            <li><a class="dropdown-item" href="testers.py">Tester Summary</a></li>
+            <li><a class="dropdown-item" href="tester_summary.py">Tester Summary</a></li>
             <li><a class="dropdown-item" href="board_images.py">Photo Repository</a></li>
           </ul>
         </li>
@@ -174,7 +174,7 @@ def bottom():
             <span class="text-light">Summary</a>
             <ul class="list">
                 <li><a class="text-light text-decoration-none" href="summary.py">\tBoard Summary</a></li>
-                <li><a class="text-light text-decoration-none" href="testers.py">\tTester Summary</a></li>
+                <li><a class="text-light text-decoration-none" href="tester_summary.py">\tTester Summary</a></li>
                 <li><a class="text-light text-decoration-none" href="board_images.py">\tPhoto Repository</a></li>
             </ul>
           </li>

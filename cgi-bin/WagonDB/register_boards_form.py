@@ -11,8 +11,8 @@ import add_test_functions
 print("Content-type: text/html\n")
 
 base.header(title='Board Registration')
-base.top(False)
+base.top()
 
 add_test_functions.register_boards_form()
 
-base.bottom(False)
+base.bottom()

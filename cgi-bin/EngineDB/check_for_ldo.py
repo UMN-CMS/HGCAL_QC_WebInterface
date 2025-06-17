@@ -9,7 +9,7 @@ from connect import connect
 print("Content-type: text/html\n")
 
 base.header(title='Check For LDO')
-base.top(False)
+base.top()
 
 db = connect(0)
 cur = db.cursor()
@@ -33,4 +33,4 @@ for t in ldo:
 
 print('End')
 
-base.bottom(False)
+base.bottom()

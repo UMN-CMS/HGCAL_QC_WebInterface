@@ -16,8 +16,8 @@ print("Content-type: text/html\n")
 form = cgi.FieldStorage()
 test_id = base.cleanCGInumber(form.getvalue('test_id'))
 base.header(title='Revoke Test')
-base.top(False)
+base.top()
 
 module_functions.add_revoke(test_id)
 
-base.bottom(False)
+base.bottom()

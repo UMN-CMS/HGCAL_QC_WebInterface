@@ -205,6 +205,7 @@ def add_test(person_id, test_type, barcode, success, comments, config_id):
     for test in temp:
         req_tests.append(test[0])
 
+    # prevents a test from being uploaded for a board that doesn't need that test
     if test_type_id not in req_tests:
         return None
 
@@ -252,6 +253,7 @@ def add_test(person_id, test_type, barcode, success, comments, config_id):
 # Adds a tester person
 def add_tester(person_name, passwd, db_name):
     try:
+        # db name argument allows for one set of webpages to upload to multiple databases
         db = connect_admin(passwd, db_name)
         cur = db.cursor()
     except Exception as e:

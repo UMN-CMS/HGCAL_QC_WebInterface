@@ -17,22 +17,10 @@ def fetch_list_tests():
     # gets total tests done for each test
     cur.execute("select Test_Type.name,COUNT(*) from Test,Test_Type WHERE Test.test_type_id=Test_Type.test_type  GROUP BY Test.test_type_id ORDER BY Test_Type.relative_order");
     rows2 = cur.fetchall()
-    # gets revoked tests
-    cur.execute("select Test_Type.name,Count(*) from TestRevoke,Test_Type,Test WHERE Test.test_type_id=Test_Type.test_type and Test.successful=1 and Test.test_id=TestRevoke.test_id GROUP BY Test.test_type_id ORDER BY Test_Type.relative_order")
-    rows3 = cur.fetchall()
    
     # iterates over test types
     for i,r in enumerate(rows):
-        # if there are revoked tests
-        if rows3:
-            # iterate over revoked tests
-            for row in rows3:
-                # if the revoked test is the same type of test
-                if row[0] == r[0]:
-                    # subtract off the number of revoked tests
-                    rows[i] = (r[0], r[1]-row[1], r[2])
-        else:
-            rows[i] = (r[0], r[1], r[2])
+        rows[i] = (r[0], r[1], r[2])
     # creates final set of data before returning it
     finalrows = ()
     for i in range (0,len(rows)):
