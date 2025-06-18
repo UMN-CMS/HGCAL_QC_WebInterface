@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 LOCATION = "UMN"
 INSTITUTION = "UMN"
 
-MANU_RENAMES = { "Poly" : "PolyElectronics" }
+MANU_RENAMES = { "Poly" : "PolyElectronics",
+                 "Piranha" : "Piranha EMS"}
 
 
 # Helper Functions
@@ -35,10 +36,13 @@ def check_if_registered(cur, barcode):
         board_id_result = cur.fetchall()
         board_id = board_id_result[0][0]
 
+        cur.execute('SELECT test_type FROM Test_Type WHERE name="Registered"')
+        reg_test_type_id = cur.fetchall()[0][0]
+
         cur.execute(
-            'SELECT test_id FROM Test WHERE test_type_id = 7 AND board_id = %s '
+            'SELECT test_id FROM Test WHERE test_type_id = %s AND board_id = %s '
             'ORDER BY day DESC, test_id DESC',
-            (board_id,)
+            (reg_test_type_id, board_id)
         )
         test_id_result = cur.fetchall()
         return test_id_result
@@ -103,11 +107,23 @@ def get_name(barcode):
     """Generate a name label for the barcode."""
     return f"LD Wagon {barcode[4]} {barcode}"
 
-def get_date(typecode):
-    """Determine the production date based on typcode."""
-    first_group = {"WE-10A1", "WE-20A1", "WW-10A1", "WW-20A1", "WE-20B1"}
-    second_group = {"WE-11A1", "WE-12A1", "WW-11A1", "WW-12A1"}
-    return "2024-06-01" if typecode in first_group else "2024-09-01" if typecode in second_group else "UNKNOWN"
+BATCH_BOARD_DATES = {
+    "WE-10A1:A" : "2024-06-01", "WE-20A1:A" : "2024-06-01", "WE-20B1:A" : "2024-06-01", "WW-10A1:A" : "2024-06-01", "WW-20A1:A" : "2024-06-01",
+    "WE-11A1:1" : "2024-09-01", "WE-12A1:1" : "2024-09-01", "WW-11A1:1" : "2024-09-01", "WW-12A1:1" : "2024-09-01",
+    "WE-12A1:B" : "2025-02-28", "WW-12A1:B" : "2025-02-28",
+    "WE-21A1:B" : "2025-03-04", "WE-21B1:B" : "2025-03-04", "WW-21B1:B" : "2025-03-04", "WW-21A1:B" : "2025-03-04",
+    "WE-10B1:C" : "2025-04-17", "WE-11B2:C" : "2025-04-17", "WE-11C1:C" : "2025-04-17", "WW-11C1:C" : "2025-04-17", "WE-21C6:C" : "2025-04-17", "WW-20C1:C" : "2025-04-17", "WW-21E1:C" : "2025-04-17",
+    "WW-21E2:D" : "2025-05-09","WW-21E3:D" : "2025-05-09","WW-12C1:D": "2025-05-09","WE-21C3:D": "2025-05-09","WE-20E1:D": "2025-05-09","WE-11C1:D": "2025-05-09", "WE-10B1:D": "2025-05-09",
+    "WW-30A1:E" : "2025-06-03","WE-30A1:E" : "2025-06-03",
+}
+
+def get_date(typecode, batch):
+    """Determine the production date based on typcode and batch."""
+    fullcode="%s:%s"%(typecode,batch)
+    if fullcode in BATCH_BOARD_DATES:
+        return BATCH_BOARD_DATES[fullcode]
+    else:
+        return "UNKNOWN"
 
 def get_batch(cur, barcode):
     """Get the full SN of the barcode, parse it to determine the board batch."""
@@ -131,7 +147,7 @@ def get_batch(cur, barcode):
 
 def get_description(batch):
     """Check if the batch character is a number or a letter to assign a comment field."""
-    return "Pre-series" if batch.isdigit() else "Pre-production" if batch.isalpha() else "None"
+    return "Pre-series" if batch.isdigit() else "Pre-production" if batch=="A" else "Production"
  
 def run(csv_file):
     """Main execution function."""
@@ -168,7 +184,7 @@ def run(csv_file):
             manufacturer = get_manufacturer(cur, barcode)
             batch = get_batch(cur, barcode)
             name_label = get_name(barcode)
-            production_date = get_date(label_typecode)
+            production_date = get_date(label_typecode, batch)
             comment = get_description(batch)
 
             writer.writerow([
@@ -181,7 +197,7 @@ def run(csv_file):
 
         logger.info(f"CSV file for {success} LD wagons created successfully.")
         if ofile is not None:
-            close(ofile)
+            ofile.close()
 
     except Exception as e:
         logger.error(f"Critical error in run function: {e}")
