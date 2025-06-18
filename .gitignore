@@ -38,7 +38,7 @@ tramp
 *_archive
 
 ##Github VIM Ignore
-*.s[a-w][a-z]
+*.s[a-n][a-z]
 *.un~
 Session.vim
 .netrwhist
