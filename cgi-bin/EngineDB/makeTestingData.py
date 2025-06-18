@@ -621,7 +621,7 @@ def get_check_out():
     writer = csv.writer(csv_file)
     writer.writerow(columns)
 
-    cur.execute('select board_id, person_id, comment, checkout_date from Check_Out')
+    cur.execute('select CO.board_id, CO.person_id, B.location, CO.checkout_date from Check_Out CO join Board B on CO.board_id=B.board_id')
     check_out = cur.fetchall()
     for c in check_out:
         loc = c[2].split()[-1]

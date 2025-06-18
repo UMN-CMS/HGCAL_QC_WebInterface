@@ -10,7 +10,7 @@ import os
 print("Content-type: text/html\n")
 
 base.header(title='is_new_board')
-base.top(False)
+base.top()
 
 
 form = cgi.FieldStorage()
@@ -32,5 +32,5 @@ else:
     print ("NO SERIAL SENT")
 
 
-base.bottom(False)
+base.bottom()
 

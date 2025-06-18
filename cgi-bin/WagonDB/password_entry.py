@@ -13,7 +13,7 @@ form = cgi.FieldStorage()
 url = form.getvalue("url")
 
 base.header(title='Admin Access')
-base.top(False)
+base.top()
 
 # form to input admin password to access a page that needs admin password
 # the next page is encoded in the variable url
@@ -39,4 +39,4 @@ print("</form>")
 
 print("<div class='row pt-4 my-2'>")
 
-base.bottom(False)
+base.bottom()

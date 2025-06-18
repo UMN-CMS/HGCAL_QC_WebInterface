@@ -53,16 +53,13 @@ def parse_data(form):
             valid_tester = True   
             person_id = i[0]
 
-    cur.execute('select test_type from Test_Type where name="%s"' % test_name)
-    test_type_id = cur.fetchall()[0][0]
- 
     if not valid_tester:
-        print("Invalid tester (for writting priveldges, please access DB administrators)")
+        print("Invalid tester (for writting priviledges, please access DB administrators)")
         return None
 
 
     # Creates output
-    test_dict = {'full_id': full_id, 'board_type': board_type, 'tester': tester, 'person_id': person_id, 'test': test_type_id, 'successful': successful, 'comments': comments, 'config_id': config_id}
+    test_dict = {'full_id': full_id, 'board_type': board_type, 'tester': tester, 'person_id': person_id, 'test': test_name, 'successful': successful, 'comments': comments, 'config_id': config_id}
 
 
     print("          RETURNING TEST_DICT            ")
@@ -83,7 +80,7 @@ base_url = connect.get_base_url()
 print("Content-type: text/html\n")
 
 base.header(title="Add Test From JSON")
-base.top(False)
+base.top()
 
 form = cgi.FieldStorage()
 test_dict = parse_data(form)
@@ -119,5 +116,5 @@ if test_id:
 #    if test_dict['test'] == 'LPGBT ID':
 #        add_test_functions.set_daq_chip_id(test_dict['full_id'], test_id)
 
-base.bottom(False)
+base.bottom()
 

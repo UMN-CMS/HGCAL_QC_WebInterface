@@ -12,7 +12,7 @@ base_url = connect.get_base_url()
 print("Content-type: text/html\n")
 
 base.header(title='Adding a new module...')
-base.top(False)
+base.top()
 
 form = cgi.FieldStorage()
 
@@ -38,7 +38,7 @@ if form.getvalue('full_id'):
 
     print('<br><br>')
 
-    base.bottom(False)
+    base.bottom()
 
 
 else:
@@ -60,5 +60,5 @@ else:
 
     print('<br><br>')
 
-    base.bottom(False) 
+    base.bottom() 
     

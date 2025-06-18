@@ -20,11 +20,11 @@ except:
     serial_num = None
 
 base.header(title='Board Checkout')
-base.top(False)
+base.top()
 
 if serial_num:
     board_check_functions.board_checkout_form_sn(serial_num)
 else:
     board_check_functions.board_checkout_form_sn("")
 
-base.bottom(False)
+base.bottom()

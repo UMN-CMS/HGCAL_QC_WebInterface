@@ -83,7 +83,7 @@ base_url = connect.get_base_url()
 print("Content-type: text/html\n")
 
 base.header(title="Add Test From JSON")
-base.top(False)
+base.top()
 
 form = cgi.FieldStorage()
 test_dict = parse_data(form)
@@ -113,5 +113,5 @@ if test_id:
                 acomment = html.escape(acomment)
             add_test_functions.add_test_attachment(test_id,afile,adesc,acomment)
 
-base.bottom(False)
+base.bottom()
 

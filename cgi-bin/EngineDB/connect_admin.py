@@ -12,12 +12,11 @@ print("Content-type: text/html\n")
 form = cgi.FieldStorage()
 
 base.header(title='Try Admin Connection')
-base.top(False)
+base.top()
 try:
     password = html.escape(form.getvalue("password"))
 except Exception as e:
     print(e)
-    password = 'daq5HGCAL!'
 
 db = connect_admin(password)
 if db:
@@ -30,4 +29,4 @@ else:
     print('End')
 
 
-base.bottom(False)
+base.bottom()

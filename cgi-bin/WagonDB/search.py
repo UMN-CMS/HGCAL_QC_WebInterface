@@ -6,25 +6,20 @@ import base
 import sys
 from search_functions import Filter
 
-def run(static):
-    base.header(title='Search Tests')
-    base.top(static)
+cgitb.enable()
+#cgi header
+print("Content-type: text/html\n")
 
-    print('''
-    <div id='exfilter' class='bk-root'></div>
-    <script>
-    data = {};
-    Bokeh.embed.embed_item(data, 'exfilter');
-    </script>
-    '''.format(Filter()))
+base.header(title='Search Tests')
+base.top()
 
-    base.bottom(static)
+print('''
+<div id='exfilter' class='bk-root'></div>
+<script>
+data = {};
+Bokeh.embed.embed_item(data, 'exfilter');
+</script>
+'''.format(Filter()))
 
-    
-if __name__ == '__main__':
-    cgitb.enable()
-    #cgi header
-    print("Content-type: text/html\n")
-    
-    run(False)
+base.bottom()
 

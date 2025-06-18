@@ -14,7 +14,7 @@ print("Content-type: text/html\n")
 cgitb.enable()
 
 base.header(title='Add information about the tester equipment')
-base.top(False)
+base.top()
 
 form = cgi.FieldStorage()
 
@@ -114,5 +114,5 @@ print('Begin')
 print(config_id)
 print('End')
                                     
-base.bottom(False)
+base.bottom()
 

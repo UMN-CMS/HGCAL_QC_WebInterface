@@ -9,7 +9,7 @@ from connect import connect
 print("Content-type: text/html\n")
 
 base.header(title='Get Manufacturers')
-base.top(False)
+base.top()
 
 db = connect(0)
 cur = db.cursor()
@@ -23,5 +23,5 @@ for m in makers:
 print('End')
 
 
-base.bottom(False)
+base.bottom()
 

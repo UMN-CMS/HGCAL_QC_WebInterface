@@ -24,11 +24,11 @@ if __name__ == "__main__":
     if not cur.with_rows:
         print("Content-type: text/html\n")
         base.header("Attachment Request Error")
-        base.top(False)
+        base.top()
         print('<div class="col-md-6 ps-4 pt-4 mx-2 my-2">')
         print("<h1>Attachment not available</h1>")
         print('</div>')
-        base.bottom(False)
+        base.bottom()
     else:    
         thevals=cur.fetchall()
         # grabs attached data
@@ -39,7 +39,7 @@ if __name__ == "__main__":
             base.header("Attachment Request Error")
             base.top(True)
             print("<h1>Attachment not found</h1>")
-            base.bottom(False)        
+            base.bottom()        
         else:
             # decodes the attachment and displays it
             try:
@@ -48,11 +48,11 @@ if __name__ == "__main__":
             except json.decoder.JSONDecodeError:
                 print("Content-type: text/html\n")
                 base.header("Attachment Request Error")
-                base.top(False)
+                base.top()
                 print('<div class="col-md-6 ps-4 pt-4 mx-2 my-2">')
                 print('Error: Test data length exceeds 65535 characters.')
                 print('</div>')
-                base.bottom(False)        
+                base.bottom()        
         
     cur.close()
 

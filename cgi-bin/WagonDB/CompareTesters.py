@@ -7,26 +7,21 @@ import module_functions
 import sys
 import compare_Testers as mp
 
-def run(static):
-    base.header(title='Compare Testers')
-    base.top(static)
-    # adds the bokeh filter to javascript and to the website layout
-    print('''
-    <div id='exfilter' class='bk-root'></div>
-    <script>
-    data = {};
-    Bokeh.embed.embed_item(data, 'exfilter');
-    </script>
-    '''.format(mp.Filter()))
+cgitb.enable()
+#cgi header
+print("Content-type: text/html\n")
 
-    base.bottom(static)
+base.header(title='Compare Testers')
+base.top()
+# adds the bokeh filter to javascript and to the website layout
+print('''
+<div id='exfilter' class='bk-root'></div>
+<script>
+data = {};
+Bokeh.embed.embed_item(data, 'exfilter');
+</script>
+'''.format(mp.Filter()))
 
-    
+base.bottom()
 
-    
-if __name__ == '__main__':
-    cgitb.enable()
-    #cgi header
-    print("Content-type: text/html\n")
 
-    run(False)

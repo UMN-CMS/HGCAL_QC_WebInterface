@@ -16,7 +16,7 @@ if __name__ == '__main__':
     form = cgi.FieldStorage()
     serial_num = form.getvalue('full_id')
     base.header(title='Engine DB')
-    base.top(False)
+    base.top()
 
     db = connect(0)
     cur = db.cursor()
@@ -27,14 +27,10 @@ if __name__ == '__main__':
     cur.execute('select type_id from Board_type where type_sn="%s"' % type_sn)
     type_id = cur.fetchall()[0][0]
     # adds the top row with header and buttons
-    module_functions.add_test_tab(serial_num, board_id, False)
-
-
-    # gets revoked tests
-    revokes=module_functions.Portage_fetch_revokes(serial_num)
+    module_functions.add_test_tab(serial_num, board_id)
 
     # adds info table and images
-    module_functions.board_info(serial_num, False)
+    module_functions.board_info(serial_num)
 
     # gets all test types
     #cur.execute('select test_type, name from Test_Type where required = 1 order by relative_order ASC')
@@ -48,10 +44,10 @@ if __name__ == '__main__':
     # iterates over test types and displays each test done on the board sorted by test
     for t in test_types:
         if t[0] in stitch_types:
-            module_functions.ePortageTest(t[0], serial_num, t[1], revokes, False, type_sn)
+            module_functions.ePortageTest(t[0], serial_num, t[1], type_sn)
                 
 
-    base.bottom(False)
+    base.bottom()
 
 def run(serial_num, board_id):
     # gets serial number and board_id

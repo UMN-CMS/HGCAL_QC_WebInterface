@@ -9,7 +9,6 @@ import sys
 
 base_url = connect.get_base_url()
 
-#print("Location: %s/testers.py\n\n" % base_url)
 #cgi header
 print("Content-type: text/html\n")
 
@@ -18,11 +17,11 @@ person_name = html.escape(form.getvalue("person_name"))
 password = html.escape(form.getvalue("password"))
 
 base.header(title='Add Tester')
-base.top(False)
+base.top()
 
 
 print(person_name)
 add_test_functions.add_tester(person_name, password, 'Wagon')
 add_test_functions.add_tester(person_name, password, 'Engine')
 
-base.bottom(False)
+base.bottom()
