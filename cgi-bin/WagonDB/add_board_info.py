@@ -13,10 +13,10 @@ full_id = html.escape(form.getvalue('full_id'))
 board_id = base.cleanCGInumber(form.getvalue('board_id'))
 
 base.header(title='Add extra information about board')
-base.top(False)
+base.top()
 
 # sends board info here
 home_page_list.add_board_info_form(full_id, board_id)
 
-base.bottom(False)
+base.bottom()
 

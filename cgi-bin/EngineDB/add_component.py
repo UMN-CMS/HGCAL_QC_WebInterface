@@ -9,7 +9,7 @@ import traceback
 print("Content-type: text/html\n")
 
 base.header(title='Add Component')
-base.top(False)
+base.top()
 
 db = connect(1)
 cur = db.cursor()
@@ -42,5 +42,5 @@ else:
     print ("NO SERIAL SENT")
 
 
-base.bottom(False)
+base.bottom()
 

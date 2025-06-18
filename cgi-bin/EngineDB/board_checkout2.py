@@ -5,16 +5,16 @@ import cgitb; cgitb.enable()
 import base
 import board_check_functions
 import os
-from connect import connect, get_base_url
+from connect import connect, get_base_url, connect_admin
 
 base_url = get_base_url()
 db = connect(1)
 cur = db.cursor()
 
-#print("Location: %s/summary.py\n\n" % base_url)
 #cgi header
 print("Content-type: text/html\n")
 
+# grabs the information from the form and calls board_checkout() to enter info into the DB
 form = cgi.FieldStorage()
 try:
     full = form.getvalue('full_id')
@@ -32,8 +32,7 @@ except:
         person_id = cur.fetchall()[0][0]
     except:
         raise Exception("This user does not exist in the Testing Database.")
-
-# There is a bug where comments always returns None, so the except statement is never reached.        
+        
 try:
     comments = form.getvalue("comments")
 except:
@@ -41,8 +40,16 @@ except:
     comments = "Shipped to " + location
 
 base.header(title='Board Check Out')
-base.top(False)
+base.top()
 
-board_check_functions.board_checkout(board_id, person_id, comments)
+if form.getvalue('webpage'):
+    try:
+        admin = connect_admin(form.getvalue('password'))
+        cursor = admin.cursor()
+        board_check_functions.board_checkout(board_id, person_id, comments)
+    except:
+        print("Administrative Access Denied.")
+else:
+    board_check_functions.board_checkout(board_id, person_id, comments)
 
-base.bottom(False)
+base.bottom()

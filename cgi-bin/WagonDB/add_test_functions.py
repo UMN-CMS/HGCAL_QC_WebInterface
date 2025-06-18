@@ -205,6 +205,7 @@ def add_test(person_id, test_type, barcode, success, comments, config_id):
     for test in temp:
         req_tests.append(test[0])
 
+    # prevents a test from being uploaded for a board that doesn't need that test
     if test_type_id not in req_tests:
         return None
 
@@ -250,12 +251,12 @@ def add_test(person_id, test_type, barcode, success, comments, config_id):
 
 
 # Adds a tester person
-def add_tester(person_name, passwd, db):
+def add_tester(person_name, passwd, db_name):
     try:
-        db = connect_admin(passwd, db)
+        # db name argument allows for one set of webpages to upload to multiple databases
+        db = connect_admin(passwd, db_name)
         cur = db.cursor()
     except Exception as e:
-        print(e)
         print("Administrative access denied")
         return
    
@@ -287,7 +288,6 @@ def add_new_test(test_name, required, test_desc_short, test_desc_long, passwd):
 
     if test_name and required and test_desc_short and test_desc_long:
         sql="INSERT INTO Test_Type (name, required, desc_short, desc_long) VALUES ('%s', '%s', '%s', '%s')"%(test_name, required, test_desc_short, test_desc_long)
-        print(sql)
         # This is safer because Python takes care of escaping any illegal/invalid text
         cur.execute(sql)
 
@@ -300,42 +300,6 @@ def add_new_test(test_name, required, test_desc_short, test_desc_long, passwd):
         print('</div>')
         print('</div>')
 
-# old method of adding tests?
-def add_init_tests(serial_num, tester, test_results, comments):
-    db = connect(1)
-    cur = db.cursor()
-
-    if serial_num and tester:
-        cur.execute("SELECT board_id FROM Board WHERE full_id = '%s'" %(serial_num))
-        row = cur.fetchone()
-        card_id = row[0]
-
-        cur.execute("SELECT person_id FROM People WHERE person_name = '%s'" % (tester))
-        
-        row = cur.fetchone()
-        person_id = row[0]
-        
-        test_ids = []
-
-        for x in test_results.items():
-            cur.execute("SELECT test_type FROM Test_Type WHERE name = '%s'" % (x[0]))
-            row = cur.fetchone()
-            test_type_id = row[0]
-
-            sql="INSERT INTO Test (person_id, test_type_id, board_id, successful, comments, day) VALUES (%s,%s,%s,%s,%s,NOW())"
-            items=(person_id,test_type_id,card_id,x[1],comments)
-            cur.execute(sql,items)
-            test_ids.append(cur.lastrowid)
-
-            db.commit()
-
-        return test_ids       
-    else:
-        print('<div class ="row">')
-        print('<div class = "col-md-3 pt-4 ps-4 mx-2 my-2">')
-        print('<h3> Attempt Failed. Please Specify Full ID and Tester </h3>')
-        print('</div>')
-        print('</div>')
 
 # adds attachment, called after test has been added
 def add_test_attachment(test_id, afile, desc, comments):
@@ -415,6 +379,13 @@ def add_test_template(barcode, suggested_test):
     print('<textarea rows="5" cols="50" name="comments"></textarea>')
     print('</div>')
     print('</div>')
+
+    print("<div class='row'>")
+    print('<div class = "col-md-3 pt-2 ps-5 mx-2 my-2">')
+    print("<label for='password'>Admin Password</label>")
+    print("<input type='password' name='password'>")
+    print("</div>")
+    print("</div>")
                                     
     print('<div class="row">')
     print('<div class="col-md-6 pt-2 ps-5 mx-2 my-2">')

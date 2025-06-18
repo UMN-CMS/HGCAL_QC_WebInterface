@@ -17,22 +17,10 @@ def fetch_list_tests():
     # gets total tests done for each test
     cur.execute("select Test_Type.name,COUNT(*) from Test,Test_Type WHERE Test.test_type_id=Test_Type.test_type  GROUP BY Test.test_type_id ORDER BY Test_Type.relative_order");
     rows2 = cur.fetchall()
-    # gets revoked tests
-    cur.execute("select Test_Type.name,Count(*) from TestRevoke,Test_Type,Test WHERE Test.test_type_id=Test_Type.test_type and Test.successful=1 and Test.test_id=TestRevoke.test_id GROUP BY Test.test_type_id ORDER BY Test_Type.relative_order")
-    rows3 = cur.fetchall()
    
     # iterates over test types
     for i,r in enumerate(rows):
-        # if there are revoked tests
-        if rows3:
-            # iterate over revoked tests
-            for row in rows3:
-                # if the revoked test is the same type of test
-                if row[0] == r[0]:
-                    # subtract off the number of revoked tests
-                    rows[i] = (r[0], r[1]-row[1], r[2])
-        else:
-            rows[i] = (r[0], r[1], r[2])
+        rows[i] = (r[0], r[1], r[2])
     # creates final set of data before returning it
     finalrows = ()
     for i in range (0,len(rows)):
@@ -235,6 +223,12 @@ def add_board_info_form(sn, board_id):
     print('<input type="text" name="comments" placeholder="Comments">')
     print('</div>')
     print('</div>')
+    print("<div class='row'>")
+    print('<div class = "col-md-3 pt-2 ps-5 mx-2 my-2">')
+    print("<label for='password'>Admin Password</label>")
+    print("<input type='password' name='password'>")
+    print("</div>")
+    print("</div>")
     print('<div class="row">')
     print('<div class="col-md-1 ps-5 pt-2 mx-2 my-2 sub-card-submit">')
     print('<button type="submit" class="btn btn-dark">Submit</button>')

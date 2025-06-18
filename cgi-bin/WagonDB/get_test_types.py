@@ -9,7 +9,7 @@ import os
 print("Content-type: text/html\n")
 
 base.header(title='Get Test Types')
-base.top(False)
+base.top()
 
 tests = module_functions.get_test_types()
 
@@ -21,4 +21,4 @@ for t in tests:
 
 print('End')
 
-base.bottom(False)
+base.bottom()

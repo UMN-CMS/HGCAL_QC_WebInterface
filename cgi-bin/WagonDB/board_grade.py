@@ -22,11 +22,11 @@ except:
     board_id = None
 
 base.header(title='Board Grade')
-base.top(False)
+base.top()
 
 if bc:
     add_test_functions.add_board_grade_form(bc)
 else:
     add_test_functions.add_board_grade_form()
 
-base.bottom(False)
+base.bottom()

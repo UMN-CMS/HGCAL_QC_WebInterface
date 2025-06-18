@@ -16,7 +16,7 @@ form = cgi.FieldStorage()
 bc = html.escape(form.getvalue("full_id"))
 
 base.header(title='Change Board Location')
-base.top(False)
+base.top()
 
 # creates form to change board location
 # runs change_board_location2.py with the form info on submit
@@ -32,6 +32,12 @@ print('<div class = "col-md-5 ps-5 pt-2 mx-2 my-2">')
 print('<input type="text" name="location" placeholder="Location">')
 print('</div>')
 print('</div>')
+print("<div class='row'>")
+print('<div class = "col-md-3 pt-2 ps-5 mx-2 my-2">')
+print("<label for='password'>Admin Password</label>")
+print("<input type='password' name='password'>")
+print("</div>")
+print("</div>")
 print('<div class="row">')
 print('<div class="col-md-6 pt-2 ps-5 mx-2 my-2">')
 print('<input type="submit" class="btn btn-dark" value="Update Location">')
@@ -39,4 +45,4 @@ print('</div>')
 print('</div>')
 print('</form>')
 
-base.bottom(False)
+base.bottom()

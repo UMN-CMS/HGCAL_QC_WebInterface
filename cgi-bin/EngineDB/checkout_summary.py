@@ -271,7 +271,7 @@ if (this.value.length != 0) {
 print("Content-type: text/html\n")
 
 base.header(title='Checkout Summary')
-base.top(False)
+base.top()
 
 print('''
     <div id='exfilter' class='bk-root'></div>
@@ -281,4 +281,4 @@ print('''
     </script>
     '''.format(Filter()))
 
-base.bottom(False)
+base.bottom()

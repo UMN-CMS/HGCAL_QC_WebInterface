@@ -9,7 +9,7 @@ import os
 print("Content-type: text/json\n")
 
 #base.header(title='Get Latest Test Results')
-#base.top(False)
+#base.top()
 
 form = cgi.FieldStorage()
 
@@ -23,4 +23,4 @@ if form.getvalue('full_id'):
 
 else:
     print('No serial number sent.')
-#base.bottom(False)
+#base.bottom()
