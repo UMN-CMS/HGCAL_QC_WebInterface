@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 LOCATION = "UMN"
 INSTITUTION = "UMN"
 
-MANU_RENAMES = { "Poly" : "PolyElectronics" }
+MANU_RENAMES = { "Poly" : "PolyElectronics",
+                 "Piranha" : "Piranha EMS"}
 
 
 # Helper Functions
@@ -109,6 +110,8 @@ BATCH_BOARD_DATES = {
     "WE-12A1:B" : "2025-02-28", "WW-12A1:B" : "2025-02-28",
     "WE-21A1:B" : "2025-03-04", "WE-21B1:B" : "2025-03-04", "WW-21B1:B" : "2025-03-04", "WW-21A1:B" : "2025-03-04",
     "WE-10B1:C" : "2025-04-17", "WE-11B2:C" : "2025-04-17", "WE-11C1:C" : "2025-04-17", "WW-11C1:C" : "2025-04-17", "WE-21C6:C" : "2025-04-17", "WW-20C1:C" : "2025-04-17", "WW-21E1:C" : "2025-04-17",
+    "WW-21E2:D" : "2025-05-09","WW-21E3:D" : "2025-05-09","WW-12C1:D": "2025-05-09","WE-21C3:D": "2025-05-09","WE-20E1:D": "2025-05-09","WE-11C1:D": "2025-05-09", "WE-10B1:D": "2025-05-09",
+    "WW-30A1:E" : "2025-06-03","WE-30A1:E" : "2025-06-03",
 }
 
 def get_date(typecode, batch):
@@ -191,11 +194,7 @@ def run(csv_file):
 
         logger.info(f"CSV file for {success} LD wagons created successfully.")
         if ofile is not None:
-<<<<<<< HEAD
             ofile.close()
-=======
-            close(ofile)
->>>>>>> origin/main
 
     except Exception as e:
         logger.error(f"Critical error in run function: {e}")
