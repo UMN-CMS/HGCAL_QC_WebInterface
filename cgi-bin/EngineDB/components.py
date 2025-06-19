@@ -13,16 +13,17 @@ import os.path
 import sys
 import json
 import cgitb
-import mariadb
+import mysql.connector
 
-cgitb.enable()
+#cgitb.enable()
+#print("Content-Type: text/html\n")
 
 def add_component(cnx,cur,barcode,typecode):
     try:
         cur.execute('INSERT INTO COMPONENT_STOCK (barcode, typecode) VALUES (?,?)',(barcode,typecode,))
         cnx.commit()
         return (200,"Ok",)
-    except mariadb.Error as e:
+    except mysql.connector.Error as e:
         return (400,f"Error on add_component: {e}")    
 
 def get_used_for(cur,barcode):
@@ -34,7 +35,7 @@ def get_used_for(cur,barcode):
                 retval[typecode]=[]
             retval[typecode].append(barcode)
         return (200,retval,)
-    except mariadb.Error as e:
+    except mysql.connector.Error as e:
         return (400,f"Error on get_used_for: {e}")
 
 def get_unused_stock(cur,typecode,quantity=1):
@@ -49,7 +50,7 @@ def get_unused_stock(cur,typecode,quantity=1):
             for (barcode) in cur:
                 retval.append(barcode)
         return (200,retval,)    
-    except mariadb.Error as e:
+    except mysql.connector.Error as e:
         return (400,f"Error on get_unused_stock: {e}")
 
 def mark_used(ctx,cur,barcode,tomake):
@@ -65,7 +66,7 @@ def mark_used(ctx,cur,barcode,tomake):
         else:
             cur.execute("INSERT INTO COMPONENT_USAGE (component_id) VALUES (?)",(cid,))
         ctx.commit()
-    except mariadb.Error as e:
+    except mysql.connector.Error as e:
         if e.errno == 1062:
             return (409,"Barcode %s already used to make something else"%(barcode))
         else:
@@ -80,8 +81,8 @@ def argas(args,name,notprovided=None):
 args={}
 if "REQUEST_METHOD" in os.environ:
     form = cgi.FieldStorage()
-    for (key,value) in form:
-        args[key]=value
+    for key in form.keys():
+        args[key]=form[key].value
 else:
     import argparse
     parser = argparse.ArgumentParser(description="Components")
@@ -118,11 +119,12 @@ if req in ["add_component","mark_used"]:
         result=mark_used(db,cur,argas(args,"barcode"),argas(args,"tomake"))
 
 if result[0]>299:
+    codes={ 404: "Not Found", 400: "Bad Request", 409: "Conflict"}
+    print("Status: %d %s"%(result[0],codes[result[0]]))
     print("Content-type: text/plain")
-    print("Status: %d"%(result[0]))
     print("\n")
     print(result[1])
 else:
-    print("Content-type: text/json")
     print("Status: 200 OK\n")
+    print("Content-type: text/json")
     print(json.dumps(result[1]))
