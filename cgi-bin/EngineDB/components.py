@@ -42,11 +42,11 @@ def get_unused_stock(cur,typecode,quantity=1):
     try:
         retval=[]
         if typecode is None:
-            cur.execute("SELECT typecode,barcode FROM COMPONENT_STOCK WHERE component_id NOT IN (SELECT component_id from COMPONENT_USAGE) ORDER BY entered LIMIT %d"%quantity)
+            cur.execute("SELECT typecode,barcode FROM COMPONENT_STOCK WHERE component_id NOT IN (SELECT component_id from COMPONENT_USAGE) ORDER BY entered, barcode LIMIT %d"%quantity)
             for (typecode,barcode) in cur:
                 retval.append((typecode,barcode))
         else:
-            cur.execute("SELECT barcode FROM COMPONENT_STOCK WHERE typecode=? AND component_id NOT IN (SELECT component_id from COMPONENT_USAGE) ORDER BY entered LIMIT ?",(typecode,quantity))
+            cur.execute("SELECT barcode FROM COMPONENT_STOCK WHERE typecode=? AND component_id NOT IN (SELECT component_id from COMPONENT_USAGE) ORDER BY entered,barcode LIMIT ?",(typecode,quantity))
             for (barcode) in cur:
                 retval.append(barcode)
         return (200,retval,)    
