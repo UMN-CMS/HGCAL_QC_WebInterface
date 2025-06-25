@@ -1,6 +1,5 @@
 #!./cgi_runner.sh
 from connect import connect, connect_admin
-#import mysql.connector
 import base
 import cgi, os
 import cgitb; cgitb.enable()
@@ -180,7 +179,7 @@ def get_previous_test_results(serial_num):
 
 
 # adds a test into the Test table
-def add_test(person_id, test_type, barcode, success, comments, config_id):
+def add_test(person_id, test_type, barcode, success, comments):
     if success:
         success = 1
     else:
@@ -214,26 +213,15 @@ def add_test(person_id, test_type, barcode, success, comments, config_id):
         print("The Card_ID=", row[0])
         card_id = row[0]
         
-        if config_id:
-            sql="INSERT INTO Test (person_id, test_type_id, board_id, successful, comments, day, config_id) VALUES (%s,%s,%s,%s,%s,NOW(),%s)"
-            # This is safer because Python takes care of escaping any illegal/invalid text
-            items=(person_id,test_type_id,card_id,success,comments,config_id)
-            cur.execute(sql,items)
-            test_id = cur.lastrowid
+        sql="INSERT INTO Test (person_id, test_type_id, board_id, successful, comments, day) VALUES (%s,%s,%s,%s,%s,NOW())"
+        # This is safer because Python takes care of escaping any illegal/invalid text
+        items=(person_id,test_type_id,card_id,success,comments)
+        cur.execute(sql,items)
+        test_id = cur.lastrowid
 
-            print(test_id)
+        print(test_id)
 
-            db.commit()
-        else:
-            sql="INSERT INTO Test (person_id, test_type_id, board_id, successful, comments, day) VALUES (%s,%s,%s,%s,%s,NOW())"
-            # This is safer because Python takes care of escaping any illegal/invalid text
-            items=(person_id,test_type_id,card_id,success,comments)
-            cur.execute(sql,items)
-            test_id = cur.lastrowid
-
-            print(test_id)
-
-            db.commit()
+        db.commit()
             
 
         return test_id

@@ -31,12 +31,6 @@ def parse_data(form):
             print(e)
             print("Data could not be retrieved from the JSON")
 
-        try:
-            config_id = form.getvalue('config_id')
-        except:
-            config_id = None
-
-        print('config_id:', config_id)
 
     except KeyError: 
         print('Json must contain at least the following entries:\nserial\nboard_type\ntester\ntest\nsucessful\ncomments\n\nPlease double check your json file for these fields')
@@ -62,7 +56,7 @@ def parse_data(form):
 
 
     # Creates output
-    test_dict = {'full_id': full_id, 'board_type': board_type, 'tester': tester, 'person_id': person_id, 'test': test_name, 'successful': successful, 'comments': comments, 'config_id': config_id}
+    test_dict = {'full_id': full_id, 'board_type': board_type, 'tester': tester, 'person_id': person_id, 'test': test_name, 'successful': successful, 'comments': comments}
 
 
     print("          RETURNING TEST_DICT            ")

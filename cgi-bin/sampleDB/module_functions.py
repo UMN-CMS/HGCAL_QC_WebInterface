@@ -1,13 +1,12 @@
 #!./cgi_runner.sh -B
 from connect import *
 import sys
-import mysql.connector
-import mysql
 import os
 from get_attach import save
 import home_page_list
 import pandas as pd
 import numpy as np
+import mariadb
 import datetime
 from datetime import datetime as dt
 import uuid
@@ -437,7 +436,7 @@ def get_test_types():
 
         return tests
 
-    except mysql.connector.Error as err:
+    except mariadb.Error as err:
         print("CONNECTION ERROR")
         print(err)
 
@@ -483,7 +482,7 @@ def add_board_image(sn, img_file, view):
 
         print("File received successfully!")
 
-    except mysql.connector.Error as err:
+    except mariadb.Error as err:
         print("CONNECTION ERROR")
         print(err)
 
@@ -512,7 +511,7 @@ def change_board_location(sn, location):
 
         print("Location Updated Successfully!")
 
-    except mysql.connector.Error as err:
+    except mariadb.Error as err:
         print("CONNECTION ERROR")
         print(err)
 

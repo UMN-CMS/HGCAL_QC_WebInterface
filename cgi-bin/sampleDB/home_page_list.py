@@ -4,7 +4,7 @@ import numpy as np
 from connect import connect
 import sys
 import cgitb
-import mysql
+import mariadb
 import pandas as pd
 import os
 import enum
@@ -287,7 +287,7 @@ def add_module(serial_number, manu, location):
                 print("<h3>Board already exists!<h3>")
         else:
             print('Barcode is not the correct length.')
-    except mysql.connector.Error as err:
+    except mariadb.Error as err:
         print(err)
         print('Failed to enter Board')
     

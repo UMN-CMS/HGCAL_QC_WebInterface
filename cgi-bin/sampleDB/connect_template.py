@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import mysql.connector
+import mariadb
 from hashlib import sha256
 
 # TODO rename this to connect.py
@@ -9,21 +9,21 @@ from hashlib import sha256
 def connect(num):
     if(num==1):
         # TODO fill in with hostname, username, and password
-        connection = mysql.connector.connect(
+        connection = mariadb.connect(
             host = '',
             user='',
             password='',
             database=get_db_name(),
-            #cursorclass=mysql.connector.cursors.DictCursor
+            #cursorclass=mariadb.cursors.DictCursor
         )
     if(num==0):
         # TODO fill in with hostname, username, and password
-        connection = mysql.connector.connect(
+        connection = mariadb.connect(
             host = '',
             user='',
             password='',
             database=get_db_name(),
-            #cursorclass=mysql.connector.cursors.DictCursor
+            #cursorclass=mariadb.cursors.DictCursor
         )
 
     return connection

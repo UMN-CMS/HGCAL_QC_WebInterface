@@ -32,7 +32,7 @@ try:
     cur = db.cursor()
 
     # adds the test and returns the test id
-    test_id=add_test_functions.add_test(person_id, test_type, bc, success, comments, None)
+    test_id=add_test_functions.add_test(person_id, test_type, bc, success, comments)
 
     # decodes attached file and sends it to the Attachments table
     if test_id:
