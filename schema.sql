@@ -1,10 +1,5 @@
 -- schema.sql
 
--- Create a new database
--- TODO replace db_name
-CREATE DATABASE IF NOT EXISTS db_name
-USE db_name;
-
 --
 -- Table structure for table `Attachments`
 --
