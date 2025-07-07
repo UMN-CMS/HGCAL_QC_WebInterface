@@ -28,7 +28,8 @@ sudo dnf install -y \
         python3-pip \
         python3-devel \
         gcc \
-        httpd
+        httpd \
+	mod_ssl
 
 echo "=== Starting MariaDB service ==="
 sudo systemctl start mariadb
@@ -64,13 +65,13 @@ sudo systemctl start httpd
 echo "=== Creating httpd config files ==="
 sudo tee /etc/httpd/conf.d/factorydb.conf > /dev/null <<EOF
 Alias "/Factory/static" /home/$(whoami)/HGCAL_QC_WebInterface/static
-<Directory "/home/username/HGCAL_QC_WebInterface/static">
+<Directory "/home/$(whoami)/HGCAL_QC_WebInterface/static">
     AllowOverride None
     Require all granted
 </Directory>
 
 ScriptAlias /Factory/ /home/$(whoami)/HGCAL_QC_WebInterface/cgi-bin/
-<Directory "/home/username/HGCAL_QC_WebInterface/cgi-bin/">
+<Directory "/home/$(whoami)/HGCAL_QC_WebInterface/cgi-bin/">
     AllowOverride None
     Options +ExecCGI
     Require all granted
@@ -80,19 +81,27 @@ sudo tee /etc/httpd/conf.d/ssl.conf > /dev/null <<EOF
 LoadModule ssl_module modules/mod_ssl.so
 
 Listen 443
-<VirtualHost *:443>
+#<VirtualHost *:443>
 # Add domain name and SSL Certificate File here
 #    ServerName yourdomain.com
 #    SSLEngine on
 #    SSLCertificateFile /etc/path/to/cert.pem
 #    SSLCertificateKeyFile /etc/path/to/privkey.pem
-</VirtualHost>
+#</VirtualHost>
 EOF
 
 echo "=== Allowing access through firewall on ports 80 (HTTP) and 443 (HTTPS) ==="
 sudo firewall-cmd --permanent --add-service=http
 sudo firewall-cmd --permanent --add-service=https
 sudo firewall-cmd --reload
+
+echo "=== Allowing Apache access to $(whoami)'s home directory ==="
+sudo setsebool -P httpd_enable_homedirs 1
+sudo chcon -R -t httpd_sys_script_exec_t ~/HGCAL_QC_WebInterface/cgi-bin/
+sudo chcon -t httpd_sys_content_t /home/$(whoami)/HGCAL_QC_WebInterface/static/
+sudo chcon -t httpd_sys_content_t /home/$(whoami)/HGCAL_QC_WebInterface/
+sudo chcon -t httpd_sys_content_t /home/$(whoami)/
+sudo chcon -t httpd_sys_content_t /home/
 
 sudo systemctl restart httpd
 
