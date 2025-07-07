@@ -19,7 +19,6 @@ echo "=== Refreshing package list ==="
 sudo dnf clean all
 sudo dnf makecache
 
-
 echo "=== Installing packages ==="
 sudo dnf install -y \
         MariaDB-server \
@@ -61,5 +60,40 @@ mariadb -u root -p "$DB_NAME" < schema.sql
 echo "=== Starting Apache HTTP service ==="
 sudo systemctl enable httpd
 sudo systemctl start httpd
+
+echo "=== Creating httpd config files ==="
+sudo tee /etc/httpd/conf.d/factorydb.conf > /dev/null <<EOF
+Alias "/Factory/static" /home/$(whoami)/HGCAL_QC_WebInterface/static
+<Directory "/home/username/HGCAL_QC_WebInterface/static">
+    AllowOverride None
+    Require all granted
+</Directory>
+
+ScriptAlias /Factory/ /home/$(whoami)/HGCAL_QC_WebInterface/cgi-bin/
+<Directory "/home/username/HGCAL_QC_WebInterface/cgi-bin/">
+    AllowOverride None
+    Options +ExecCGI
+    Require all granted
+</Directory>
+EOF
+sudo tee /etc/httpd/conf.d/ssl.conf > /dev/null <<EOF
+LoadModule ssl_module modules/mod_ssl.so
+
+Listen 443
+<VirtualHost *:443>
+# Add domain name and SSL Certificate File here
+#    ServerName yourdomain.com
+#    SSLEngine on
+#    SSLCertificateFile /etc/path/to/cert.pem
+#    SSLCertificateKeyFile /etc/path/to/privkey.pem
+</VirtualHost>
+EOF
+
+echo "=== Allowing access through firewall on ports 80 (HTTP) and 443 (HTTPS) ==="
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --permanent --add-service=https
+sudo firewall-cmd --reload
+
+sudo systemctl restart httpd
 
 echo "=== Finished ==="
