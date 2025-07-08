@@ -52,6 +52,23 @@ pip install --upgrade pip
 pip install -r requirements.txt
 
 read -p "Enter the name for the new MariaDB database: " DB_NAME
+read -p "Enter desired name of the Read user: " READ_USER
+read -p "Create a password for the Read user: " READ_PASS
+read -p "Enter desired name of the Insert user: " INSERTER
+read -p "Create a password for the Insert user: " INSERT_PASS
+
+sed -i "s/user=''/user='$READ_USER'/g" ./cgi-bin/exampleDB/connect.py
+sed -i "s/user =''/user='$INSERTER'/g" ./cgi-bin/exampleDB/connect.py
+sed -i "s/password=''/password='$READ_PASS'/g" ./cgi-bin/exampleDB/connect.py
+sed -i "s/password =''/password='$INSERT_PASS'/g" ./cgi-bin/exampleDB/connect.py
+sed -i "s/name = ''/name = '$DB_NAME'/g" ./cgi-bin/exampleDB/connect.py
+
+read -p "Create an password to access admin functionalities from the webpage: " ADMIN_PASS
+echo
+hash=$(python3 -c "import hashlib, sys; print(hashlib.sha256(sys.stdin.read().encode()).hexdigest())" <<< "$ADMIN_PASS")
+
+sed -i "s/ == '':/ == '$hash':/g" ./cgi-bin/exampleDB/connect.py
+sed -i "s:path/to:home/$(whoami):g" ./cgi-bin/exampleDB/cgi_runner.sh
 
 echo "=== Creating Database '$DB_NAME' ==="
 mariadb -u root -p -e "CREATE DATABASE \`${DB_NAME}\`"
