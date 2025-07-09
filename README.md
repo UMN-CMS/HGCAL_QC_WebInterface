@@ -10,7 +10,7 @@ Assuming you have a machine running on AlmaLinux 9, connected to a network, that
 2. On GitHub, within this repository, open `setup_hgcal_db.sh` and copy its contents.
 3. On your Alma 9 machine, paste the contents of your file into a new file called `setup_hgcal_db.sh`.
 4. Using `chmod`, update the permissions for this file and execute it, then follow the guiding prompts.
-5. Run `cd HGCAL_QC_WebInterface`, then `grep -rn "TODO"`. This will list all file changes needing to be made.
+5. Run `cd HGCAL_QC_WebInterface/cgi-bin/`, then `grep -rn "TODO"`. This will list all file changes needing to be made.
 6. Create your users for your database with the desired permissions, and add these to `connect.py` after renaming the template file. See below for the permissions that the Reader and Inserter users need.
 7. If you wish to access the web server from outside your local network, you will need to acquire an SSL Certificate, and likely a hostname. Once acquired, these should be added to `/etc/httpd/conf.d/ssl.conf`.
 
