@@ -4,7 +4,7 @@ CGI scripts for HGCAL QC testing information
 This branch is built for deployment, capable of installing all dependencies, creating database, Apache web server, and cgi scripts.
 This Web API was designed to be set up on AlmaLinux 9. The home page can be accessed with `http://localhost/Factory/exampleDB/home_page.py`
 
-Assuming you have a machine with AlmaLinux 9 on it that is connected to a network and that you have sudo access to, follow these steps to install the interface.
+Assuming you have a machine running on AlmaLinux 9, connected to a network, that you have sudo access to, follow these steps to install the interface.
 
 1. If you haven't already, generate a new SSH key on your machine and add it to your GitHub account.
 2. On GitHub, within this repository, open `setup_hgcal_db.sh` and copy its contents.
