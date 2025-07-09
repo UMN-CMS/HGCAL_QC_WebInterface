@@ -40,7 +40,7 @@ def get_base_url():
     return base
 
 def get_db_name():
-    name = ""
+    name = ''
     return name
 
 def get_image_location():
