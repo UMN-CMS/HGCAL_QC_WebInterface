@@ -113,12 +113,17 @@ sudo firewall-cmd --permanent --add-service=https
 sudo firewall-cmd --reload
 
 echo "=== Allowing Apache access to $(whoami)'s home directory ==="
+sudo chmod o+x /home/
+sudo chmod o+x /home/$(whoami)/
+sudo chmod o+x /home/$(whoami)/HGCAL_QC_WebInterface/
+
 sudo setsebool -P httpd_enable_homedirs 1
 sudo chcon -R -t httpd_sys_script_exec_t ~/HGCAL_QC_WebInterface/cgi-bin/
 sudo chcon -t httpd_sys_content_t /home/$(whoami)/HGCAL_QC_WebInterface/static/
 sudo chcon -t httpd_sys_content_t /home/$(whoami)/HGCAL_QC_WebInterface/
 sudo chcon -t httpd_sys_content_t /home/$(whoami)/
 sudo chcon -t httpd_sys_content_t /home/
+sudo chcon -R -t httpd_sys_script_exec_t /home/admin/HGCAL_QC_WebInterface/webappenv
 
 sudo systemctl restart httpd
 
