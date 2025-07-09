@@ -225,7 +225,9 @@ def add_test(person_id, test_type, barcode, success, comments, config_id):
             cur.execute(sql,items)
             test_id = cur.lastrowid
 
+            print('Begin')
             print(test_id)
+            print('End')
 
             db.commit()
         else:
@@ -235,7 +237,9 @@ def add_test(person_id, test_type, barcode, success, comments, config_id):
             cur.execute(sql,items)
             test_id = cur.lastrowid
 
+            print('Begin')
             print(test_id)
+            print('End')
 
             db.commit()
             

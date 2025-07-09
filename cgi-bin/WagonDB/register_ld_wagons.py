@@ -36,10 +36,13 @@ def check_if_registered(cur, barcode):
         board_id_result = cur.fetchall()
         board_id = board_id_result[0][0]
 
+        cur.execute('SELECT test_type FROM Test_Type WHERE name="Registered"')
+        reg_test_type_id = cur.fetchall()[0][0]
+
         cur.execute(
-            'SELECT test_id FROM Test WHERE test_type_id = 7 AND board_id = %s '
+            'SELECT test_id FROM Test WHERE test_type_id = %s AND board_id = %s '
             'ORDER BY day DESC, test_id DESC',
-            (board_id,)
+            (reg_test_type_id, board_id)
         )
         test_id_result = cur.fetchall()
         return test_id_result
