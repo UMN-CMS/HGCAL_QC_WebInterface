@@ -71,9 +71,6 @@ def top(admin=False):
           </ul>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="register_boards_form.py">Register Boards</a>
-        </li>
-        <li class="nav-item">
           <a class="nav-link" href="checkin_summary.py">Checkin Summary</a>
         </li>
         <li class="nav-item">
@@ -89,6 +86,9 @@ def top(admin=False):
             <li><a class="dropdown-item" href="board_images.py">Photo Repository</a></li>
           </ul>
         </li>
+        <li class="nav-item">
+          <a class="nav-link" href="list_components.py">Components Table</a>
+        </li>
 ''')
     if admin:
         print('''
@@ -102,6 +102,7 @@ def top(admin=False):
             <li><a class="dropdown-item" href="add_tester.py">Add New Tester</a></li>
             <li><a class="dropdown-item" href="add_new_test_template.py">Add New Test Template</a></li>
             <li><a class="dropdown-item" href="board_grade.py">Grade Board</a></li>
+            <li><a class="dropdown-item" href="register_boards_form.py">Register Boards</a></li>
           </ul>
         </li>
 ''')

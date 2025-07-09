@@ -98,6 +98,9 @@ def top(admin=False):
             <li><a class="dropdown-item" href="board_images.py">Photo Repository</a></li>
           </ul>
         </li>
+        <li class="nav-item">
+          <a class="nav-link" href="list_components.py">Components Table</a>
+        </li>
 ''')
     if admin:
         print('''
