@@ -13,6 +13,7 @@ Assuming you have a machine running on AlmaLinux 9, connected to a network, that
 5. Run `cd HGCAL_QC_WebInterface/cgi-bin/`, then `grep -rn "TODO"`. This will list all file changes needing to be made.
 6. Create your users for your database with the desired permissions, and add these to `connect.py` after renaming the template file. See below for the permissions that the Reader and Inserter users need.
 7. If you wish to access the web server from outside your local network, you will need to acquire an SSL Certificate, and likely a hostname. Once acquired, these should be added to `/etc/httpd/conf.d/ssl.conf`.
+8. Create a file in the `static/files/` directory named `logo.png` with your desired logo that you wish to appear on the webpage.
 
 These webpages are used to visualize the data from the database in meanful ways, related to tracking the testing process.
 Some scripts or functions within scripts are also used by the Testing GUI
