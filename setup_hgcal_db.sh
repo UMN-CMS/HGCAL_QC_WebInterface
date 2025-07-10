@@ -72,7 +72,7 @@ sed -i "s:path/to:home/$(whoami):g" ./cgi-bin/exampleDB/cgi_runner.sh
 
 echo "=== Creating Database '$DB_NAME' ==="
 mariadb -u root -p -e "CREATE DATABASE \`${DB_NAME}\`"
-echo "=== Importing schema.sql into '$DB_NAME'"
+echo "=== Importing schema.sql into '$DB_NAME' ==="
 mariadb -u root -p "$DB_NAME" < schema.sql
 
 echo "=== Starting Apache HTTP service ==="
