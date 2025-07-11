@@ -139,7 +139,6 @@ sudo chcon -t httpd_sys_content_t /home/$(whoami)/HGCAL_QC_WebInterface/
 sudo chcon -t httpd_sys_content_t /home/$(whoami)/
 sudo chcon -t httpd_sys_content_t /home/
 sudo chcon -R -t httpd_sys_script_exec_t /home/admin/HGCAL_QC_WebInterface/webappenv
-sudo restorecon -v /var/lib/mysql/mysql.sock 
 cat <<EOF > apache_mysql_socket.te
 module apache_mysql_socket 1.0;
 
@@ -154,6 +153,7 @@ EOF
 checkmodule -M -m -o apache_mysql_socket.mod apache_mysql_socket.te
 semodule_package -o apache_mysql_socket.pp -m apache_mysql_socket.mod
 sudo semodule -i apache_mysql_socket.pp
+sudo restorecon -v /var/lib/mysql/mysql.sock 
 
 sudo systemctl restart httpd
 
