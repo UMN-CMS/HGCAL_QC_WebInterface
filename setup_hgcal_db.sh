@@ -82,7 +82,6 @@ export READ_PASS
 export INSERTER
 export INSERT_PASS
 envsubst < users.sql > tmp.sql
-cat tmp.sql
 mariadb -u root -p < tmp.sql
 rm tmp.sql
 
@@ -154,6 +153,9 @@ checkmodule -M -m -o apache_mysql_socket.mod apache_mysql_socket.te
 semodule_package -o apache_mysql_socket.pp -m apache_mysql_socket.mod
 sudo semodule -i apache_mysql_socket.pp
 sudo restorecon -v /var/lib/mysql/mysql.sock 
+curl -k http://localhost/Factory/exampleDB/home_page.p
+sudo ausearch -c 'python3' --raw | audit2allow -M my-python-sql
+sudo semodule -i my-python-sql.pp
 
 sudo systemctl restart httpd
 
