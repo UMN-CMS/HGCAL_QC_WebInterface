@@ -46,6 +46,7 @@ echo "=== Setting up Python virtual environment ==="
 cd HGCAL_QC_WebInterface
 python3 -m venv webappenv
 source webappenv/bin/activate
+git clone https://hgcaltestgui:gldt-_nACNMrPNxyAuX4uz5Ae@gitlab.cern.ch/hgcal-integration/hgcal-label-info.git
 
 echo "=== Installing Python dependencies ==="
 pip install --upgrade pip
@@ -132,6 +133,7 @@ sudo setsebool -P httpd_enable_homedirs 1
 sudo setsebool -P httpd_can_network_connect_db 1
 sudo setsebool -P httpd_can_network_connect 1
 sudo chcon -R -t httpd_sys_script_exec_t ~/HGCAL_QC_WebInterface/cgi-bin/
+sudo chcon -R -t httpd_sys_script_exec_t ~/HGCAL_QC_WebInterface/hgcal-label-info/
 sudo chcon -t httpd_sys_content_t /home/$(whoami)/HGCAL_QC_WebInterface/static/
 sudo chcon -t httpd_sys_content_t /home/$(whoami)/HGCAL_QC_WebInterface/
 sudo chcon -t httpd_sys_content_t /home/$(whoami)/

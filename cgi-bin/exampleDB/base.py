@@ -120,7 +120,6 @@ def top(admin=False):
             <li><a class="dropdown-item" href="board_checkout.py">Board Checkout</a></li>
             <li><a class="dropdown-item" href="add_tester.py">Add New Tester</a></li>
             <li><a class="dropdown-item" href="add_new_test_template.py">Add New Test Template</a></li>
-            <li><a class="dropdown-item" href="board_grade.py">Grade Board</a></li>
             <li><a class="dropdown-item" href="register_ld_wagons.py">Get list of unregistered LD wagons</a></li>
             <li><a class="dropdown-item" href="register_boards_form.py">Register Boards</a></li>
           </ul>

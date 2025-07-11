@@ -148,7 +148,6 @@ def get_stitch_types():
 
     return stitch_types_by_subtype
 
-
 def get_board_states():
 
     cur.execute('''

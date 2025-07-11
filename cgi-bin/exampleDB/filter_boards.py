@@ -32,13 +32,14 @@ from datetime import datetime as dt
 import datetime
 import makeTestingData as mTD
 
-csv_WE, csv_WH, csv_WW, csv_ZP = mTD.get_board_states()
+#csv_WE, csv_WH, csv_WW, csv_ZP = mTD.get_board_states()
 stitch_types = mTD.get_stitch_types()
-WE = pd.read_csv(csv_WE, parse_dates=['Check In Time'])
-WW = pd.read_csv(csv_WW, parse_dates=['Check In Time'])
-WH = pd.read_csv(csv_WH, parse_dates=['Check In Time'])
-ZP = pd.read_csv(csv_ZP, parse_dates=['Check In Time'])
-LD = pd.concat([WE, WW])
+#WE = pd.read_csv(csv_WE, parse_dates=['Check In Time'])
+#WW = pd.read_csv(csv_WW, parse_dates=['Check In Time'])
+#WH = pd.read_csv(csv_WH, parse_dates=['Check In Time'])
+#ZP = pd.read_csv(csv_ZP, parse_dates=['Check In Time'])
+#LD = pd.concat([WE, WW])
+df = pd.read_csv(mTD.get_board_states()[0], parse_dates=['Check In Time'])
 
 filter_code=('''
 const is_selected_map = new Map([
@@ -175,15 +176,20 @@ td.change.emit()
     return td
 
 def Filter(major_type):
+    # how to split up this page based on boards with different tests
     if major_type == 'LD':
         ds = ColumnDataSource(LD)
         test_types = stitch_types.get('WE10A1', [])
-    if major_type == 'HD':
+    elif major_type == 'HD':
         ds = ColumnDataSource(WH)
         test_types = stitch_types.get('WH20A0', [])
-    if major_type == 'ZP':
+    elif major_type == 'ZP':
         ds = ColumnDataSource(ZP)
         test_types = stitch_types.get('ZPHSL0', [])
+    # for all the same tests
+    else:
+        ds = ColumnDataSource(df)
+        test_types = list(stitch_types)[0]
 
     # create the widgets to be used
     mc_widgets = {}
