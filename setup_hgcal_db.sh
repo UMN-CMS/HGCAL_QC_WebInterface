@@ -74,6 +74,16 @@ echo "=== Creating Database '$DB_NAME' ==="
 mariadb -u root -p -e "CREATE DATABASE \`${DB_NAME}\`"
 echo "=== Importing schema.sql into '$DB_NAME' ==="
 mariadb -u root -p "$DB_NAME" < schema.sql
+echo "=== Adding users to Database ==="
+export DB_NAME
+export READ_USER
+export READ_PASS
+export INSERTER
+export INSERT_PASS
+envsubst < users.sql > tmp.sql
+cat tmp.sql
+mariadb -u root -p < tmp.sql
+rm tmp.sql
 
 echo "=== Starting Apache HTTP service ==="
 sudo systemctl enable httpd
@@ -112,18 +122,36 @@ sudo firewall-cmd --permanent --add-service=http
 sudo firewall-cmd --permanent --add-service=https
 sudo firewall-cmd --reload
 
-echo "=== Allowing Apache access to $(whoami)'s home directory ==="
+echo "=== Allowing Apache access to traverse $(whoami)'s home directory ==="
 sudo chmod o+x /home/
 sudo chmod o+x /home/$(whoami)/
 sudo chmod o+x /home/$(whoami)/HGCAL_QC_WebInterface/
 
+echo "=== Changing SELinux Permissions ==="
 sudo setsebool -P httpd_enable_homedirs 1
+sudo setsebool -P httpd_can_network_connect_db 1
+sudo setsebool -P httpd_can_network_connect 1
 sudo chcon -R -t httpd_sys_script_exec_t ~/HGCAL_QC_WebInterface/cgi-bin/
 sudo chcon -t httpd_sys_content_t /home/$(whoami)/HGCAL_QC_WebInterface/static/
 sudo chcon -t httpd_sys_content_t /home/$(whoami)/HGCAL_QC_WebInterface/
 sudo chcon -t httpd_sys_content_t /home/$(whoami)/
 sudo chcon -t httpd_sys_content_t /home/
 sudo chcon -R -t httpd_sys_script_exec_t /home/admin/HGCAL_QC_WebInterface/webappenv
+sudo restorecon -v /var/lib/mysql/mysql.sock 
+cat <<EOF > apache_mysql_socket.te
+module apache_mysql_socket 1.0;
+
+require {
+    type httpd_sys_script_t;
+    type mysqld_var_run_t;
+    class unix_stream_socket connectto;
+}
+
+allow httpd_sys_script_t mysqld_var_run_t:unix_stream_socket connectto;
+EOF
+checkmodule -M -m -o apache_mysql_socket.mod apache_mysql_socket.te
+semodule_package -o apache_mysql_socket.pp -m apache_mysql_socket.mod
+sudo semodule -i apache_mysql_socket.pp
 
 sudo systemctl restart httpd
 
