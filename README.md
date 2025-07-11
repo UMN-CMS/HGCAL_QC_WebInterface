@@ -12,7 +12,7 @@ Assuming you have a machine running on AlmaLinux 9, connected to a network, that
 2. On GitHub, within this repository, open `setup_hgcal_db.sh` and copy its contents.
 3. On your Alma 9 machine, paste the contents of your file into a new file called `setup_hgcal_db.sh`.
 4. Using `chmod`, update the permissions for this file and execute it, then follow the guiding prompts.
-5. Run `cd HGCAL_QC_WebInterface/cgi-bin/`, then `grep -rn "TODO"`. This will list all file changes needing to be made.
+5. I would recommend skimming each file to get an idea of the architecture works after reading everything below. Change names like "Wagon" to your specific board.
 6. If you wish to access the web server from outside your local network, you will need to acquire an SSL Certificate, and likely a hostname. Once acquired, these should be added to `/etc/httpd/conf.d/ssl.conf`.
 7. If you wish to, create a file in the `static/files/` directory named `logo.png` with your desired logo that you wish to appear on the webpage.
 
