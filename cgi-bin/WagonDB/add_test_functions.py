@@ -274,6 +274,7 @@ def add_tester(person_name, passwd, db_name):
         print("%s"%(person_name))
 
         db.commit()
+        db.close()
 
     else:
         print('<div class ="row">')
