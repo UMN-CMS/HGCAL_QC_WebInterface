@@ -133,6 +133,7 @@ CREATE TABLE `Grades` (
 CREATE TABLE `Manufacturers` (
   `manufacturer_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(50) DEFAULT NULL,
+  `letter_code` varchar(2) DEFAULT NULL,
   PRIMARY KEY (`manufacturer_id`)
 );
 
