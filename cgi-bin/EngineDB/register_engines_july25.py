@@ -1,4 +1,25 @@
 #!/usr/bin/env python3
+"""
+Produce engine- and LPGBT- registration CSVs and bundle them into a ZIP.
+
+Usage:
+    # basic invocation (outputs LD_engine_reg.zip)
+    python3 register_engines_july25.py --engine LD
+
+    # specify a custom ZIP filename
+    python3 register_engines_july25.py --engine HDH --zip-out my_hdh_bundle.zip
+
+Arguments:
+    --engine       Required. One of: HDF, HDH, LD
+    -z, --zip-out  Optional. Output ZIP filename (default: '<engine>_engine_reg.zip')
+
+Examples:
+    # Generate CSVs for HD full engines:
+    python3 register_engines_july25.py --engine HDF
+
+    # Generate CSVs for LD engines, output to 'ld_components.zip':
+    python3 register_engines_july25.py --engine LD -z ld_components.zip
+"""
 
 import json
 import csv
@@ -174,7 +195,7 @@ def get_bare_code(barcode):
 
 # --- Engine CSV --------------------------------------------------
 def engine_file(prefix, n_lpgbts, engine_type):
-    db  = connect(1)
+    db  = connect(0)
     cur = db.cursor(buffered=True)
     boards = filter_boards(cur, prefix)
 
@@ -194,9 +215,7 @@ def engine_file(prefix, n_lpgbts, engine_type):
 
     count = 0
     for bc in boards:
-#        logger.info(f"Processing {bc}")
         if check_if_registered(cur, bc):
-#            logger.warning(f"Skipping {bc}: Already registered")
             continue
 
         tc, mf, batch = get_typecode(cur, bc), get_manufacturer(cur, bc), get_batch(cur, bc)
@@ -243,7 +262,7 @@ def engine_file(prefix, n_lpgbts, engine_type):
 
 # ------ LPGBT CSV using unused stock --------------------------
 def lpgbt_file(prefix, engine_type):
-    db  = connect(1)
+    db  = connect(0)
     cur = db.cursor(buffered=True)
     boards = [bc for bc in filter_boards(cur, prefix) if not check_if_registered(cur, bc)]
 
@@ -252,9 +271,11 @@ def lpgbt_file(prefix, engine_type):
 
     logger.info("Fetching LPGBT stock..")
     total_needed = sum(len(get_lpgbt_ids(cur, bc)) for bc in boards)
-    stock_db  = connect(1)
+    stock_db  = connect(0)
     stock_cur = stock_db.cursor(prepared=True)
     status, stock_list = get_unused_stock(stock_cur, "IC-LPS", quantity=total_needed)
+
+    print(stock_list)
     if status != 200:
         logger.error(f"Failed to fetch LPGBT stock: {stock_list}")
         return io.StringIO()
@@ -291,7 +312,8 @@ def lpgbt_file(prefix, engine_type):
                 logger.error(f"Error checking existing stock for {lid}: {used_map}")
                 continue
 
-            # pick any previous “IC-LPS” entry if present
+            #THIS HAS NOT BEEN CHECKED
+            # pick any previous “IC-LPS” entry if present 
             existing = None
             if "IC-LPS" in used_map and used_map["IC-LPS"]:
                 existing = used_map["IC-LPS"][0]
@@ -308,7 +330,9 @@ def lpgbt_file(prefix, engine_type):
                     break
 
                 # 3) immediately mark it used in the DB
-                mk_status, mk_msg = mark_used(stock_db, stock_cur, serial, lid)
+                mark_db  = connect(1)
+                mark_cur = mark_db.cursor(prepared=True)
+                mk_status, mk_msg = mark_used(mark_db, mark_cur, serial, lid)
                 if mk_status != 200:
                     logger.error(f"Failed to mark {serial} used→{lid}: {mk_msg}")
                     continue
@@ -325,6 +349,7 @@ def lpgbt_file(prefix, engine_type):
             ]
             writer.writerow(row)
             count += 1
+        break
 
     logger.info(f"LPGBT CSV: prepared {count} entries")
     buf.seek(0)
