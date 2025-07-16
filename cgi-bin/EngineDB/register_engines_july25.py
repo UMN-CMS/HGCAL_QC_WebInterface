@@ -308,11 +308,11 @@ def lpgbt_file(prefix, engine_type):
                     break
 
                 # 3) immediately mark it used in the DB
-#                mk_status, mk_msg = mark_used(stock_db, stock_cur, serial, lid)
-#                if mk_status != 200:
-#                    logger.error(f"Failed to mark {serial} used→{lid}: {mk_msg}")
-#                    continue
-#                logger.info(f"Assigned new stock {serial} → LPGBT {lid}")
+                mk_status, mk_msg = mark_used(stock_db, stock_cur, serial, lid)
+                if mk_status != 200:
+                    logger.error(f"Failed to mark {serial} used→{lid}: {mk_msg}")
+                    continue
+                logger.info(f"Assigned new stock {serial} → LPGBT {lid}")
 
             mapped_loc = remap.get(loc, loc)
             row = [
@@ -335,10 +335,20 @@ def main():
     parser = argparse.ArgumentParser(
         description="Produce both engine and LPGBT CSVs and zip them."
     )
-    parser.add_argument('--engine',   required=True, choices=ENGINE_CONFIG.keys())
-    parser.add_argument('-z','--zip-out', required=True,
-                        help="Output ZIP filename, e.g. all_boards.zip")
+    parser.add_argument(
+        '--engine',
+        required=True,
+        choices=ENGINE_CONFIG.keys(),
+    )
+    parser.add_argument(
+        '-z', '--zip-out',
+        required=False,
+        default=None,
+        help="Output ZIP filename. If omitted, defaults to '<engine>_components.zip'"
+    )
     args = parser.parse_args()
+
+    zip_name = args.zip_out or f"{args.engine}_engine_reg.zip"
 
     cfg     = ENGINE_CONFIG[args.engine]
     eng_buf = engine_file(cfg['prefix'], cfg['n_lpgbts'], args.engine)
@@ -347,12 +357,13 @@ def main():
     zip_buf = io.BytesIO()
     with zipfile.ZipFile(zip_buf, 'w', zipfile.ZIP_DEFLATED) as zf:
         zf.writestr(f"{args.engine}_engines.csv", eng_buf.getvalue())
-        zf.writestr("LPGBT.csv",                lpg_buf.getvalue())
+        zf.writestr(f"{args.engine}_lpgbts.csv",                lpg_buf.getvalue())
 
-    with open(args.zip_out, 'wb') as f:
+    with open(zip_name, 'wb') as f:
         f.write(zip_buf.getvalue())
 
-    logger.info(f"Wrote {args.zip_out}")
+    logger.info(f"Wrote {zip_name}")
+
 
 if __name__ == '__main__':
     main()
