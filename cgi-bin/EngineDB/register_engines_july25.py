@@ -5,8 +5,7 @@ import csv
 import logging
 import argparse
 from connect import connect
-from components import get_unused_stock
-from components import get_used_for
+from components import get_unused_stock, get_used_for, mark_used
 import io
 import zipfile
 
@@ -249,16 +248,7 @@ def lpgbt_file(prefix, engine_type):
     boards = [bc for bc in filter_boards(cur, prefix) if not check_if_registered(cur, bc)]
 
     # filter out any engine that is missing its LDO
-    valid_boards = []
-    for bc in boards:
-        ldo = get_ldo_id(cur, bc)
-        if ldo is None:
-            logger.warning(f"Skipping LPGBTs for engine {bc}: missing LDO")
-            continue
-        valid_boards.append(bc)
-
-    # only work on engines that passed the LDO check
-    boards = valid_boards
+    boards = [bc for bc in boards if get_ldo_id(cur, bc) is not None]
 
     logger.info("Fetching LPGBT stock..")
     total_needed = sum(len(get_lpgbt_ids(cur, bc)) for bc in boards)
@@ -294,21 +284,35 @@ def lpgbt_file(prefix, engine_type):
         manufacturer    = lp_info['manufacturer']
         production_date = lp_info['production_date']
 
-        lpgbts = get_lpgbt_ids(cur, bc)
-        for loc, lid in lpgbts:
-            try:
-                serial = next(stock_iter)
-            except StopIteration:
-                logger.error("Insufficient LPGBT stock for all boards")
-                break
+        for loc, lid in get_lpgbt_ids(cur, bc):
+            # 1) see if this LPGBT already has a stock entry
+            st_status, used_map = get_used_for(stock_cur, lid)
+            if st_status != 200:
+                logger.error(f"Error checking existing stock for {lid}: {used_map}")
+                continue
 
-            status, used_map = get_used_for(stock_cur, lid)
-            if status == 200:
-#                print(f"Component used for lpgbt {lid}:")
-                for typecode, barcodes in used_map.items():
-                    print(f"  {typecode}: {', '.join(barcodes)}")
+            # pick any previous “IC-LPS” entry if present
+            existing = None
+            if "IC-LPS" in used_map and used_map["IC-LPS"]:
+                existing = used_map["IC-LPS"][0]
+
+            if existing:
+                serial = existing
+                logger.info(f"Re-using stock {serial} for LPGBT {lid}")
             else:
-                print("Error:", used_map)
+                # 2) otherwise grab a new one
+                try:
+                    serial = next(stock_iter)
+                except StopIteration:
+                    logger.error("Insufficient LPGBT stock for all boards")
+                    break
+
+                # 3) immediately mark it used in the DB
+#                mk_status, mk_msg = mark_used(stock_db, stock_cur, serial, lid)
+#                if mk_status != 200:
+#                    logger.error(f"Failed to mark {serial} used→{lid}: {mk_msg}")
+#                    continue
+#                logger.info(f"Assigned new stock {serial} → LPGBT {lid}")
 
             mapped_loc = remap.get(loc, loc)
             row = [
