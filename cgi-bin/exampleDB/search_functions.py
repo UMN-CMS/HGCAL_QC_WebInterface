@@ -138,7 +138,12 @@ for (let j = 0; j < data.get_length(); j++) {
         tests.push(data.data['Test Name'][j])
     
         // converts date to a readable format
-        let temp_date = new Date(data.data['Time'][j] + 21600000);
+        let temp_date = new Date(data.data['Time'][j]);
+        if (String(temp_date).includes('Daylight')) {
+            temp_date = new Date(data.data['Time'][j] + 18000000 + 3600000);
+        } else {
+            temp_date = new Date(data.data['Time'][j] + 21600000 + 3600000);
+        }
         let date = temp_date.toString().slice(4, 24)
         times.push(date)
         raw_time.push(temp_date.valueOf())

@@ -146,7 +146,13 @@ for (let sn = 0; sn < serial_numbers.length; sn++) {
         locations.push(data.data['Location'][sn])
         status.push(data.data['Status'][sn])
 
-        let temp_date = new Date(data.data['Check In Time'][sn] + 21600000);
+        // converts to eastern time
+        let temp_date = new Date(data.data['Check In Time'][sn]);
+        if (String(temp_date).includes('Daylight')) {
+            temp_date = new Date(data.data['Check In Time'][sn] + 18000000 + 3600000);
+        } else {
+            temp_date = new Date(data.data['Check In Time'][sn] + 21600000 + 3600000);
+        }
         let date = temp_date.toString().slice(4, 24)
         dates.push(date)
         raw_times.push(temp_date.valueOf())
