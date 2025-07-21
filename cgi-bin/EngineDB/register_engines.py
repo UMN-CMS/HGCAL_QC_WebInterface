@@ -1,344 +1,426 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
+"""
+Produce engine- and LPGBT- registration CSVs and bundle them into a ZIP.
 
-import json 
+Usage:
+    # basic invocation (outputs LD_engine_reg.zip)
+    python3 register_engines.py --engine LD
+
+    # specify a custom ZIP filename
+    python3 register_engines.py --engine HDH --zip-out my_hdh_bundle.zip
+
+Arguments:
+    --engine       Required. One of: HDF, HDH, LD
+    -z, --zip-out  Optional. Output ZIP filename (default: '<engine>_engine_reg.zip')
+
+Examples:
+    # Generate CSVs for HD full engines:
+    python3 register_engines.py --engine HDF
+
+    # Generate CSVs for LD engines, output to 'ld_components.zip':
+    python3 register_engines.py --engine LD -z ld_components.zip
+"""
+
+import json
 import csv
 import logging
 import argparse
 from connect import connect
+from components import get_unused_stock, get_used_for, mark_used
+import io
+import zipfile
 
-# Set up logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Common Hardcodes
-LOCATION = "UMN"
+# ---------- Production dates & comments by engine type & batch ----------
+BATCH_INFO = {
+    'HDF': {
+        '1': ('2024-06-21', 'Preseries'),
+        '2': ('2025-06-04', 'Production'),
+    },
+    'HDH': {
+        '1': ('2024-06-21', 'Preseries'),
+        '2': ('2025-06-06', 'Production'),
+    },
+    'LD': {
+        '1': ('2024-11-22', 'Preproduction'),
+        '2': ('2025-07-02', 'Production'),
+    },
+}
+
+# ---------- Common Hardcodes ------------------
+LOCATION    = "UMN"
 INSTITUTION = "UMN"
-LPGBT_TYPECODE = "IC-LPG"
 
-# Engine Specific Hardcodes
-ENGINE_PRODUCTION_DATE = "2024-11-22"
-COMMENT_DESCRIPTION = "Preproduction"
+# -------------- LPGBT Specific Hardcodes --------------
+LPGBT_VERSIONS = {
+    '0': {'manufacturer': 'TSMC', 'production_date': '2024-04-24'},
+    '1': {'manufacturer': 'TSMC', 'production_date': '2024-04-24'},
+    '2': {'manufacturer': 'TSMC', 'production_date': '2025-05-13'},
+}
 
-# LPGBT Specific Hardcodes
-LPGBT_MANUFACTURER = "TSMC"
-LPGBT_PRODUCTION_DATE = "2024-04-24"
+# -------- Engine-type -> prefix & LPGBT-count mapping ----------
+ENGINE_CONFIG = {
+    'HDF': {'prefix': '320EH0QF', 'n_lpgbts': 6},
+    'HDH': {'prefix': '320EH0QH', 'n_lpgbts': 3},
+    'LD' : {'prefix': '320EL',    'n_lpgbts': 3},
+}
 
-# Helper Functions
-def filter_boards(cur) -> list:
-    """Fetch and filter board IDs that start with '320EL10' (Production LD Engines)."""
+ENGINE_LABELS = {
+    'HDF': 'HD Engine',
+    'HDH': 'HD Engine',
+    'LD' : 'LD Engine',
+}
+
+# -------------------- Helpers ------------------------------
+def filter_boards(cur, prefix) -> list:
     try:
         cur.execute('SELECT full_id FROM Board')
-        return [board[0] for board in cur.fetchall() if board[0].startswith('320EL10')]
+        return [row[0] for row in cur.fetchall() if row[0].startswith(prefix)]
     except Exception as e:
-        logger.error(f"Error fetching board IDs: {e}")
+        logger.error(f"Error fetching boards: {e}")
         return []
 
 def check_if_registered(cur, barcode):
-    """Check if board is already registered."""
     try:
         cur.execute('SELECT board_id FROM Board WHERE full_id = %s', (barcode,))
-        board_id_result = cur.fetchall()
-        board_id = board_id_result[0][0]
-
+        bid = cur.fetchone()[0]
         cur.execute(
-            'SELECT test_id FROM Test WHERE test_type_id = 26 AND board_id = %s '
+            'SELECT test_id FROM Test '
+            'WHERE test_type_id = 26 AND board_id = %s '
             'ORDER BY day DESC, test_id DESC',
-            (board_id,)
+            (bid,)
         )
-        test_id_result = cur.fetchall()
-        return test_id_result
+        return bool(cur.fetchall())
     except Exception as e:
-        logger.error(f"Error checking if board is registered for barcode {barcode}: {e}")
-        return None
+        logger.error(f"Error checking registration for {barcode}: {e}")
+        return False
 
 def get_typecode(cur, barcode):
-    """Function to make a typcode (e.g EL-10E)."""
     try:
         cur.execute('SELECT type_id FROM Board WHERE full_id = %s', (barcode,))
-        type_id_result = cur.fetchone()
-        if not type_id_result:
-            logger.warning(f"No type ID found for barcode {barcode}")
+        row = cur.fetchone()
+        if not row:
             return None
-        type_id = type_id_result[0]
-
-        # Insert a hyphen after the first two characters
-        if len(type_id) > 2:
-            formatted_type_id = type_id[:2] + '-' + type_id[2:5] #ENGINEDB_PRO gives EL-10E1 as the type_id, DB uses EL-10E
-        else:
-            logger.warning(f"Type ID '{type_id}' is too short to format")
-            return None
-        return formatted_type_id
+        tid = row[0]
+        return f"{tid[:2]}-{tid[2:5]}" if len(tid) > 2 else None
     except Exception as e:
-        logger.error(f"Error getting formatted type ID for barcode {barcode}: {e}")
+        logger.error(f"Error getting typecode for {barcode}: {e}")
         return None
 
-#ASK ABOUT THIS
 def get_manufacturer(cur, barcode):
     try:
-        # Fetch the manufacturer_id associated with the barcode
         cur.execute('SELECT manufacturer_id FROM Board WHERE full_id = %s', (barcode,))
-        manufacturer_id_result = cur.fetchone()
-        if not manufacturer_id_result:
-            logger.warning(f"No manufacturer ID found for barcode {barcode}")
+        mid = cur.fetchone()
+        if not mid:
             return None
-        manufacturer_id = manufacturer_id_result[0]
-
-        # Fetch the name from the Manufacturers table
-        cur.execute('SELECT name FROM Manufacturers WHERE manufacturer_id = %s', (manufacturer_id,))
-        name_result = cur.fetchone()
-        if not name_result:
-            logger.warning(f"No manufacturer name found for manufacturer ID {manufacturer_id}")
-            return None
-        else:
-            return name_result[0]
-
-        # Split the name by hyphen and return the second word (e.g. TTM-Caltronics)
-        name_parts = name.split('-')
-        if len(name_parts) < 2:
-            logger.warning(f"Manufacturer name '{name}' does not contain a hyphen")
-            return None
-        return name_parts[1].strip()
+        cur.execute('SELECT name FROM Manufacturers WHERE manufacturer_id = %s', (mid[0],))
+        row = cur.fetchone()
+        return row[0] if row else None
     except Exception as e:
-        logger.error(f"Error getting manufacturer for barcode {barcode}: {e}")
+        logger.error(f"Error getting manufacturer for {barcode}: {e}")
         return None
 
 def get_batch(cur, barcode):
-    """Get the full SN of the barcode, parse it to determine the board batch."""
     try:
         cur.execute('SELECT sn FROM Board WHERE full_id = %s', (barcode,))
-        sn_result = cur.fetchone()
-        if not sn_result:
-            logger.warning(f"No serial number (sn) found for barcode {barcode}")
+        row = cur.fetchone()
+        if not row:
             return None
-        sn = str(sn_result[0])
-
-        # Return the second character of the sn, which is the batch character.
-        if len(sn) > 0:
-            return sn[0]
-        else:
-            logger.warning(f"Serial number '{sn}' is too short to extract the second character")
-            return None
+        sn = str(row[0])
+        return sn[0] if len(sn) > 1 else None
     except Exception as e:
-        logger.error(f"Error getting second character from serial number for barcode {barcode}: {e}")
+        logger.error(f"Error getting batch for {barcode}: {e}")
         return None
 
-def get_name(barcode):
-    """Generate a name label for the barcode."""
-    return f"LD Engine {barcode[7]} {barcode}"
+def get_name(barcode, engine_type):
+    prefix = {
+        'HDF': 'HD Full Engine',
+        'HDH': 'HD Half Engine',
+        'LD' : 'LD Engine',
+    }.get(engine_type, 'Engine')
+
+    if "HD" in prefix:
+        return f"{prefix} {barcode}"
+    elif "LD" in prefix:
+        return f"{prefix} {barcode[7]} {barcode}"
 
 def get_lpgbt_ids(cur, barcode):
-    """
-    Retrieve LPGBT IDs for a given barcode.
-    """
     try:
-        # Fetch the board ID associated with the barcode
         cur.execute('SELECT board_id FROM Board WHERE full_id = %s', (barcode,))
-        board_id_result = cur.fetchall()
-        if not board_id_result:
-            return None
-        
-        board_id = board_id_result[0][0]
-
-        # Fetch the most recent test ID for LPGBT
+        bid = cur.fetchone()
+        if not bid:
+            return []
         cur.execute(
-            'SELECT test_id FROM Test WHERE test_type_id = 22 AND board_id = %s '
+            'SELECT test_id FROM Test '
+            'WHERE test_type_id = 22 AND board_id = %s '
             'ORDER BY day DESC, test_id DESC',
-            (board_id,)
+            (bid[0],)
         )
-        test_id_result = cur.fetchall()
-        if not test_id_result:
-            return None
-        
-        test_id = test_id_result[0][0]
-
-        # Fetch the attached LPGBT IDs
-        cur.execute('SELECT attach FROM Attachments WHERE test_id = %s', (test_id,))
-        lpgbt_ids_result = cur.fetchall()
-        if not lpgbt_ids_result:
-            return None
-        
-        lpgbt_ids = lpgbt_ids_result[0][0]
-        return extract_ids(lpgbt_ids)
+        tid = cur.fetchone()
+        if not tid:
+            return []
+        cur.execute('SELECT attach FROM Attachments WHERE test_id = %s', (tid[0],))
+        blob = cur.fetchone()
+        if not blob:
+            return []
+        data = json.loads(blob[0].decode('utf-8'))['test_data']
+        return [(loc, f"{vals['id']:08X}") for loc, vals in data.items() if 'id' in vals]
     except Exception as e:
-        logger.error(f"Error retrieving LPGBT IDs for barcode {barcode}: {e}")
-        return None
-
-def extract_ids(byte_data):
-    json_str = byte_data.decode('utf-8')
-    data_dict = json.loads(json_str)
-
-    test_data = data_dict['test_data']
-
-    if not test_data or all('id' not in value for value in test_data.values()):
-        return None
-
-    id_list = [(key, f"{value['id']:08x}".upper()) for key, value in test_data.items() if 'id' in value]
-    return id_list
+        logger.error(f"Error retrieving LPGBT IDs for {barcode}: {e}")
+        return []
 
 def get_ldo_id(cur, barcode):
-    """
-    Retrieve the LDO ID for a given barcode.
-    """
     try:
         cur.execute('SELECT LDO FROM Board WHERE full_id = %s', (barcode,))
-        ldo_result = cur.fetchone()
-        return ldo_result[0] if ldo_result else None
+        row = cur.fetchone()
+        return row[0] if row else None
     except Exception as e:
-        logger.error(f"Error retrieving LDO ID for barcode {barcode}: {e}")
+        logger.error(f"Error getting LDO for {barcode}: {e}")
         return None
 
-def get_bare_code(barcode):
+def get_bare_code(barcode, typecode):
     """
-    Generate the Bare Code from the given barcode.
+    barcode:   e.g. "320EL10E2020001"
+    typecode:  e.g. "EL-10E"
+    Returns:
+      (200, (final_typecode, component_barcode))
+    or
+      (error_code, error_message)
     """
-    try:
-        zero_index = barcode.find('0', barcode.find('0') + 1)
-        if zero_index == -1:
-            logger.warning(f"Invalid barcode format: {barcode}")
-            return None, None
+    # 1) open a read-only stock cursor
+    stock_db  = connect(0)
+    stock_cur = stock_db.cursor(prepared=True)
 
-        bare_code = barcode[:zero_index] + 'B' + barcode[zero_index + 1:]
-        made_from_typecode = f"{bare_code[3:5]}-{bare_code[5:8]}"
-        return made_from_typecode, bare_code
-    except Exception as e:
-        logger.error(f"Error generating Bare Code for barcode {barcode}: {e}")
-        return None, None
+    # 2) check if barcode is already in use
+    st, used_map = get_used_for(stock_cur, barcode)
+    if st != 200:
+        logger.error(f"Error checking existing stock for {barcode}: {used_map}")
+        return st, f"Error checking existing usage: {used_map}"
+   
+    # 3) normalize "-10X" -> "-1BX"
+    if len(typecode) > 4 and typecode[4] == '0':
+        typecode = typecode[:4] + 'B' + typecode[5:]
 
-def engine_file(csv_file):
-    """Main execution function to make the engine CSV file."""
-    try:
-        db = connect(1)
-        cur = db.cursor()
+    # 4) if already used, re-use
+    existing = used_map.get(typecode)
+    if existing:
+        return 200, (typecode, existing[0])
 
-        all_ld_engines = filter_boards(cur)
+    # 5) fetch all unused stock for this typecode
+    st, stock_list = get_unused_stock(stock_cur, typecode, quantity=9999)
+    if st != 200:
+        return st, f"Error fetching unused stock: {stock_list}"
+    # filter for matching trailing digits
+    suffix = barcode[-6:]
+    matches = [s for s in stock_list if s.endswith(suffix)]
+    if not matches:
+        return 404, f"No unused stock matching suffix {suffix} for typecode {typecode}"
+    bc = matches[0]
 
-        with open(csv_file, mode='w', newline='') as file:
-            writer = csv.writer(file)
+    # 6) mark it used for this barcode
+    mark_db  = connect(1)
+    mark_cur = mark_db.cursor(prepared=True)
+    mstatus, msg = mark_used(mark_db, mark_cur, bc, barcode)
+    if mstatus != 200:
+        mark_db.rollback()
+        return mstatus, f"Failed to mark {bc} used→{barcode}: {msg}"
 
-            writer.writerow([
-                "LABEL_TYPECODE", "SERIAL_NUMBER", "BARCODE", "LOCATION",
-                "INSTITUTION", "MANUFACTURER", "NAME_LABEL", "PRODUCTION_DATE",
-	        "BATCH_NUMBER", "COMMENT_DESCRIPTION", "MADE-FROM-TYPECODE[0]", 
-                "MADE-FROM-SN[0]", "MADE-FROM-TYPECODE[1]", "MADE-FROM-SN[1]",
-                "MADE-FROM-TYPECODE[2]", "MADE-FROM-SN[2]", "MADE-FROM-TYPECODE[3]",
-	        "MADE-FROM-SN[3]", "MADE-FROM-TYPECODE[4]", "MADE-FROM-SN[4]"
-            ])
+    # mark_used commits on success
+    return 200, (typecode, bc)
 
-            success = 0
+# --- Engine CSV --------------------------------------------------
+def engine_file(prefix, n_lpgbts, engine_type):
+    db  = connect(0)
+    cur = db.cursor(buffered=True)
+    boards = filter_boards(cur, prefix)
 
-            for barcode in all_ld_engines:
-#                logger.info(f"Processing barcode: {barcode}")
-                if check_if_registered(cur, barcode):
-#                    logger.info(f"Skipping {barcode}, already registered")
+    header = [
+        "LABEL_TYPECODE","SERIAL_NUMBER","BARCODE","LOCATION","INSTITUTION",
+        "MANUFACTURER","NAME_LABEL","PRODUCTION_DATE","BATCH_NUMBER",
+        "COMMENT_DESCRIPTION"
+    ]
+    for i in range(n_lpgbts):
+        header += [f"MADE-FROM-TYPECODE[{i}]", f"MADE-FROM-SN[{i}]"]
+    header += [f"MADE-FROM-TYPECODE[{n_lpgbts}]", f"MADE-FROM-SN[{n_lpgbts}]"]
+    header += [f"MADE-FROM-TYPECODE[{n_lpgbts+1}]", f"MADE-FROM-SN[{n_lpgbts+1}]"]
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(header)
+
+    written_boards = []
+    count = 0
+    for bc in boards:
+        if check_if_registered(cur, bc):
+            continue
+
+        tc, mf, batch = get_typecode(cur, bc), get_manufacturer(cur, bc), get_batch(cur, bc)
+
+        info = BATCH_INFO.get(engine_type, {}).get(batch)
+        if info is None:
+            logger.warning(f"Unknown batch '{batch}' for {engine_type} engine {bc}, skipping…")
+            continue
+        prod_date, comment = info
+
+        name = get_name(bc, engine_type)
+        lpgbts = get_lpgbt_ids(cur, bc)
+        ldo = get_ldo_id(cur, bc)
+
+        status, payload = get_bare_code(bc, tc)
+        if status != 200:
+            continue #This skips anything not 10E or 10W
+        else:
+            bare_tc, bare_sn = payload
+
+        missing = []
+        if tc is None:           missing.append("typecode")
+        if mf is None:           missing.append("manufacturer")
+        if batch is None:        missing.append("batch")
+        if ldo is None:          missing.append("LDO")
+        if bare_tc is None or bare_sn is None:
+            missing.append("bare code")
+        if len(lpgbts) < n_lpgbts:
+            missing.append(f"{n_lpgbts} LPGBT IDs (got {len(lpgbts)})")
+        if missing:
+            logger.warning(f"Skipping {bc}: missing {', '.join(missing)}")
+            continue
+
+        row = [tc, bc, bc, LOCATION, INSTITUTION,
+               mf, name, prod_date, batch,
+               comment]
+        for loc, lid in lpgbts[:n_lpgbts]:
+            row += ["IC-LPG", lid]
+        row += ["IC-LDH", str(ldo)]
+        row += [bare_tc, bare_sn]
+
+        writer.writerow(row)
+        written_boards.append(bc)
+        count += 1
+
+    logger.info(f"Engine CSV: prepared {count} entries")
+    buf.seek(0)
+    return buf, written_boards
+
+# ------ LPGBT CSV using unused stock --------------------------
+def lpgbt_file(prefix, engine_type, boards):
+    db  = connect(0)
+    cur = db.cursor(buffered=True)
+
+    logger.info("Fetching LPGBT stock..")
+    total_needed = sum(len(get_lpgbt_ids(cur, bc)) for bc in boards)
+    stock_db  = connect(0)
+    stock_cur = stock_db.cursor(prepared=True)
+    status, stock_list = get_unused_stock(stock_cur, "IC-LPS", quantity=total_needed)
+
+    if status != 200:
+        logger.error(f"Failed to fetch LPGBT stock: {stock_list}")
+        return io.StringIO()
+    stock_iter = iter(stock_list)
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    header = [
+        "LABEL_TYPECODE","SERIAL_NUMBER","BARCODE","NAME_LABEL",
+        "LOCATION","INSTITUTION","MANUFACTURER","PRODUCTION_DATE",
+        "MADE-FROM-TYPECODE[0]","MADE-FROM-SN[0]",
+        "COMMENT_DESCRIPTION","ATTRIBUTE-NAME[0]","ATTRIBUTE-VALUE[0]",
+    ]
+    writer.writerow(header)
+
+    remap = {"DAQ1":"DAQ","TRG1":"TRIG-1","TRG2":"TRIG-2","TRG3":"TRIG-3","TRG4":"TRIG-4"}
+    eng_label = ENGINE_LABELS.get(engine_type, f"{engine_type} Engine")
+
+    count = 0
+    for bc in boards:
+        version_char = bc[8]
+        lp_info = LPGBT_VERSIONS.get(version_char)
+        if lp_info is None:
+            logger.warning(f"Unknown LPGBT version '{version_char}' in {bc}, skipping")
+            continue
+
+        manufacturer    = lp_info['manufacturer']
+        production_date = lp_info['production_date']
+
+        for loc, lid in get_lpgbt_ids(cur, bc):
+            st_status, used_map = get_used_for(stock_cur, lid)
+            if st_status != 200:
+                logger.error(f"Error checking existing stock for {lid}: {used_map}")
+                continue
+
+            existing = None
+            if "IC-LPS" in used_map and used_map["IC-LPS"]:
+                existing = used_map["IC-LPS"][0]
+
+            if existing:
+                serial = existing
+            else:
+                try:
+                    serial = next(stock_iter)
+                except StopIteration:
+                    logger.error("Insufficient LPGBT stock for all boards")
+                    break
+
+                mark_db  = connect(1)
+                mark_cur = mark_db.cursor(prepared=True)
+                mk_status, mk_msg = mark_used(mark_db, mark_cur, serial, lid)
+                if mk_status != 200:
+                    logger.error(f"Failed to mark {serial} used→{lid}: {mk_msg}")
                     continue
+                logger.info(f"Assigned new stock {serial} → LPGBT {lid}")
 
-                label_typecode = get_typecode(cur, barcode)
-                manufacturer = get_manufacturer(cur, barcode)
-                batch_number = get_batch(cur, barcode)
-                name_label = get_name(barcode)
-                 
-                # Retrieve LPGBT IDs
-                lpgbt_ids = get_lpgbt_ids(cur, barcode)
-                if not lpgbt_ids:
-                    continue
+            mapped_loc = remap.get(loc, loc)
+            row = [
+                "IC-LPG", lid, lid,
+                f"LPGBT {mapped_loc} 0x{lid}",
+                LOCATION, INSTITUTION, manufacturer,
+                production_date, "IC-LPS", serial,
+                f"{mapped_loc} LPGBT for {bc}",
+                f"lpGBT Location {eng_label}", mapped_loc
+            ]
+            writer.writerow(row)
+            count += 1
 
-                made_from_components = [
-                    (LPGBT_TYPECODE, lpgbt_ids[0][1]),
-                    (LPGBT_TYPECODE, lpgbt_ids[1][1]),
-                    (LPGBT_TYPECODE, lpgbt_ids[2][1]),
-                ]
+    logger.info(f"LPGBT CSV: prepared {count} entries")
+    buf.seek(0)
+    return buf
 
-                # Retrieve LDO ID
-                ldo = get_ldo_id(cur, barcode)
-                if not ldo:
-                    logger.info(f"Skipping {barcode}, no LDO found.")
-                    continue  # Skip if no LDO found
-
-                made_from_components.append(("IC-LDH", ldo))
-
-               # Retrieve Bare Code
-                made_from_typecode4, made_from_sn4 = get_bare_code(barcode)
-                if not made_from_typecode4 or not made_from_sn4:
-                    continue  # Skip if Bare Code cannot be generated
-
-                made_from_components.append((made_from_typecode4, made_from_sn4))
-                   
-                writer.writerow([
-                    label_typecode, barcode, barcode, LOCATION, INSTITUTION, 
-                    manufacturer, name_label, ENGINE_PRODUCTION_DATE, batch_number, 
-                    COMMENT_DESCRIPTION,
-                    *(item for sublist in made_from_components for item in sublist)
-                ])
-
-                success += 1
-
-            logger.info(f"Created CSV file '{csv_file}' for {success} engines.")
-
-    except Exception as e:
-        logger.error(f"Error in engine file: {e}")
-
-def lpgbt_file(csv_file, LPGBT_INDEX):
-    """Main execution function to make the lpgbt CSV file."""
-    lpgbt_csv_file = f"LPGBT_{csv_file}"
-    try:
-        db = connect(1)
-        cur = db.cursor()
-
-        all_ld_engines = filter_boards(cur)
-
-        with open(lpgbt_csv_file, mode='w', newline='') as file:
-            writer = csv.writer(file)
-
-            # Write the header row
-            writer.writerow([
-                "LABEL_TYPECODE", "SERIAL_NUMBER", "BARCODE", "NAME_LABEL", "LOCATION",
-                "INSTITUTION", "MANUFACTURER", "PRODUCTION_DATE", "MADE-FROM-TYPECODE[0]",
-                "MADE-FROM-SN[0]", "COMMENT_DESCRIPTION", "ATTRIBUTE-NAME[0]", "ATTRIBUTE-VALUE[0]",
-            ])
-
-            success = 0
-
-            for barcode in all_ld_engines:
-#                logger.info(f"Processing barcode: {barcode}")
-                if check_if_registered(cur, barcode):
-#                    logger.info(f"Skipping {barcode}, already registered")
-                    continue
-
-
-                # Retrieve LPGBT IDs
-                lpgbt_ids = get_lpgbt_ids(cur, barcode)
-                if not lpgbt_ids:
-                    continue
-
-                for loc, lpgbt in lpgbt_ids:
-                    serial_number = f"{lpgbt}"
-                    bc = serial_number
-                    name_label = f"LPGBT {loc} 0x{serial_number}"
-                    made_from_typecode0 = "IC-LPS"
-                    made_from_sn0 = LPGBT_INDEX 
-                    comment_description = f"{loc} LPGBT for {barcode}"
-                    attribute_name0 = "lpGBT Location LD Engine"
-                    if loc == "E" or loc == "W":
-                        loc = f"TRIG-{loc}"
-                    attribute_value0 = loc
-
-                    # Write the row to the CSV
-                    writer.writerow([
-                        LPGBT_TYPECODE, serial_number, bc, name_label, LOCATION,
-                        INSTITUTION, LPGBT_MANUFACTURER, LPGBT_PRODUCTION_DATE, made_from_typecode0,
-                        made_from_sn0, comment_description, attribute_name0, attribute_value0
-                    ])
-                    success += 1
-                    LPGBT_INDEX += 1
-            logger.info(f"Created LpGBT CSV file '{lpgbt_csv_file}' for {success} LpGBTs.")
-    except Exception as e:
-        logger.error(f"Error in LpGBT file: {e}")
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Register LD engines and LpGBTs by exporting data to CSV files.")
-    parser.add_argument("-o", "--output", type=str, required=True, help="Output CSV file name (e.g., output.csv)")
-    parser.add_argument("-l", "--lpgbt", type=int, required=True, help="Starting LpGBT index (find from the last upload)")
+# --------- CLI ---------------------------------------------------
+def main():
+    parser = argparse.ArgumentParser(
+        description="Produce both engine and LPGBT CSVs and zip them."
+    )
+    parser.add_argument(
+        '--engine',
+        required=True,
+        choices=ENGINE_CONFIG.keys(),
+    )
+    parser.add_argument(
+        '-z', '--zip-out',
+        required=False,
+        default=None,
+        help="Output ZIP filename. If omitted, defaults to '<engine>_components.zip'"
+    )
     args = parser.parse_args()
 
-    engine_file(args.output)
-    lpgbt_file(args.output, args.lpgbt)
+    zip_name = args.zip_out or f"{args.engine}_engine_reg.zip"
+
+    cfg     = ENGINE_CONFIG[args.engine]
+    eng_buf, written_engines = engine_file(cfg['prefix'], cfg['n_lpgbts'], args.engine)
+    lpg_buf = lpgbt_file(cfg['prefix'], args.engine, written_engines)
+
+    zip_buf = io.BytesIO()
+    with zipfile.ZipFile(zip_buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr(f"{args.engine}_engines.csv", eng_buf.getvalue())
+        zf.writestr(f"{args.engine}_lpgbts.csv",                lpg_buf.getvalue())
+
+    with open(zip_name, 'wb') as f:
+        f.write(zip_buf.getvalue())
+
+    logger.info(f"Wrote {zip_name}")
+
+
+if __name__ == '__main__':
+    main()
