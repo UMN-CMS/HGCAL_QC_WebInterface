@@ -76,8 +76,7 @@ def mark_used(ctx, cur, barcode, tomake=None):
         if not row:
             return (404, f"Barcode '{barcode}' not found in stock")
         cid = int(row[0])
-
-        if tomake and len(tomake) > 10:
+        if tomake:
             cur.execute(
                 "INSERT INTO COMPONENT_USAGE (component_id, used_in_barcode) VALUES (?, ?) ",
                 (cid, tomake)
@@ -98,7 +97,6 @@ def argas(args, name, default=None):
     return args.get(name, default)
 
 
-# ---------- Main entrypoint -----------------------------
 def main():
     args = {}
     if 'REQUEST_METHOD' in os.environ:
@@ -126,7 +124,6 @@ def main():
         db = connect(0)
         cur = db.cursor(prepared=True)
         result = get_unused_stock(cur, argas(args, 'typecode'), int(argas(args, 'quantity', 1)))
-        print(result)
     elif req == 'get_used_for':
         db = connect(0)
         cur = db.cursor(prepared=True)

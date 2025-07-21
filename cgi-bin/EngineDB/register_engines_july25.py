@@ -37,12 +37,12 @@ logger = logging.getLogger(__name__)
 # ---------- Production dates & comments by engine type & batch ----------
 BATCH_INFO = {
     'HDF': {
-        '1': ('2024-06-21', 'HDF Preproduction'),
-        '2': ('2025-06-04', 'HDF Production'),
+        '1': ('2024-06-21', 'Preseries'),
+        '2': ('2025-06-04', 'Production'),
     },
     'HDH': {
-        '1': ('2024-06-21', 'HDH Preproduction'),
-        '2': ('2025-06-06', 'HDH Production'),
+        '1': ('2024-06-21', 'Preseries'),
+        '2': ('2025-06-06', 'Production'),
     },
     'LD': {
         '1': ('2024-11-22', 'Preproduction'),
@@ -181,17 +181,55 @@ def get_ldo_id(cur, barcode):
         logger.error(f"Error getting LDO for {barcode}: {e}")
         return None
 
-def get_bare_code(barcode):
-    try:
-        i = barcode.find('0', barcode.find('0') + 1)
-        if i < 0:
-            return None, None
-        bc = barcode[:i] + 'B' + barcode[i+1:]
-        tc = f"{bc[3:5]}-{bc[5:8]}"
-        return tc, bc
-    except Exception as e:
-        logger.error(f"Error making bare code for {barcode}: {e}")
-        return None, None
+def get_bare_code(barcode, typecode):
+    """
+    barcode:   e.g. "320EL10E2020001"
+    typecode:  e.g. "EL-10E"
+    Returns:
+      (200, (final_typecode, component_barcode))
+    or
+      (error_code, error_message)
+    """
+    # 1) open a read-only stock cursor
+    stock_db  = connect(0)
+    stock_cur = stock_db.cursor(prepared=True)
+
+    # 2) check if barcode is already in use
+    st, used_map = get_used_for(stock_cur, barcode)
+    if st != 200:
+        logger.error(f"Error checking existing stock for {barcode}: {used_map}")
+        return st, f"Error checking existing usage: {used_map}"
+   
+    # 3) normalize "-10X" -> "-1BX"
+    if len(typecode) > 4 and typecode[4] == '0':
+        typecode = typecode[:4] + 'B' + typecode[5:]
+
+    # 4) if already used, re-use
+    existing = used_map.get(typecode)
+    if existing:
+        return 200, (typecode, existing[0])
+
+    # 5) fetch all unused stock for this typecode
+    st, stock_list = get_unused_stock(stock_cur, typecode, quantity=9999)
+    if st != 200:
+        return st, f"Error fetching unused stock: {stock_list}"
+    # filter for matching trailing digits
+    suffix = barcode[-6:]
+    matches = [s for s in stock_list if s.endswith(suffix)]
+    if not matches:
+        return 404, f"No unused stock matching suffix {suffix} for typecode {typecode}"
+    bc = matches[0]
+
+    # 6) mark it used for this barcode
+    mark_db  = connect(1)
+    mark_cur = mark_db.cursor(prepared=True)
+    mstatus, msg = mark_used(mark_db, mark_cur, bc, barcode)
+    if mstatus != 200:
+        mark_db.rollback()
+        return mstatus, f"Failed to mark {bc} used→{barcode}: {msg}"
+
+    # mark_used commits on success
+    return 200, (typecode, bc)
 
 # --- Engine CSV --------------------------------------------------
 def engine_file(prefix, n_lpgbts, engine_type):
@@ -213,6 +251,7 @@ def engine_file(prefix, n_lpgbts, engine_type):
     writer = csv.writer(buf)
     writer.writerow(header)
 
+    written_boards = []
     count = 0
     for bc in boards:
         if check_if_registered(cur, bc):
@@ -220,7 +259,6 @@ def engine_file(prefix, n_lpgbts, engine_type):
 
         tc, mf, batch = get_typecode(cur, bc), get_manufacturer(cur, bc), get_batch(cur, bc)
 
-        # look up prod_date & comment
         info = BATCH_INFO.get(engine_type, {}).get(batch)
         if info is None:
             logger.warning(f"Unknown batch '{batch}' for {engine_type} engine {bc}, skipping…")
@@ -230,7 +268,12 @@ def engine_file(prefix, n_lpgbts, engine_type):
         name = get_name(bc, engine_type)
         lpgbts = get_lpgbt_ids(cur, bc)
         ldo = get_ldo_id(cur, bc)
-        bare_tc, bare_sn = get_bare_code(bc)
+
+        status, payload = get_bare_code(bc, tc)
+        if status != 200:
+            continue #This skips anything not 10E or 10W
+        else:
+            bare_tc, bare_sn = payload
 
         missing = []
         if tc is None:           missing.append("typecode")
@@ -254,20 +297,17 @@ def engine_file(prefix, n_lpgbts, engine_type):
         row += [bare_tc, bare_sn]
 
         writer.writerow(row)
+        written_boards.append(bc)
         count += 1
 
     logger.info(f"Engine CSV: prepared {count} entries")
     buf.seek(0)
-    return buf
+    return buf, written_boards
 
 # ------ LPGBT CSV using unused stock --------------------------
-def lpgbt_file(prefix, engine_type):
+def lpgbt_file(prefix, engine_type, boards):
     db  = connect(0)
     cur = db.cursor(buffered=True)
-    boards = [bc for bc in filter_boards(cur, prefix) if not check_if_registered(cur, bc)]
-
-    # filter out any engine that is missing its LDO
-    boards = [bc for bc in boards if get_ldo_id(cur, bc) is not None]
 
     logger.info("Fetching LPGBT stock..")
     total_needed = sum(len(get_lpgbt_ids(cur, bc)) for bc in boards)
@@ -275,7 +315,6 @@ def lpgbt_file(prefix, engine_type):
     stock_cur = stock_db.cursor(prepared=True)
     status, stock_list = get_unused_stock(stock_cur, "IC-LPS", quantity=total_needed)
 
-    print(stock_list)
     if status != 200:
         logger.error(f"Failed to fetch LPGBT stock: {stock_list}")
         return io.StringIO()
@@ -306,30 +345,24 @@ def lpgbt_file(prefix, engine_type):
         production_date = lp_info['production_date']
 
         for loc, lid in get_lpgbt_ids(cur, bc):
-            # 1) see if this LPGBT already has a stock entry
             st_status, used_map = get_used_for(stock_cur, lid)
             if st_status != 200:
                 logger.error(f"Error checking existing stock for {lid}: {used_map}")
                 continue
 
-            #THIS HAS NOT BEEN CHECKED
-            # pick any previous “IC-LPS” entry if present 
             existing = None
             if "IC-LPS" in used_map and used_map["IC-LPS"]:
                 existing = used_map["IC-LPS"][0]
 
             if existing:
                 serial = existing
-                logger.info(f"Re-using stock {serial} for LPGBT {lid}")
             else:
-                # 2) otherwise grab a new one
                 try:
                     serial = next(stock_iter)
                 except StopIteration:
                     logger.error("Insufficient LPGBT stock for all boards")
                     break
 
-                # 3) immediately mark it used in the DB
                 mark_db  = connect(1)
                 mark_cur = mark_db.cursor(prepared=True)
                 mk_status, mk_msg = mark_used(mark_db, mark_cur, serial, lid)
@@ -349,7 +382,6 @@ def lpgbt_file(prefix, engine_type):
             ]
             writer.writerow(row)
             count += 1
-        break
 
     logger.info(f"LPGBT CSV: prepared {count} entries")
     buf.seek(0)
@@ -376,8 +408,8 @@ def main():
     zip_name = args.zip_out or f"{args.engine}_engine_reg.zip"
 
     cfg     = ENGINE_CONFIG[args.engine]
-    eng_buf = engine_file(cfg['prefix'], cfg['n_lpgbts'], args.engine)
-    lpg_buf = lpgbt_file(cfg['prefix'], args.engine)
+    eng_buf, written_engines = engine_file(cfg['prefix'], cfg['n_lpgbts'], args.engine)
+    lpg_buf = lpgbt_file(cfg['prefix'], args.engine, written_engines)
 
     zip_buf = io.BytesIO()
     with zipfile.ZipFile(zip_buf, 'w', zipfile.ZIP_DEFLATED) as zf:
