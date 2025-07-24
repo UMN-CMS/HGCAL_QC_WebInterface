@@ -275,6 +275,11 @@ def engine_file(prefix, n_lpgbts, engine_type):
         else:
             bare_tc, bare_sn = payload
 
+        mf = "TTM-Caltronics"
+
+        if mf == "TTM-Caltronics":
+            mf = "Caltronics-Minnesota"
+
         missing = []
         if tc is None:           missing.append("typecode")
         if mf is None:           missing.append("manufacturer")
@@ -371,6 +376,9 @@ def lpgbt_file(prefix, engine_type, boards):
                     continue
                 logger.info(f"Assigned new stock {serial} → LPGBT {lid}")
 
+            print("loc", loc)
+            print(remap)
+            print("mapped_loc", mapped_loc)
             mapped_loc = remap.get(loc, loc)
             row = [
                 "IC-LPG", lid, lid,
