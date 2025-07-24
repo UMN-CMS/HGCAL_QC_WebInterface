@@ -275,8 +275,6 @@ def engine_file(prefix, n_lpgbts, engine_type):
         else:
             bare_tc, bare_sn = payload
 
-        mf = "TTM-Caltronics"
-
         if mf == "TTM-Caltronics":
             mf = "Caltronics-Minnesota"
 
@@ -330,12 +328,13 @@ def lpgbt_file(prefix, engine_type, boards):
     header = [
         "LABEL_TYPECODE","SERIAL_NUMBER","BARCODE","NAME_LABEL",
         "LOCATION","INSTITUTION","MANUFACTURER","PRODUCTION_DATE",
+        "VERSION",
         "MADE-FROM-TYPECODE[0]","MADE-FROM-SN[0]",
         "COMMENT_DESCRIPTION","ATTRIBUTE-NAME[0]","ATTRIBUTE-VALUE[0]",
     ]
     writer.writerow(header)
 
-    remap = {"DAQ1":"DAQ","TRG1":"TRIG-1","TRG2":"TRIG-2","TRG3":"TRIG-3","TRG4":"TRIG-4"}
+    remap = {"DAQ1":"DAQ","TRG1":"TRIG-1","TRG2":"TRIG-2","TRG3":"TRIG-3","TRG4":"TRIG-4", "E": "TRIG-E", "W": "TRIG-W"}
     eng_label = ENGINE_LABELS.get(engine_type, f"{engine_type} Engine")
 
     count = 0
@@ -360,31 +359,32 @@ def lpgbt_file(prefix, engine_type, boards):
                 existing = used_map["IC-LPS"][0]
 
             if existing:
-                serial = existing
+                full_serial = existing
+                serial = full_serial[-7:]
             else:
                 try:
-                    serial = next(stock_iter)
+                    full_serial = next(stock_iter)
+                    serial = full_serial[-7:]
                 except StopIteration:
                     logger.error("Insufficient LPGBT stock for all boards")
                     break
 
                 mark_db  = connect(1)
                 mark_cur = mark_db.cursor(prepared=True)
-                mk_status, mk_msg = mark_used(mark_db, mark_cur, serial, lid)
+                mk_status, mk_msg = mark_used(mark_db, mark_cur, full_serial, lid)
                 if mk_status != 200:
-                    logger.error(f"Failed to mark {serial} used→{lid}: {mk_msg}")
+                    logger.error(f"Failed to mark {full_serial} used→{lid}: {mk_msg}")
                     continue
-                logger.info(f"Assigned new stock {serial} → LPGBT {lid}")
+                logger.info(f"Assigned new stock {full_serial} → LPGBT {lid}")
 
-            print("loc", loc)
-            print(remap)
-            print("mapped_loc", mapped_loc)
             mapped_loc = remap.get(loc, loc)
             row = [
                 "IC-LPG", lid, lid,
                 f"LPGBT {mapped_loc} 0x{lid}",
                 LOCATION, INSTITUTION, manufacturer,
-                production_date, "IC-LPS", serial,
+                production_date, 
+                version_char,
+                "IC-LPS", serial,
                 f"{mapped_loc} LPGBT for {bc}",
                 f"lpGBT Location {eng_label}", mapped_loc
             ]
