@@ -78,54 +78,54 @@ def argas(args,name,notprovided=None):
     return notprovided
 
 args={}
-if "REQUEST_METHOD" in os.environ:
-    form = cgi.FieldStorage()
-    knowns=['req','quantity','typecode','barcode','tomake']
-    for key in knowns:
-        if key in form:
-            args[key]=form.getvalue(key)
+if __name__ == "__main__":
+    if "REQUEST_METHOD" in os.environ:
+        form = cgi.FieldStorage()
+        knowns=['req','quantity','typecode','barcode','tomake']
+        for key in knowns:
+            if key in form:
+                args[key]=form.getvalue(key)
 
-else:
-    import argparse
-    parser = argparse.ArgumentParser(description="Components")
-    parser.add_argument("-r", "--req", type=str, default=None, choices=['get_unused_stock','get_used_for','add_component','mark_used'],help="Request type")
-    parser.add_argument("-b", "--barcode", type=str, default=None, help="Barcode")
-    parser.add_argument("-m", "--tomake", type=str, default=None, help="To make barcode")
-    parser.add_argument("-t", "--typecode", type=str, default=None, help="Typecode")
-    parser.add_argument("-q", "--quantity", type=int, default=None, help="Quantity requested")
-    a = parser.parse_args()
-    for (key,value) in vars(a).items():
-        args[key]=value
-    print(args)
-    
-#default behavior
-if 'req' not in args:
-    args['req']="get_unused_stock"
-    args['quantity']=20
+    else:
+        import argparse
+        parser = argparse.ArgumentParser(description="Components")
+        parser.add_argument("-r", "--req", type=str, default=None, choices=['get_unused_stock','get_used_for','add_component','mark_used'],help="Request type")
+        parser.add_argument("-b", "--barcode", type=str, default=None, help="Barcode")
+        parser.add_argument("-m", "--tomake", type=str, default=None, help="To make barcode")
+        parser.add_argument("-t", "--typecode", type=str, default=None, help="Typecode")
+        parser.add_argument("-q", "--quantity", type=int, default=None, help="Quantity requested")
+        a = parser.parse_args()
+        for (key,value) in vars(a).items():
+            args[key]=value
+            
+    #default behavior
+    if 'req' not in args:
+        args['req']="get_unused_stock"
+        args['quantity']=20
 
-req=args['req']
-result=(404,"Unknown")
+    req=args['req']
+    result=(404,"Unknown")
 
-if req in ["get_unused_stock","get_used_for"]:
-    db=connect(0)
-    cur=db.cursor(prepared=True)
-    if req == "get_unused_stock": result=get_unused_stock(cur,argas(args,"typecode"),int(argas(args,"quantity",1)))
-    if req == "get_used_for": result=get_used_for(cur,argas(args,"barcode"))
+    if req in ["get_unused_stock","get_used_for"]:
+        db=connect(0)
+        cur=db.cursor(prepared=True)
+        if req == "get_unused_stock": result=get_unused_stock(cur,argas(args,"typecode"),int(argas(args,"quantity",1)))
+        if req == "get_used_for": result=get_used_for(cur,argas(args,"barcode"))
 
-if req in ["add_component","mark_used"]:
-    db=connect(1)
-    cur=db.cursor(prepared=True)
-    if req == "add_component":
-        result=add_component(db,cur,argas(args,"barcode"),argas(args,"typecode"))
-    if req == "mark_used":
-        result=mark_used(db,cur,argas(args,"barcode"),argas(args,"tomake"))
+    if req in ["add_component","mark_used"]:
+        db=connect(1)
+        cur=db.cursor(prepared=True)
+        if req == "add_component":
+            result=add_component(db,cur,argas(args,"barcode"),argas(args,"typecode"))
+        if req == "mark_used":
+            result=mark_used(db,cur,argas(args,"barcode"),argas(args,"tomake"))
 
-if result[0]>299:
-    print("Content-type: text/plain")
-    print("Status: %d"%(result[0]))
-    print("\n")
-    print(result[1])
-else:
-    print("Content-type: text/json")
-    print("Status: 200 OK\n")
-    print(json.dumps(result[1]))
+    if result[0]>299:
+        print("Content-type: text/plain")
+        print("Status: %d"%(result[0]))
+        print("\n")
+        print(result[1])
+    else:
+        print("Content-type: text/json")
+        print("Status: 200 OK\n")
+        print(json.dumps(result[1]))
