@@ -295,7 +295,7 @@ def engine_file(prefix, n_lpgbts, engine_type):
             logger.warning(f"Skipping {bc}: missing {', '.join(missing)}")
             continue
 
-        print(f"Registering {bc}")
+        logger.info(f"Registering {bc}")
         row = [tc, bc, bc, LOCATION, INSTITUTION,
                mf, name, prod_date, batch,
                comment]
