@@ -215,11 +215,13 @@ def get_bare_code(barcode, typecode):
         return st, f"Error fetching unused stock: {stock_list}"
     # filter for matching trailing digits
     suffix = barcode[-6:]
-    matches = [s for s in stock_list if s.endswith(suffix)]
+
+    matches = [s for s in stock_list if s[0].endswith(suffix)]
     if not matches:
         return 404, f"No unused stock matching suffix {suffix} for typecode {typecode}"
-    bc = matches[0]
-
+    bc = matches[0][0]
+    logging.info("barcode", barcode)
+    logging.info("bc", bc)
     # 6) mark it used for this barcode
     mark_db  = connect(1)
     mark_cur = mark_db.cursor(prepared=True)
@@ -259,6 +261,8 @@ def engine_file(prefix, n_lpgbts, engine_type):
 
         tc, mf, batch = get_typecode(cur, bc), get_manufacturer(cur, bc), get_batch(cur, bc)
 
+        if tc == "EL-0QE" or tc == "EL-0QW":
+            continue
         info = BATCH_INFO.get(engine_type, {}).get(batch)
         if info is None:
             logger.warning(f"Unknown batch '{batch}' for {engine_type} engine {bc}, skipping…")
@@ -291,6 +295,7 @@ def engine_file(prefix, n_lpgbts, engine_type):
             logger.warning(f"Skipping {bc}: missing {', '.join(missing)}")
             continue
 
+        print(f"Registering {bc}")
         row = [tc, bc, bc, LOCATION, INSTITUTION,
                mf, name, prod_date, batch,
                comment]
@@ -357,13 +362,12 @@ def lpgbt_file(prefix, engine_type, boards):
             existing = None
             if "IC-LPS" in used_map and used_map["IC-LPS"]:
                 existing = used_map["IC-LPS"][0]
-
             if existing:
                 full_serial = existing
                 serial = full_serial[-7:]
             else:
                 try:
-                    full_serial = next(stock_iter)
+                    full_serial = next(stock_iter)[0]
                     serial = full_serial[-7:]
                 except StopIteration:
                     logger.error("Insufficient LPGBT stock for all boards")
