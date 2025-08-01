@@ -59,8 +59,7 @@ def mark_used(ctx,cur,barcode,tomake):
         if row is None:
             return (404,"Barcode '%s' not found in stock"%(barcode));
         cid=int(row[0])
-        
-        if tomake is not None and len(tomake)>10:
+        if tomake is not None: #and len(tomake)>10
             cur.execute("INSERT INTO COMPONENT_USAGE (component_id, used_in_barcode) VALUES (?,?)",(cid,tomake,))
         else:
             cur.execute("INSERT INTO COMPONENT_USAGE (component_id) VALUES (?)",(cid,))
