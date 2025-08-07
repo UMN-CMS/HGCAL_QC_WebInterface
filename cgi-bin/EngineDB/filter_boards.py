@@ -32,10 +32,11 @@ from datetime import datetime as dt
 import datetime
 import makeTestingData as mTD
 
-csv_EH, csv_EL = mTD.get_board_states()
+csv_EH, csv_EL, csv_ZP = mTD.get_board_states()
 stitch_types = mTD.get_stitch_types()
 HD = pd.read_csv(csv_EH, parse_dates=['Check In Time'])
 LD = pd.read_csv(csv_EL, parse_dates=['Check In Time'])
+ZP = pd.read_csv(csv_ZP, parse_dates=['Check In Time'])
 
 filter_code=('''
 const is_selected_map = new Map([
@@ -94,13 +95,15 @@ for (let i = 0; i < d_keys.length; i++) {
         let sd = d_keys[i];
         start_date = new Date(sd);
     }
-    if (dates.get('End Date').get(d_keys[i]) == true) {
+    if (dates.get('Checked In Before').get(d_keys[i]) == true) {
         let ed = d_keys[i];
         end_date = new Date(ed);
+
+        end_date.setDate(end_date.getDate() + 1);
     }
 }
 for (let i = 0; i < source.get_length(); i++) {
-    if (source.data['Check In Time'][i] >= start_date && indices[i] == true) {
+    if (source.data['Check In Time'][i] >= start_date && source.data['Check In Time'][i] <= end_date && indices[i] == true) {
         indices[i] = true;
     } else {
         indices[i] = false;
@@ -142,7 +145,12 @@ for (let sn = 0; sn < serial_numbers.length; sn++) {
         locations.push(data.data['Location'][sn])
         status.push(data.data['Status'][sn])
 
-        let temp_date = new Date(data.data['Check In Time'][sn] + 21600000);
+        let temp_date = new Date(data.data['Check In Time'][sn]);
+        if (String(temp_date).includes('Daylight')) {
+            temp_date = new Date(data.data['Check In Time'][sn] + 18000000);
+        } else {
+            temp_date = new Date(data.data['Check In Time'][sn] + 21600000);
+        }
         let date = temp_date.toString().slice(4, 24)
         dates.push(date)
         raw_times.push(temp_date.valueOf())
@@ -173,11 +181,14 @@ td.change.emit()
 
 def Filter(major_type):
     if major_type == 'LD':
-        ds = ColumnDataSource(LD)
+        ds = ColumnDataSource(LD.sort_values('Check In Time', ascending=False))
         test_types = stitch_types.get('EL10E1', [])
     if major_type == 'HD':
-        ds = ColumnDataSource(HD)
+        ds = ColumnDataSource(HD.sort_values('Check In Time', ascending=False))
         test_types = stitch_types.get('EH0QH0', [])
+    if major_type == 'ZP':
+        ds = ColumnDataSource(ZP.sort_values('Check In Time', ascending=False))
+        test_types = stitch_types.get('ZPLMEZ', [])
 
     # create the widgets to be used
     mc_widgets = {}
@@ -185,15 +196,14 @@ def Filter(major_type):
     multi_choice = (lambda x,y: MultiChoice(options=x, value=[], title=y), 'value')
     start_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value=x, title=z), 'value')
     today = datetime.date.today()
-    today_plus_one = today + datetime.timedelta(days=1)
-    end_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value=today_plus_one, title=z), 'value')
+    end_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value=today, title=z), 'value')
     min_date = pd.Timestamp((min(ds.data['Check In Time']))).date()
     date_range = []
-    while min_date <= today_plus_one:
+    while min_date <= today:
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
     # widget titles and data for those widgets has to be manually entered, as well as the type
-    columns = ['Subtype', 'Nickname', 'Location', 'Status', 'Checked In After', 'End Date']
+    columns = ['Subtype', 'Nickname', 'Location', 'Status', 'Checked In After', 'Checked In Before']
     data = [ds.data['Subtype'].tolist(), ds.data['Nickname'].tolist(), ds.data['Location'].tolist(), ds.data['Status'].tolist(), date_range, date_range]
     t = [multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
 
@@ -312,9 +322,11 @@ def Filter(major_type):
     w = [*widgets.values()]
 
     if major_type == 'HD':
-        layout = row(column(row(w[0:4] + [w[-2]]), row(w[4:9]), row(w[9:14]), row(w[14:19]), data_table))
+        layout = row(column(row(w[0:4] + w[-2:]), row(w[4:9]), row(w[9:14]), row(w[14:19]), data_table))
     elif major_type == 'LD':
-        layout = row(column(row(w[0:4] + [w[-2]]), row(w[4:10]), row(w[10:15]), row(w[15:20]), data_table))
+        layout = row(column(row(w[0:4] + w[-2:]), row(w[4:10]), row(w[10:15]), row(w[15:20]), data_table))
+    elif major_type == 'ZP':
+        layout = row(column(row(w[0:4] + [w[-2]]), row(w[4:8] + [w[-1]]), row(w[8:11]), data_table))
 
 
     return json.dumps(json_item(layout))

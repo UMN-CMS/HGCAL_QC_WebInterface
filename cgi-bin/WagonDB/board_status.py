@@ -29,7 +29,8 @@ from bokeh.layouts import column, row
 import json
 import makeTestingData as mTD
 
-ds = mTD.get_board_statuses()
+#ds = mTD.get_board_statuses()
+ds = mTD.get_status_over_time()
 
 colors = [
         d3['Category10'][10][0],
@@ -39,6 +40,16 @@ colors = [
         d3['Category10'][10][2],
         d3['Category10'][10][3],
         ]
+
+def convert_keys_to_strings(obj):
+    if isinstance(obj, dict):
+        return {str(k): convert_keys_to_strings(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_keys_to_strings(item) for item in obj]
+    else:
+        return obj
+
+ds = convert_keys_to_strings(ds)
 
 def TotalPlot(data, mc_widgets, widgets):
     data_total = ColumnDataSource(data={'dates':[], 'counts':[]})

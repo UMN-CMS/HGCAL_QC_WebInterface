@@ -17,9 +17,9 @@ form = cgi.FieldStorage()
 if form.getvalue('full_id'):
     full_id = html.escape(form.getvalue('full_id'))
 
-    test_results = add_test_functions.get_is_ready_for_thermal(full_id)
+    num_failures = add_test_functions.get_thermal_failures(full_id)
 
-    print(test_results)
+    print(num_failures)
 
 
 else:
