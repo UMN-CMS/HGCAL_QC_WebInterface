@@ -41,7 +41,7 @@ BATCH_INFO = {
         '2': ('2025-06-04', 'Production'),
     },
     'HDH': {
-        '1': ('2024-06-21', 'Preseries'),
+        '1': ('2024-06-21', 'Preproduction'),
         '2': ('2025-06-06', 'Production'),
     },
     'LD': {
@@ -64,7 +64,7 @@ LPGBT_VERSIONS = {
 # -------- Engine-type -> prefix & LPGBT-count mapping ----------
 ENGINE_CONFIG = {
     'HDF': {'prefix': '320EH0QF', 'n_lpgbts': 6},
-    'HDH': {'prefix': '320EH0QH', 'n_lpgbts': 3},
+    'HDH': {'prefix': '320EH', 'n_lpgbts': 3},
     'LD' : {'prefix': '320EL',    'n_lpgbts': 3},
 }
 
@@ -211,17 +211,13 @@ def get_bare_code(barcode, typecode):
 
     # 5) fetch all unused stock for this typecode
     st, stock_list = get_unused_stock(stock_cur, typecode, quantity=9999)
+    stock_iter = iter(stock_list)
+    bc = next(stock_iter)[0]
+
+#    print(stock_list)
     if st != 200:
         return st, f"Error fetching unused stock: {stock_list}"
-    # filter for matching trailing digits
-    suffix = barcode[-6:]
 
-    matches = [s for s in stock_list if s[0].endswith(suffix)]
-    if not matches:
-        return 404, f"No unused stock matching suffix {suffix} for typecode {typecode}"
-    bc = matches[0][0]
-    logging.info("barcode", barcode)
-    logging.info("bc", bc)
     # 6) mark it used for this barcode
     mark_db  = connect(1)
     mark_cur = mark_db.cursor(prepared=True)
@@ -256,12 +252,13 @@ def engine_file(prefix, n_lpgbts, engine_type):
     written_boards = []
     count = 0
     for bc in boards:
+        print(bc)
         if check_if_registered(cur, bc):
             continue
 
         tc, mf, batch = get_typecode(cur, bc), get_manufacturer(cur, bc), get_batch(cur, bc)
-
-        if tc == "EL-0QE" or tc == "EL-0QW":
+        print(tc)
+        if tc == "EL-0QE" or tc == "EL-0QW" or tc == "EH-0QH" or tc == "EH-0QF":
             continue
         info = BATCH_INFO.get(engine_type, {}).get(batch)
         if info is None:
