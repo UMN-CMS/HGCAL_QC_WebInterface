@@ -29,17 +29,27 @@ from bokeh.layouts import column, row
 import json
 import makeTestingData as mTD
 
-ds = mTD.get_board_statuses()
+#ds = mTD.get_board_statuses()
+ds = mTD.get_status_over_time()
 
 colors = [
         d3['Category10'][10][0],
         d3['Category10'][10][1],
-        d3['Category10'][10][9],
         d3['Category10'][10][7],
         d3['Category10'][10][8],
         d3['Category10'][10][2],
         d3['Category10'][10][3],
         ]
+
+def convert_keys_to_strings(obj):
+    if isinstance(obj, dict):
+        return {str(k): convert_keys_to_strings(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_keys_to_strings(item) for item in obj]
+    else:
+        return obj
+
+ds = convert_keys_to_strings(ds)
 
 def TotalPlot(data, mc_widgets, widgets):
     data_total = ColumnDataSource(data={'dates':[], 'counts':[]})
@@ -48,9 +58,8 @@ def TotalPlot(data, mc_widgets, widgets):
     data_passed = ColumnDataSource(data={'dates':[], 'counts':[]})
     data_shipped = ColumnDataSource(data={'dates':[], 'counts':[]})
     data_inprog = ColumnDataSource(data={'dates':[], 'counts':[]})
-    data_thermal = ColumnDataSource(data={'dates':[], 'counts':[]})
 
-    x = CustomJS(args=dict(data_failed=data_failed, data_total=data_total, data_notreg=data_notreg, data_passed=data_passed, data_shipped=data_shipped, data_inprog=data_inprog, data=data, mc_widgets=mc_widgets, data_thermal=data_thermal),code='''
+    x = CustomJS(args=dict(data_failed=data_failed, data_total=data_total, data_notreg=data_notreg, data_passed=data_passed, data_shipped=data_shipped, data_inprog=data_inprog, data=data, mc_widgets=mc_widgets),code='''
 const dates = []
 const tsd_failed = []
 const tsd_passed = []
@@ -58,7 +67,6 @@ const tsd_shipped = []
 const tsd_inprog = []
 const tsd_notreg = []
 const tsd_total = []
-const tsd_thermal = []
 
 const is_selected_map = new Map([
     ["multi_choice", (wi, pos, el, idx) => wi.value.includes(el)],
@@ -93,7 +101,6 @@ const days = Array.from(Object.keys(data));
 for (let d = 0; d < days.length; d++) {
     let total = 0;
     let awaiting = 0;
-    let thermal = 0;
     let notreg = 0;
     let passed = 0;
     let shipped = 0;
@@ -107,23 +114,20 @@ for (let d = 0; d < days.length; d++) {
                     if (data[days[d]][majors[m]][subs[s]]['Total']) {
                         total = total + data[days[d]][majors[m]][subs[s]]['Total']
                     }
-                    if (data[days[d]][majors[m]][subs[s]]['Awaiting']) {
-                        awaiting = awaiting + data[days[d]][majors[m]][subs[s]]['Awaiting']
+                    if (data[days[d]][majors[m]][subs[s]]['Awaiting Testing']) {
+                        awaiting = awaiting + data[days[d]][majors[m]][subs[s]]['Awaiting Testing']
                     }
-                    if (data[days[d]][majors[m]][subs[s]]['Thermal']) {
-                        thermal = thermal + data[days[d]][majors[m]][subs[s]]['Thermal']
+                    if (data[days[d]][majors[m]][subs[s]]['Passed QC, Awaiting Registration']) {
+                        notreg = notreg + data[days[d]][majors[m]][subs[s]]['Passed QC, Awaiting Registration']
                     }
-                    if (data[days[d]][majors[m]][subs[s]]['Not Registered']) {
-                        notreg = notreg + data[days[d]][majors[m]][subs[s]]['Not Registered']
-                    }
-                    if (data[days[d]][majors[m]][subs[s]]['Passed']) {
-                        passed = passed + data[days[d]][majors[m]][subs[s]]['Passed']
+                    if (data[days[d]][majors[m]][subs[s]]['Ready for Shipping']) {
+                        passed = passed + data[days[d]][majors[m]][subs[s]]['Ready for Shipping']
                     }
                     if (data[days[d]][majors[m]][subs[s]]['Shipped']) {
                         shipped = shipped + data[days[d]][majors[m]][subs[s]]['Shipped']
                     }
-                    if (data[days[d]][majors[m]][subs[s]]['Failed']) {
-                        failed = failed + data[days[d]][majors[m]][subs[s]]['Failed']
+                    if (data[days[d]][majors[m]][subs[s]]['Failed QC']) {
+                        failed = failed + data[days[d]][majors[m]][subs[s]]['Failed QC']
                     }
                 }
             }
@@ -132,7 +136,6 @@ for (let d = 0; d < days.length; d++) {
     dates.push(Date.parse(days[d]))
     tsd_failed.push(failed)
     tsd_passed.push(passed)
-    tsd_thermal.push(thermal)
     tsd_shipped.push(shipped)
     tsd_inprog.push(awaiting)
     tsd_notreg.push(notreg)
@@ -158,17 +161,13 @@ data_shipped.data['dates'] = dates;
 data_shipped.data['counts'] = tsd_shipped;
 data_shipped.change.emit()
 
-data_thermal.data['dates'] = dates;
-data_thermal.data['counts'] = tsd_thermal
-data_thermal.change.emit()
-
 data_inprog.data['dates'] = dates;
 data_inprog.data['counts'] = tsd_inprog;
 data_inprog.change.emit()
 ''')
     for widget in widgets.values():
         widget.js_on_change('value', x)
-    return data_total, data_inprog, data_thermal, data_notreg, data_passed, data_shipped, data_failed
+    return data_total, data_inprog, data_notreg, data_passed, data_shipped, data_failed
 
 def Filter():
     mc_widgets = {}
@@ -207,15 +206,14 @@ def Filter():
                 'widget': widget,}
 
     widgets = {k:w['widget'] for k,w in mc_widgets.items()}
-    data_total, data_awaiting, data_thermal, data_notreg, data_passed, data_shipped, data_failed = TotalPlot(ds, mc_widgets, widgets)
+    data_total, data_awaiting, data_notreg, data_passed, data_shipped, data_failed = TotalPlot(ds, mc_widgets, widgets)
 
     p.line('dates', 'counts', source=data_total, legend_label='Total Received', color=colors[0], line_width=2, muted_alpha=0.2)
     p.line('dates', 'counts', source=data_awaiting, legend_label='Awaiting Testing', color=colors[1], line_width=2, muted_alpha=0.2)
-    p.line('dates', 'counts', source=data_thermal, legend_label='QC Passed Minus Thermal Cycle', color=colors[2], line_width=2, muted_alpha=0.2)
-    p.line('dates', 'counts', source=data_notreg, legend_label='Awaiting Registration', color=colors[3], line_width=2, muted_alpha=0.2)
-    p.line('dates', 'counts', source=data_passed, legend_label='Passed QC', color=colors[4], line_width=2, muted_alpha=0.2)
-    p.line('dates', 'counts', source=data_shipped, legend_label='Shipped', color=colors[5], line_width=2, muted_alpha=0.2)
-    p.line('dates', 'counts', source=data_failed, legend_label='Have Failures', color=colors[6], line_width=2, muted_alpha=0.2)
+    p.line('dates', 'counts', source=data_notreg, legend_label='Awaiting Registration', color=colors[2], line_width=2, muted_alpha=0.2)
+    p.line('dates', 'counts', source=data_passed, legend_label='Passed QC', color=colors[3], line_width=2, muted_alpha=0.2)
+    p.line('dates', 'counts', source=data_shipped, legend_label='Shipped', color=colors[4], line_width=2, muted_alpha=0.2)
+    p.line('dates', 'counts', source=data_failed, legend_label='Failed QC', color=colors[5], line_width=2, muted_alpha=0.2)
 
     p.legend.click_policy='hide'
     p.legend.label_text_font_size = '8pt'

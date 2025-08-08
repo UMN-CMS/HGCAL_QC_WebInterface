@@ -104,7 +104,8 @@ for (let i = 0; i < d_keys.length; i++) {
     if (dates.get('End Date').get(d_keys[i]) == true) {
         let ed = d_keys[i];
         end_date = new Date(ed);
-        end_date = new Date(end_date.setDate(end_date.getDate() + 1));
+
+        end_date.setDate(end_date.getDate() + 1);
     }
 }
 for (let i = 0; i < source.get_length(); i++) {

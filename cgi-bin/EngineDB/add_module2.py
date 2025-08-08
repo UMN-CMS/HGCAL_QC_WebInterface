@@ -22,7 +22,9 @@ if form.getvalue('full_id'):
     loc = html.escape(form.getvalue('location'))
 
     # calls add_module() to add it to DB
+    print('Begin')
     home_page_list.add_module(full, manu, loc)
+    print('End')
     
     print('<div class="row">')
     print('<div class="col-md-3 ps-4 pt-2 mx-2 my-2">')

@@ -68,6 +68,7 @@ def top(admin=False):
           <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
             <li><a class="dropdown-item" href="search_boards.py?major_type=LD">Search LD Engines</a></li>
             <li><a class="dropdown-item" href="search_boards.py?major_type=HD">Search HD Engines</a></li>
+            <li><a class="dropdown-item" href="search_boards.py?major_type=ZP">Search lpGBT Mezzanines</a></li>
           </ul>
         </li>
         <li class="nav-item">

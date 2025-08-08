@@ -35,7 +35,7 @@ def render_list_tests():
         select B.full_id, B.type_id, B.board_id, BT.name as nickname, BT.type_id as bt_type_id 
         from Board B
         join Board_type BT on B.type_id=BT.type_sn
-        order by B.type_id
+        order by B.type_id, B.full_id
     ''')
     all_boards = cur.fetchall()
 
@@ -269,7 +269,7 @@ def add_module(serial_number, manu, location):
                     cur.execute("INSERT INTO Board (sn, full_id, type_id, location) VALUES (%s, '%s', '%s', '%s'); " % (sn, serial_number, type_id, location)) 
                     db.commit()
                     db.close()
-                return 'Board entered successfully!'
+                print('Board entered successfully!')
             else:
                 print("<h3>Serial number already exists!<h3>")
         else:

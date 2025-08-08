@@ -43,7 +43,7 @@ def render_list_tests():
         select B.full_id, B.type_id, B.board_id, BT.name as nickname, BT.type_id as bt_type_id 
         from Board B
         join Board_type BT on B.type_id=BT.type_sn
-        order by B.type_id
+        order by B.type_id, B.full_id
     ''')
     all_boards = cur.fetchall()
 
