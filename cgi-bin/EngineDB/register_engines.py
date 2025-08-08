@@ -63,8 +63,8 @@ LPGBT_VERSIONS = {
 
 # -------- Engine-type -> prefix & LPGBT-count mapping ----------
 ENGINE_CONFIG = {
-    'HDF': {'prefix': '320EH0QF', 'n_lpgbts': 6},
-    'HDH': {'prefix': '320EH0QH', 'n_lpgbts': 3},
+    'HDF': {'prefix': '320EH10F2', 'n_lpgbts': 6},
+    'HDH': {'prefix': '320EH10H2', 'n_lpgbts': 3},
     'LD' : {'prefix': '320EL',    'n_lpgbts': 3},
 }
 
@@ -275,6 +275,7 @@ def engine_file(prefix, n_lpgbts, engine_type):
 
         status, payload = get_bare_code(bc, tc)
         if status != 200:
+            print(payload)
             continue #This skips anything not 10E or 10W
         else:
             bare_tc, bare_sn = payload
@@ -399,6 +400,18 @@ def lpgbt_file(prefix, engine_type, boards):
     buf.seek(0)
     return buf
 
+def zip_for_engine(etype):
+    cfg     = ENGINE_CONFIG[etype]
+    eng_buf, written_engines = engine_file(cfg['prefix'], cfg['n_lpgbts'], etype)
+    lpg_buf = lpgbt_file(cfg['prefix'], etype, written_engines)
+
+    zip_buf = io.BytesIO()
+    with zipfile.ZipFile(zip_buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr(f"{etype}_engines.csv", eng_buf.getvalue())
+        zf.writestr(f"{etype}_lpgbts.csv",                lpg_buf.getvalue())
+    return zip_buf.getvalue()
+    
+
 # --------- CLI ---------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(
@@ -418,18 +431,10 @@ def main():
     args = parser.parse_args()
 
     zip_name = args.zip_out or f"{args.engine}_engine_reg.zip"
-
-    cfg     = ENGINE_CONFIG[args.engine]
-    eng_buf, written_engines = engine_file(cfg['prefix'], cfg['n_lpgbts'], args.engine)
-    lpg_buf = lpgbt_file(cfg['prefix'], args.engine, written_engines)
-
-    zip_buf = io.BytesIO()
-    with zipfile.ZipFile(zip_buf, 'w', zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr(f"{args.engine}_engines.csv", eng_buf.getvalue())
-        zf.writestr(f"{args.engine}_lpgbts.csv",                lpg_buf.getvalue())
+    zip_data = zip_for_engine(args.engine)
 
     with open(zip_name, 'wb') as f:
-        f.write(zip_buf.getvalue())
+        f.write(zip_data)
 
     logger.info(f"Wrote {zip_name}")
 
