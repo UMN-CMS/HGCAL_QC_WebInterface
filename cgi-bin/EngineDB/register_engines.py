@@ -279,6 +279,8 @@ def engine_file(prefix, n_lpgbts, engine_type):
 
         if mf == "TTM-Caltronics":
             mf = "Caltronics-Minnesota"
+        elif mf == "TTM-Piranha":
+            mf = "Piranha EMS"
 
         missing = []
         if tc is None:           missing.append("typecode")
