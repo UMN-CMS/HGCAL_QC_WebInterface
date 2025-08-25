@@ -224,13 +224,21 @@ if __name__ == '__main__':
     if "REQUEST_METHOD" in os.environ:
         import cgi, html
         print("Content-type: text/csv")
-        print('Content-disposition: attachment; filename="ld_wagons_register.csv"\n')
         form = cgi.FieldStorage()
         if "mt" in form:
-            mt=str(form["mt"]).split(",")
+            mt=form["mt"].value.split(",")
             fl=["320" + s for s in mt]
+            if "WW" in mt:
+                print('Content-disposition: attachment; filename="ld_wagons_register.csv"\n')
+            elif "ZP" in mt:
+                print('Content-disposition: attachment; filename="zippers_register.csv"\n')
+            elif "SC" in mt:
+                print('Content-disposition: attachment; filename="flex_register.csv"\n')
+            else:
+                print('Content-disposition: attachment; filename="boards_register.csv"\n')
             run(None, fl)
         else:
+            print('Content-disposition: attachment; filename="boards_register.csv"\n')
             run(None)
     else: # Commandline
         parser = argparse.ArgumentParser(description="Register wagons and other items by exporting data to a CSV file.")
