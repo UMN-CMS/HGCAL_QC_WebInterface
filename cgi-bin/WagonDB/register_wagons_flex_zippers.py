@@ -24,7 +24,7 @@ def filter_boards(cur) -> list:
     """Fetch and filter board IDs that start with '320WW' or '320WE'."""
     try:
         cur.execute('SELECT full_id FROM Board')
-        return [board[0] for board in cur.fetchall() if board[0].startswith('320WW') or board[0].startswith('320WE')]
+        return [board[0] for board in cur.fetchall() if board[0].startswith('320WW') or board[0].startswith('320WE') or board[0].startswith('320ZP') or board[0].startswith('320SC')]
     except Exception as e:
         logger.error(f"Error fetching board IDs: {e}")
         return []
@@ -105,7 +105,12 @@ def get_manufacturer(cur, barcode):
 
 def get_name(barcode):
     """Generate a name label for the barcode."""
-    return f"LD Wagon {barcode[4]} {barcode}"
+    if barcode[3:5] == "WE" or barcode[3:5] == "WW":
+        return f"LD Wagon {barcode[4]} {barcode}"
+    elif barcode[3:5] == "ZP":
+        return f"Zipper {barcode}"
+    elif barcode[3:5] == "SC":
+        return f"Flex Cable {barcode}"
 
 BATCH_BOARD_DATES = {
     "WE-10A1:A" : "2024-06-01", "WE-20A1:A" : "2024-06-01", "WE-20B1:A" : "2024-06-01", "WW-10A1:A" : "2024-06-01", "WW-20A1:A" : "2024-06-01",
@@ -116,6 +121,14 @@ BATCH_BOARD_DATES = {
     "WW-21E2:D" : "2025-05-09","WW-21E3:D" : "2025-05-09","WW-12C1:D": "2025-05-09","WE-21C3:D": "2025-05-09","WE-20E1:D": "2025-05-09","WE-11C1:D": "2025-05-09", "WE-10B1:D": "2025-05-09",
     "WW-30A1:E" : "2025-06-03","WE-30A1:E" : "2025-06-03",
     "WW-20A1:F" : "2025-06-24","WE-20A1:F" : "2025-06-24",
+    "SC-FBH4:1" : "2024-04-03",
+    "WE-21C4:I" : "2025-08-15",
+    "WW-20D1:I" : "2025-08-15",
+    "WW-21D1:I" : "2025-08-15",
+    "ZP-HSN0:2" : "2025-07-15",
+    "WE-40A2:1" : "2025-08-05"
+
+
 }
 
 def get_date(typecode, batch):
@@ -134,7 +147,7 @@ def get_batch(cur, barcode):
         if not sn_result:
             logger.warning(f"No serial number (sn) found for barcode {barcode}")
             return None
-        sn = sn_result[0]
+        sn = str(sn_result[0])
 
         # Return the second character of the sn, which is the batch character.
         if len(sn) >= 2:
