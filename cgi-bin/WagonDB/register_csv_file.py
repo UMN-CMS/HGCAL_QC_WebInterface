@@ -162,8 +162,8 @@ def get_batch(cur, barcode):
 
 def get_description(label_typecode,batch):
     """Check if the batch character is a number or a letter to assign a comment field."""
-    if label_typecode=="SC-FBH4" return "Production"
-    if label_typecode.startswith("ZP-") return "Production"
+    if label_typecode=="SC-FBH4": return "Production"
+    if label_typecode.startswith("ZP-"): return "Production"
     return "Pre-series" if batch.isdigit() else "Pre-production" if batch=="A" else "Production"
  
 def run(csv_file,selected=None):
