@@ -160,8 +160,10 @@ def get_batch(cur, barcode):
         logger.error(f"Error getting second character from serial number for barcode {barcode}: {e}")
         return None
 
-def get_description(batch):
+def get_description(label_typecode,batch):
     """Check if the batch character is a number or a letter to assign a comment field."""
+    if label_typecode=="SC-FBH4" return "Production"
+    if label_typecode.startswith("ZP-") return "Production"
     return "Pre-series" if batch.isdigit() else "Pre-production" if batch=="A" else "Production"
  
 def run(csv_file,selected=None):
@@ -203,7 +205,7 @@ def run(csv_file,selected=None):
             batch = get_batch(cur, barcode)
             name_label = get_name(barcode)
             production_date = get_date(label_typecode, batch)
-            comment = get_description(batch)
+            comment = get_description(label_typecode, batch)
 
             writer.writerow([
                 label_typecode, barcode, barcode, LOCATION,
