@@ -80,6 +80,7 @@ def top(admin=False):
             <li><a class="dropdown-item" href="search_boards.py?major_type=LD">Search LD Wagons</a></li>
             <li><a class="dropdown-item" href="search_boards.py?major_type=HD">Search HD Wagons</a></li>
             <li><a class="dropdown-item" href="search_boards.py?major_type=ZP">Search Zippers</a></li>
+            <li><a class="dropdown-item" href="search_boards.py?major_type=SC">Search Flex Cables</a></li>
           </ul>
         </li>
         <li class="nav-item">

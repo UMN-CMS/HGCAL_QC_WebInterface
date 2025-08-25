@@ -68,7 +68,7 @@ else:
     print('<th> LD West Wagons </th>')
     print('<th> LD East Wagons </th>')
     print('<th> HD Wagons </th>')
-    print('<th> Zippers </th>')
+    print('<th> Zippers and Flex Cables </th>')
     print('</tr>')
     print('</thead>')
     print('<tbody>')
@@ -83,11 +83,16 @@ else:
     cur.execute('select type_sn, name from Board_type where type_sn like "ZP%" order by type_sn')
     zp_subtypes = cur.fetchall()
 
+    cur.execute('select type_sn, name from Board_type where type_sn like "SC%" order by type_sn')
+    sc_subtypes = cur.fetchall()
+
     cur.execute('select type_sn, name from Board_type where type_sn like "WH%" order by type_sn')
     hd_subtypes = cur.fetchall()
 
 
     m = max([len(zp_subtypes), len(west_subtypes), len(east_subtypes), len(hd_subtypes)])
+
+    count = 0
 
     for s in range(m):
         print('<tr>')
@@ -113,8 +118,12 @@ else:
         print('<td>')
         try:
             print('<a href="board_images.py?type_id=%(id)s">%(id)s, (%(name)s)</a>' %{'id':zp_subtypes[s][0], 'name': zp_subtypes[s][1]})
+            count += 1
         except:
-            pass
+            try:
+                print('<a href="board_images.py?type_id=%(id)s">%(id)s, (%(name)s)</a>' %{'id':sc_subtypes[s-count][0], 'name': sc_subtypes[s-count][1]})
+            except:
+                pass
         print('</td>')
         print('</tr>')
 

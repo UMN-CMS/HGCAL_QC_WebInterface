@@ -838,7 +838,7 @@ def get_status_over_time():
 
     for date in all_dates:
         for board_id, info in board_info.items():
-            if info['checkin_date'].date() > date:
+            if info['checkin_date'].date() >= date:
                 continue  # not yet checked in
 
             full_id = info['full_id']
