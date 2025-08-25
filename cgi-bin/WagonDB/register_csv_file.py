@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import sys
+import os
 import json 
 import csv
 import logging
@@ -20,11 +21,11 @@ MANU_RENAMES = { "Poly" : "PolyElectronics",
 
 
 # Helper Functions
-def filter_boards(cur) -> list:
-    """Fetch and filter board IDs that start with '320WW' or '320WE'."""
+def filter_boards(cur, ok_list=['320WW','320WE','320ZP','320SC']) -> list:
+    """Fetch and filter board IDs that start with selected characters."""
     try:
         cur.execute('SELECT full_id FROM Board')
-        return [board[0] for board in cur.fetchall() if board[0].startswith('320WW') or board[0].startswith('320WE') or board[0].startswith('320ZP') or board[0].startswith('320SC')]
+        return [board[0] for board in cur.fetchall() if board[0][:5] in ok_list]
     except Exception as e:
         logger.error(f"Error fetching board IDs: {e}")
         return []
@@ -163,14 +164,17 @@ def get_description(batch):
     """Check if the batch character is a number or a letter to assign a comment field."""
     return "Pre-series" if batch.isdigit() else "Pre-production" if batch=="A" else "Production"
  
-def run(csv_file):
+def run(csv_file,selected=None):
     """Main execution function."""
     try:
         db = connect(0)
         cur = db.cursor()
         ofile = None
 
-        all_ld_wagons = filter_boards(cur)
+        if selected is None:
+            all_ld_wagons = filter_boards(cur)
+        else:
+            all_ld_wagons = filter_boards(cur,selected)
 
         if csv_file is None:
             writer = csv.writer(sys.stdout)
@@ -217,11 +221,25 @@ def run(csv_file):
         logger.error(f"Critical error in run function: {e}")
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Register LD wagons by exporting data to a CSV file.")
-    parser.add_argument("-o", "--output", type=str, default=None, help="Output CSV file name (e.g., output.csv)")
-    args = parser.parse_args()
-
-    if args.output is None:        
+    if "REQUEST_METHOD" in os.environ:
+        import cgi, html
         print("Content-type: text/csv")
         print('Content-disposition: attachment; filename="ld_wagons_register.csv"\n')
-    run(args.output)
+        form = cgi.FieldStorage()
+        if "mt" in form:
+            mt=str(form["mt"]).split(",")
+            fl=["320" + s for s in mt]
+            run(None, fl)
+        else:
+            run(None)
+    else: # Commandline
+        parser = argparse.ArgumentParser(description="Register wagons and other items by exporting data to a CSV file.")
+        parser.add_argument("-o", "--output", type=str, default=None, help="Output CSV file name (e.g., output.csv)")
+        parser.add_argument('-t', "--majortype", type=str, default=None, help="Major type")
+        args = parser.parse_args()
+
+        if args.majortype is None:
+            run(args.output)
+        else:
+            run(args.output,["320%s"%args.majortype])
+        
