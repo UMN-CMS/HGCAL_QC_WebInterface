@@ -670,18 +670,21 @@ def get_board_states():
         }
 
     cur.execute('''
-        select T.board_id, T.test_type_id, T.successful
+        select T.board_id, T.test_type_id, T.successful, A.attach
         from Test T
         join (
             select board_id, test_type_id, MAX(test_id) as latest_test_id
             from Test
             group by board_id, test_type_id
         ) latest on T.test_id = latest.latest_test_id
+        left join Attachments A on A.test_id=T.test_id
     ''')
 
     test_results = {}
-    for board_id, test_type_id, successful in cur.fetchall():
+    test_data = {}
+    for board_id, test_type_id, successful, attachment in cur.fetchall():
         test_results.setdefault(board_id, {})[test_type_id] = successful
+        test_data.setdefault(board_id, {})[test_type_id] = attachment
 
     cur.execute('''
         select TTS.type_id, TT.test_type, TT.name
@@ -742,7 +745,14 @@ def get_board_states():
             if board_id in shipped_board_ids:
                 status = 'Shipped'
             elif num_tests_failed != 0:
-                status = 'Failed QC'
+                try:
+                    if (failed.get('Thermal Cycle') is True and 
+                    json.loads(test_data.get(board_id, {}).get(24))['test_data']['status_num'] in (2, 3)):
+                        status = 'Passed QC Minus Thermal Cycle'
+                    else:
+                        status = 'Failed QC'
+                except KeyError as e:
+                    status = 'Failed QC'
             elif num_tests_passed == num_tests_req:
                 status = 'Ready for Shipping'
             elif (
@@ -775,8 +785,9 @@ def get_status_over_time():
     board_rows = cur.fetchall()
 
     cur.execute('''
-        SELECT T.board_id, T.test_type_id, T.successful, T.day
+        SELECT T.board_id, T.test_type_id, T.successful, T.day, A.attach
         FROM Test T
+        JOIN Attachments A ON A.test_id=T.test_id
         ORDER BY T.day
     ''')
     test_rows = cur.fetchall()
@@ -812,8 +823,10 @@ def get_status_over_time():
         all_dates.add(checkout_date.date())
 
     test_history = defaultdict(lambda: defaultdict(list))
-    for board_id, test_type_id, successful, timestamp in test_rows:
+    test_data = {}
+    for board_id, test_type_id, successful, timestamp, attachment in test_rows:
         test_history[board_id][test_type_id].append((timestamp, successful))
+        test_data.setdefault(board_id, {})[test_type_id] = attachment
         all_dates.add(timestamp.date())
 
     all_dates = sorted(all_dates)
@@ -821,7 +834,7 @@ def get_status_over_time():
 
     for date in all_dates:
         for board_id, info in board_info.items():
-            if info['checkin_date'].date() > date:
+            if info['checkin_date'].date() >= date:
                 continue  # not yet checked in
 
             full_id = info['full_id']
@@ -856,10 +869,22 @@ def get_status_over_time():
             # Determine status
             if checkout_dates.get(board_id, None) and checkout_dates[board_id].date() <= date:
                 status = 'Shipped'
-            elif num_tests_failed:
-                status = 'Failed QC'
+            elif num_tests_failed != 0:
+                try:
+                    if (failed.get('Thermal Cycle') is True and 
+                    json.loads(test_data.get(board_id, {}).get(24))['test_data']['status_num'] in (2, 3)):
+                        status = 'Passed QC Minus Thermal Cycle'
+                    else:
+                        status = 'Failed QC'
+                except KeyError as e:
+                    status = 'Failed QC'
             elif num_tests_passed == num_tests_req:
                 status = 'Ready for Shipping'
+            elif (
+                outcomes.get('Thermal Cycle') is False and 
+                sum(v for k,v in outcomes.items() if k != 'Thermal Cycle' and k != 'Registered') == num_tests_req - 2
+            ):
+                status = 'Passed QC Minus Thermal Cycle'
             elif (num_tests_passed == num_tests_req - 1 and not outcomes.get('Registered', False)):
                 status = 'Passed QC, Awaiting Registration'
             else:
