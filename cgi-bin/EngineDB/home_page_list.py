@@ -5,6 +5,7 @@ from connect import connect
 import sys
 import cgitb
 import mysql
+import json
 
 cgitb.enable()
 db = connect(0)
@@ -51,18 +52,21 @@ def render_list_tests():
         }
 
     cur.execute('''
-        select T.board_id, T.test_type_id, T.successful
+        select T.board_id, T.test_type_id, T.successful, A.attach
         from Test T
         join (
             select board_id, test_type_id, MAX(test_id) as latest_test_id
             from Test
             group by board_id, test_type_id
         ) latest on T.test_id = latest.latest_test_id
+        left join Attachments A on A.test_id=T.test_id
     ''')
 
     test_results = {}
-    for board_id, test_type_id, successful in cur.fetchall():
+    test_data = {}
+    for board_id, test_type_id, successful, attachment in cur.fetchall():
         test_results.setdefault(board_id, {})[test_type_id] = successful
+        test_data.setdefault(board_id, {})[test_type_id] = attachment
 
     cur.execute('''
         select TTS.type_id, TT.test_type, TT.name
@@ -112,7 +116,14 @@ def render_list_tests():
             if board_id in shipped_board_ids:
                 status = 'Shipped'
             elif num_tests_failed != 0:
-                status = 'Failed'
+                try:
+                    if (failed.get('Thermal Cycle') is True and 
+                    json.loads(test_data.get(board_id, {}).get(24))['test_data']['status_num'] in (2, 3)):
+                        status = 'Thermal'
+                    else:
+                        status = 'Failed'
+                except KeyError as e:
+                    status = 'Failed'
             elif num_tests_passed == num_tests_req:
                 status = 'Passed'
             elif (

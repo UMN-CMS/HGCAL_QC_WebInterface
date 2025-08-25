@@ -30,7 +30,7 @@ print('<tr>')
 print('<th> LD West Wagons </th>')
 print('<th> LD East Wagons </th>')
 print('<th> HD Wagons </th>')
-print('<th> Zippers </th>')
+print('<th> Zippers and Flex Cables </th>')
 print('</tr>')
 print('</thead>')
 print('<tbody>')
@@ -72,7 +72,18 @@ for t in temp:
     hd_subtypes.append(new[0][0])
 hd_subtypes = np.unique(hd_subtypes).tolist()
 
+sc_subtypes = []
+cur.execute('select board_id from Board where full_id like "%SC%"')
+temp = cur.fetchall()
+for t in temp:
+    cur.execute('select type_id from Board where board_id="%s"' % t[0])
+    new = cur.fetchall()
+    sc_subtypes.append(new[0][0])
+sc_subtypes = np.unique(sc_subtypes).tolist()
+
 m = max([len(zp_subtypes), len(west_subtypes), len(east_subtypes), len(hd_subtypes)])
+
+count = 0
 
 for s in range(m):
     print('<tr>')
@@ -98,8 +109,12 @@ for s in range(m):
     print('<td>')
     try:
         print('<a href="summary_board.py?type_id=%(id)s">%(id)s</a>' %{'id':zp_subtypes[s]})
+        count += 1
     except:
-        pass
+        try:
+            print('<a href="summary_board.py?type_id=%(id)s">%(id)s</a>' %{'id':sc_subtypes[s-count]})
+        except:
+            pass
     print('</td>')
     print('</tr>')
 
