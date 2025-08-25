@@ -77,6 +77,7 @@ def argas(args,name,notprovided=None):
     return notprovided
 
 args={}
+
 if __name__ == "__main__":
     if "REQUEST_METHOD" in os.environ:
         form = cgi.FieldStorage()
@@ -84,7 +85,6 @@ if __name__ == "__main__":
         for key in knowns:
             if key in form:
                 args[key]=form.getvalue(key)
-
     else:
         import argparse
         parser = argparse.ArgumentParser(description="Components")

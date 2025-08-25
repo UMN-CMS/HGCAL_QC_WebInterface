@@ -74,12 +74,17 @@ def add_test_tab(barcode, board_id):
     print('</div>')
     print('</div>')
     
-    decoded = la.decode(barcode)
-    major = la.getMajorType(decoded.major_type_code)
-    sub = major.getSubtypeByCode(decoded.subtype_code)
-    schema = la.getMajorType(decoded.major_type_code).getSubtypeByCode(decoded.subtype_code).serial_schema
-    sn = schema.encode(decoded.field_values)
-    #sn = decoded.field_values['SerialNumber'].value
+    if barcode[3:5] == 'WH' and barcode[8] == '0':
+        major = la.getMajorType('WH')
+        sub = major.getSubtypeByCode(barcode[5:9])
+        sn = barcode[11:]
+    else:
+        decoded = la.decode(barcode)
+        major = la.getMajorType(decoded.major_type_code)
+        sub = major.getSubtypeByCode(decoded.subtype_code)
+        schema = la.getMajorType(decoded.major_type_code).getSubtypeByCode(decoded.subtype_code).serial_schema
+        sn = schema.encode(decoded.field_values)
+        #sn = decoded.field_values['SerialNumber'].value
     print('<div class="row">')
     print('<div class="col-md-3 pt-4 ps-5 mx-2 my-2">')
     print('<h4>')

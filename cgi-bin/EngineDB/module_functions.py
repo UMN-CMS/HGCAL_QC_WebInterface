@@ -72,7 +72,10 @@ def add_test_tab(barcode, board_id):
     decoded = la.decode(barcode)
     major = la.getMajorType(decoded.major_type_code)
     sub = major.getSubtypeByCode(decoded.subtype_code)
-    sn = decoded.field_values['SerialNumber'].value
+    if barcode[3] == 'E':
+        sn = decoded.field_values['SerialNumber'].value
+    elif barcode[3] == 'Z':
+        sn = decoded.field_values['N'].value
     print('<div class="row">')
     print('<div class="col-md-3 pt-4 ps-5 mx-2 my-2">')
     print('<h4>')
@@ -251,8 +254,8 @@ def ePortageTest(test_type_id, board_sn, test_name, type_sn):
 
 def get_sn_from_lpgbt_id(lpgbt_id):
 
-    LD_QUERY = "SELECT full_id FROM Board INNER JOIN Test INNER JOIN Attachments ON Board.board_id=Test.board_id and Test.test_id=Attachments.test_id WHERE JSON_EXTRACT(Attachments.attach, '$.test_data.DAQ.id') = %s"
-    HD_QUERY = "SELECT full_id FROM Board INNER JOIN Test INNER JOIN Attachments ON Board.board_id=Test.board_id and Test.test_id=Attachments.test_id WHERE JSON_EXTRACT(Attachments.attach, '$.test_data.DAQ1.id') = %s"
+    LD_QUERY = "SELECT full_id FROM Board INNER JOIN Test INNER JOIN Attachments ON Board.board_id=Test.board_id and Test.test_id=Attachments.test_id WHERE JSON_EXTRACT(Attachments.attach, '$.test_data.DAQ.id') = %s ORDER BY Test.test_id desc"
+    HD_QUERY = "SELECT full_id FROM Board INNER JOIN Test INNER JOIN Attachments ON Board.board_id=Test.board_id and Test.test_id=Attachments.test_id WHERE JSON_EXTRACT(Attachments.attach, '$.test_data.DAQ1.id') = %s ORDER BY Test.test_id desc"
 
     lpgbt_id_int = str(int(lpgbt_id, 16))
 
@@ -296,7 +299,7 @@ def board_info(sn):
             daq_chip_id = hex(int(attach['DAQ']["id"]))
             east_chip_id = hex(int(attach['E']["id"]))
             west_chip_id = hex(int(attach['W']["id"]))
-        if sn[3:5] == 'EH':
+        elif sn[3:5] == 'EH':
             daq1_chip_id = hex(int(attach['DAQ1']["id"]))
             trig1_chip_id = hex(int(attach['TRG1']["id"]))
             trig2_chip_id = hex(int(attach['TRG2']["id"]))
@@ -304,6 +307,9 @@ def board_info(sn):
                 daq2_chip_id = hex(int(attach['DAQ2']["id"]))
                 trig3_chip_id = hex(int(attach['TRG3']["id"]))
                 trig4_chip_id = hex(int(attach['TRG4']["id"]))
+        elif sn[3:5] == 'ZP':
+            daq_chip_id = hex(int(attach['lpgbt']["id"]))
+
     except Exception as e:
         test_id = 'No tests run'
         attach = 'none'
@@ -311,13 +317,15 @@ def board_info(sn):
             daq_chip_id = 'None'
             east_chip_id = 'None'
             west_chip_id = 'None'
-        if sn[3:5] == 'EH':
+        elif sn[3:5] == 'EH':
             daq1_chip_id = 'None'
             daq2_chip_id = 'None'
             trig1_chip_id = 'None'
             trig2_chip_id = 'None'
             trig3_chip_id = 'None'
             trig4_chip_id = 'None'
+        elif sn[3:5] == 'ZP':
+            daq_chip_id = 'None'
         
     try:
         cur.execute('select comments from Board where board_id=%s' % board_id)
@@ -370,35 +378,48 @@ def board_info(sn):
     print('<table class="table table-bordered table-hover table-active">')
     print('<tbody>')
     print('<tr>')
-    print('<th colspan=1>Location</th>')
+    if sn[3] == 'E':
+        print('<th colspan=1>Location</th>')
+    elif sn[3] == 'Z':
+        print('<th colspan=2>Location</th>')
     if sn[3:5] == 'EL':
         print('<th colspan=1>DAQ Chip ID</th>')
         print('<th colspan=1>East Chip ID</th>')
         print('<th colspan=1>West Chip ID</th>')
-    if sn[3:5] == 'EH':
+    elif sn[3:5] == 'EH':
         print('<th colspan=1>DAQ 1 Chip ID</th>')
         if sn[7] == 'F':
             print('<th colspan=1>DAQ 2 Chip ID</th>')
 
         print('<th colspan=1>Trigger 1 Chip ID</th>')
         print('<th colspan=1>Trigger 2 Chip ID</th>')
-    print('<th colspan=2>LDO ID</th>')
+    elif sn[3:5] == 'ZP':
+        print('<th colspan=3>lpGBT Chip ID</th>')
+
+    if sn[3] == 'E':
+        print('<th colspan=2>LDO ID</th>')
     print('<th colspan=1>Testing Status</th>')
     print('</tr>')
     print('<tr>')
-    print('<td colspan=1>%s</td>' % location)
+    if sn[3] == 'E':
+        print('<td colspan=1>%s</td>' % location)
+    elif sn[3] == 'Z':
+        print('<td colspan=2>%s</td>' % location)
     if sn[3:5] == 'EL':
         print('<td colspan=1>%s</td>' % daq_chip_id)
         print('<td colspan=1>%s</td>' % east_chip_id)
         print('<td colspan=1>%s</td>' % west_chip_id)
-    if sn[3:5] == 'EH':
+    elif sn[3:5] == 'EH':
         print('<td colspan=1>%s</td>' % daq1_chip_id)
         if sn[7] == 'F':
             print('<td colspan=1>%s</td>' % daq2_chip_id)
 
         print('<td colspan=1>%s</td>' % trig1_chip_id)
         print('<td colspan=1>%s</td>' % trig2_chip_id)
-    print('<td colspan=2>%s</td>' % ldo)
+    elif sn[3:5] == 'ZP':
+        print('<td colspan=3>%s</td>' % daq_chip_id)
+    if sn[3] == 'E':
+        print('<td colspan=2>%s</td>' % ldo)
     if num == total:
         print('<td colspan=1><span class="badge bg-success rounded-pill">Done</span></td>')
     else:
@@ -414,13 +435,15 @@ def board_info(sn):
     print('<tr>') 
     if sn[3:5] == 'EL':
         print('<th colspan=2>Comments</th>')
-    if sn[3:5] == 'EH':
+    elif sn[3:5] == 'EH':
         if sn[7] == 'F':
             print('<th colspan=1>Comments</th>')
             print('<th colspan=1>Trigger 3 Chip ID</th>')
             print('<th colspan=1>Trigger 4 Chip ID</th>')
         else:
             print('<th colspan=2>Comments</th>')
+    elif sn[3:5] == 'ZP':
+        print('<th colspan=1>Comments</th>')
 
     print('<th colspan=1>Date Received</th>')
     print('<th colspan=1>Manufacturer</th>')
@@ -430,13 +453,15 @@ def board_info(sn):
     print('<tr>')
     if sn[3:5] == 'EL':
         print('<td colspan=2>%s</td>' % info_com)
-    if sn[3:5] == 'EH':
+    elif sn[3:5] == 'EH':
         if sn[7] == 'F':
             print('<td colspan=1>%s</td>' % info_com)
             print('<td colspan=1>%s</td>' % trig3_chip_id)
             print('<td colspan=1>%s</td>' % trig4_chip_id)
         else:
             print('<td colspan=2>%s</td>' % info_com)
+    elif sn[3:5] == 'ZP':
+        print('<td colspan=1>%s</td>' % info_com)
     # gets check in date
     cur.execute('select checkin_date from Check_In where board_id=%s' % board_id)
     try:

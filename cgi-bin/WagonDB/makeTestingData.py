@@ -8,6 +8,7 @@ import pandas as pd
 import datetime
 import pickle
 import multiprocessing as mp
+from collections import defaultdict
 
 path = os.path.dirname(os.path.abspath(__file__))
 
@@ -780,6 +781,111 @@ def get_board_states():
 
     return csvs_to_return
 
+def get_status_over_time():
+
+    cur.execute('''
+        SELECT B.full_id, B.type_id, B.board_id, BT.name as nickname, BT.type_id as bt_type_id, B.location, C.checkin_date
+        FROM Board B
+        JOIN Board_type BT ON B.type_id=BT.type_sn
+        JOIN Check_In C ON B.board_id=C.board_id
+    ''')
+    board_rows = cur.fetchall()
+
+    cur.execute('''
+        SELECT T.board_id, T.test_type_id, T.successful, T.day
+        FROM Test T
+        ORDER BY T.day
+    ''')
+    test_rows = cur.fetchall()
+
+    cur.execute('SELECT board_id, checkout_date FROM Check_Out')
+    checkout_rows = cur.fetchall()
+
+    cur.execute('''
+        SELECT TTS.type_id, TT.test_type, TT.name
+        FROM Type_test_stitch TTS
+        JOIN Test_Type TT ON TTS.test_type_id = TT.test_type
+    ''')
+    stitch_type_map = defaultdict(list)
+    for type_id, test_type_id, test_name in cur.fetchall():
+        stitch_type_map[type_id].append((test_type_id, test_name))
+
+    board_info = {}
+    all_dates = set()
+    for full_id, type_sn, board_id, nickname, bt_type_id, location, checkin_date in board_rows:
+        board_info[board_id] = {
+            'full_id': full_id,
+            'type_sn': type_sn,
+            'nickname': nickname,
+            'bt_type_id': bt_type_id,
+            'location': location,
+            'checkin_date': checkin_date,
+        }
+        all_dates.add(checkin_date.date())
+
+    checkout_dates = {}
+    for board_id, checkout_date in checkout_rows:
+        checkout_dates[board_id] = checkout_date
+        all_dates.add(checkout_date.date())
+
+    test_history = defaultdict(lambda: defaultdict(list))
+    for board_id, test_type_id, successful, timestamp in test_rows:
+        test_history[board_id][test_type_id].append((timestamp, successful))
+        all_dates.add(timestamp.date())
+
+    all_dates = sorted(all_dates)
+    status_over_time = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(int))))
+
+    for date in all_dates:
+        for board_id, info in board_info.items():
+            if info['checkin_date'].date() > date:
+                continue  # not yet checked in
+
+            full_id = info['full_id']
+            type_sn = info['type_sn']
+            major_type = type_sn[:2]
+            subtype = type_sn
+            bt_type_id = info['bt_type_id']
+            stitch_types = stitch_type_map.get(bt_type_id, [])
+
+            # Get most recent test outcomes before or on this date
+            outcomes = {}
+            failed = {}
+            for test_type_id, test_name in stitch_types:
+                tests = test_history[board_id][test_type_id]
+                latest = None
+                for ts, success in tests:
+                    if ts.date() <= date:
+                        latest = success
+                    else:
+                        break
+                if latest is not None:
+                    outcomes[test_name] = latest == 1
+                    failed[test_name] = latest == 0
+                else:
+                    outcomes[test_name] = None
+                    failed[test_name] = None
+
+            num_tests_passed = sum(1 for v in outcomes.values() if v is True)
+            num_tests_req = len(stitch_types)
+            num_tests_failed = sum(1 for v in failed.values() if v is True)
+
+            # Determine status
+            if checkout_dates.get(board_id, None) and checkout_dates[board_id].date() <= date:
+                status = 'Shipped'
+            elif num_tests_failed:
+                status = 'Failed QC'
+            elif num_tests_passed == num_tests_req:
+                status = 'Ready for Shipping'
+            elif (num_tests_passed == num_tests_req - 1 and not outcomes.get('Registered', False)):
+                status = 'Passed QC, Awaiting Registration'
+            else:
+                status = 'Awaiting Testing'
+
+            status_over_time[date][major_type][subtype][status] += 1
+            status_over_time[date][major_type][subtype]['Total'] += 1
+
+    return status_over_time
 
 def write_board_statuses_file():
 

@@ -99,6 +99,8 @@ for (let i = 0; i < d_keys.length; i++) {
     if (dates.get('End Date').get(d_keys[i]) == true) {
         let ed = d_keys[i];
         end_date = new Date(ed);
+
+        end_date.setDate(end_date.getDate() + 1);
     }
 }
 for (let i = 0; i < source.get_length(); i++) {
@@ -171,8 +173,8 @@ td.change.emit()
     return td
 
 def Filter():
-    ds = ColumnDataSource(AllData)
-    df = AllData
+    ds = ColumnDataSource(AllData.sort_values('Time', ascending=False))
+    df = AllData.sort_values('Time', ascending=False)
 
     # create the widgets to be used
     mc_widgets = {}
@@ -180,11 +182,10 @@ def Filter():
     multi_choice = (lambda x,y: MultiChoice(options=x, value=[], title=y), 'value')
     start_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value=x, title=z), 'value')
     today = datetime.date.today()
-    today_plus_one = today + datetime.timedelta(days=1)
-    end_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value=today_plus_one, title=z), 'value')
+    end_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value=today, title=z), 'value')
     min_date = pd.Timestamp((min(ds.data['Time']))).date()
     date_range = []
-    while min_date <= today_plus_one:
+    while min_date <= today:
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
     # widget titles and data for those widgets has to be manually entered, as well as the type

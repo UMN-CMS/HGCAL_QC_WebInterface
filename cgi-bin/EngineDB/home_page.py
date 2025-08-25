@@ -14,10 +14,26 @@ try:
 
     print('<div class="row">')
     print('<div class="col-md-12 pt-4 ps-5 mx-2 my-2">')
-    print('<h2>Count by Test</h2>' )
     print('</div>')
     print('</div>')
     home_page_list.render_list_tests()
+
+    print('<div class="row">')
+    print('<div class="col-md-12 pt-4 ps-5 mx-2 my-2">')
+    print('<form action="module.py" method="post" enctype="multipart/form-data">')
+    print('<h4>Board lookup</h4>')
+    print('</div>')
+
+    print('<div class="col-md-2 ps-5 pt-2 my-2">')
+    print('<INPUT type="text" class="form-control" name="full_id">')
+    print('</div>')
+
+    print('<div class="col-md-2 ps-5 pt-2 my-2">')
+    print('<input type="submit" class="btn btn-dark" value="Submit">')
+    print('</div>')
+
+    print('</form>')
+    print('</div>')
 
     # the following is obsolete
 

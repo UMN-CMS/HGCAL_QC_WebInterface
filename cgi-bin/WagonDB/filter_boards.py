@@ -32,12 +32,13 @@ from datetime import datetime as dt
 import datetime
 import makeTestingData as mTD
 
-csv_WE, csv_WH, csv_WW, csv_ZP = mTD.get_board_states()
+csv_SC, csv_WE, csv_WH, csv_WW, csv_ZP = mTD.get_board_states()
 stitch_types = mTD.get_stitch_types()
 WE = pd.read_csv(csv_WE, parse_dates=['Check In Time'])
 WW = pd.read_csv(csv_WW, parse_dates=['Check In Time'])
 WH = pd.read_csv(csv_WH, parse_dates=['Check In Time'])
 ZP = pd.read_csv(csv_ZP, parse_dates=['Check In Time'])
+SC = pd.read_csv(csv_SC, parse_dates=['Check In Time'])
 LD = pd.concat([WE, WW])
 
 filter_code=('''
@@ -100,6 +101,8 @@ for (let i = 0; i < d_keys.length; i++) {
     if (dates.get('Checked In Before').get(d_keys[i]) == true) {
         let ed = d_keys[i];
         end_date = new Date(ed);
+
+        end_date.setDate(end_date.getDate() + 1);
     }
 }
 for (let i = 0; i < source.get_length(); i++) {
@@ -145,7 +148,12 @@ for (let sn = 0; sn < serial_numbers.length; sn++) {
         locations.push(data.data['Location'][sn])
         status.push(data.data['Status'][sn])
 
-        let temp_date = new Date(data.data['Check In Time'][sn] + 21600000);
+        let temp_date = new Date(data.data['Check In Time'][sn]);
+        if (String(temp_date).includes('Daylight')) {
+            temp_date = new Date(data.data['Check In Time'][sn] + 18000000);
+        } else {
+            temp_date = new Date(data.data['Check In Time'][sn] + 21600000);
+        }
         let date = temp_date.toString().slice(4, 24)
         dates.push(date)
         raw_times.push(temp_date.valueOf())
@@ -176,14 +184,17 @@ td.change.emit()
 
 def Filter(major_type):
     if major_type == 'LD':
-        ds = ColumnDataSource(LD)
+        ds = ColumnDataSource(LD.sort_values('Check In Time', ascending=False))
         test_types = stitch_types.get('WE10A1', [])
     if major_type == 'HD':
-        ds = ColumnDataSource(WH)
+        ds = ColumnDataSource(WH.sort_values('Check In Time', ascending=False))
         test_types = stitch_types.get('WH20A0', [])
     if major_type == 'ZP':
-        ds = ColumnDataSource(ZP)
+        ds = ColumnDataSource(ZP.sort_values('Check In Time', ascending=False))
         test_types = stitch_types.get('ZPHSL0', [])
+    if major_type == 'SC':
+        ds = ColumnDataSource(SC.sort_values('Check In Time', ascending=False))
+        test_types = stitch_types.get('SCFBH4', [])
 
     # create the widgets to be used
     mc_widgets = {}
@@ -191,11 +202,10 @@ def Filter(major_type):
     multi_choice = (lambda x,y: MultiChoice(options=x, value=[], title=y), 'value')
     start_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value=x, title=z), 'value')
     today = datetime.date.today()
-    today_plus_one = today + datetime.timedelta(days=1)
-    end_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value=today_plus_one, title=z), 'value')
+    end_date = (lambda x,y,z: DatePicker(min_date=x,max_date=y, value=today, title=z), 'value')
     min_date = pd.Timestamp((min(ds.data['Check In Time']))).date()
     date_range = []
-    while min_date <= today_plus_one:
+    while min_date <= today:
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
     # widget titles and data for those widgets has to be manually entered, as well as the type

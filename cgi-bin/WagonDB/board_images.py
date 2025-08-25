@@ -13,81 +13,118 @@ print("Content-type: text/html\n")
 base.header(title='Board Images')
 base.top()
 
-print('<div class="row">')
-print('<div class="col-md-5 ps-4 pt-4 mx-2 my-2"><h2>Board Photo Repository</h2></div>')
-print('</div>')
-print('<div class="row">')
-print('<div class="col-md-12">')
-print('<div class="col-md-11 ps-5 py-4my-2"><table class="table table-hover">')
-print('<thead class="table-dark">')
-print('<tr>')
-print('<th> Full ID </th>')
-print('<th colspan=2> Top View </th>')
-print('<th colspan=2> Bottom View </th>')
-print('</tr>')
-print('</thead>')
-print('<tbody>')
-
 db = connect(0)
 cur = db.cursor()
 
-subtypes = []
-cur.execute('select board_id from Board')
-temp = cur.fetchall()
-for t in temp:
-    cur.execute('select type_id from Board where board_id="%s"' % t[0])
-    new = cur.fetchall()
-    subtypes.append(new[0][0])
-subtypes = np.unique(subtypes).tolist()
+print('<div class="row">')
+print('<div class="col-md-5 ps-4 pt-4 mx-2 my-2"><h2>Board Photo Repository</h2></div>')
+print('</div>')
 
-# sorts by subtype
-barcodes = {}
-for s in subtypes:
-    cur.execute('select full_id from Board where type_id="%s"' % s)
-    li = []
-    for l in cur.fetchall():
-        li.append(l[0])
-    barcodes[s] = np.unique(li).tolist()
+form = cgi.FieldStorage()
+if form.getvalue('type_id'):
+    type_id = form.getvalue('type_id')
 
-    print('<tr><td colspan=5><a class="btn btn-dark" data-bs-toggle="collapse" href="#col%(id)s">%(id)s</a></td></tr>' %{'id':s})
-
-    print('<tr><td class="hiddenRow" colspan=5>')
-    print('<div class="collapse" id="col%s">' %s)
+    print('<div class="row">')
+    print('<div class="col-md-12">')
+    print('<div class="col-md-11 ps-5 py-4my-2"><table class="table table-hover">')
+    print('<thead class="table-dark">')
+    print('<tr>')
+    print('<th> Full ID </th>')
+    print('<th colspan=2> Top View </th>')
+    print('<th colspan=2> Bottom View </th>')
+    print('</tr>')
+    print('</thead>')
+    print('<tbody>')
+    
     print('<table>')
 
-    for sn in barcodes[s]:
-        cur.execute('select board_id from Board where full_id="%s"' % sn)
-        board_id = cur.fetchall()[0][0]
-        # gets the top and bottom images
-        # if no images, prints such
-        try:
-            # date is just used to get most recent image
-            cur.execute('select image_name,date from Board_images where board_id=%s and view="Top" order by date desc' % board_id)
-            name_top = cur.fetchall()[0][0]
-            cur.execute('select image_name,date from Board_images where board_id=%s and view="Bottom" order by date desc' % board_id)
-            name_bottom = cur.fetchall()[0][0]
-            print('<tr>')
-            print('<td> <a href=module.py?board_id=%(id)s&full_id=%(full_id)s> %(full_id)s </a></td>' %{'full_id':sn, 'id':board_id})
-            print('<td colspan=2>')
-            print('<a href="/home/ePortage/wagondb/%(img)s"><img src="/home/ePortage/wagondb/%(img)s" width=400 height=auto></a>' % {'img':name_top})
-            print('</td>') 
-            print('<td colspan=2>')
-            print('<a href="/home/ePortage/wagondb/%(img)s"><img src="/home/ePortage/wagondb/%(img)s" width=400 height=auto></a>' % {'img':name_bottom})
-            print('</td>') 
-            print('</tr>')
-        except:
-            print('<tr>')
-            print('<td> <a href=module.py?board_id=%(id)s&full_id=%(full_id)s> %(full_id)s </a></td>' %{'full_id':sn, 'id':s})
-            print('<td colspan=4>')
-            print('<a>This board has no images.</a>')
-            print('</td>') 
-            print('</tr>')
-            
+    cur.execute('SELECT full_id, board_id FROM Board WHERE type_id="%s" ORDER BY full_id' % type_id)
+    for sn, board_id in cur.fetchall():
+        print('<tr>')
+        print('<td> <a href=module.py?full_id=%(full_id)s> %(full_id)s </a></td>' %{'full_id':sn})
+        print('<td colspan=2>')
+        print('<img src="get_image.py?board_id=%s&view=%s" width=800 height=auto>' % (board_id, 'Top'))
+        print('</td>') 
+        print('<td colspan=2>')
+        print('<img src="get_image.py?board_id=%s&view=%s" width=800 height=auto>' % (board_id, 'Bottom'))
+        print('</td>') 
+        print('</tr>')
 
     print('</table>')
     print('</div>')
     print('</td></tr>')
-print('</tbody></table></div></div>')
+    print('</tbody></table></div>')
+
+
+else:
+    print('<div class="row">')
+    print('<div class="col-md-5 ps-5 mx-2"><h4>Select a Subtype</h4></div>')
+    print('</div>')
+    print('<div class="row">')
+    print('<div class="col-md-12">')
+    print('<div class="col-md-11 ps-5 py-4my-2"><table class="table table-hover">')
+    print('<thead class="table-dark">')
+    print('<tr>')
+    print('<th> LD West Wagons </th>')
+    print('<th> LD East Wagons </th>')
+    print('<th> HD Wagons </th>')
+    print('<th> Zippers </th>')
+    print('</tr>')
+    print('</thead>')
+    print('<tbody>')
+
+    # gets all the subtypes and makes a row for each one
+    cur.execute('select type_sn, name from Board_type where type_sn like "WE%" order by type_sn')
+    east_subtypes = cur.fetchall()
+
+    cur.execute('select type_sn, name from Board_type where type_sn like "WW%" order by type_sn')
+    west_subtypes = cur.fetchall()
+
+    cur.execute('select type_sn, name from Board_type where type_sn like "ZP%" order by type_sn')
+    zp_subtypes = cur.fetchall()
+
+    cur.execute('select type_sn, name from Board_type where type_sn like "WH%" order by type_sn')
+    hd_subtypes = cur.fetchall()
+
+
+    m = max([len(zp_subtypes), len(west_subtypes), len(east_subtypes), len(hd_subtypes)])
+
+    for s in range(m):
+        print('<tr>')
+        # links each subtype to it's own page
+        print('<td>')
+        try:
+            print('<a href="board_images.py?type_id=%(id)s">%(id)s, (%(name)s)</a>' %{'id':west_subtypes[s][0], 'name': west_subtypes[s][1]})
+        except:
+            pass
+        print('</td>')
+        print('<td>')
+        try:
+            print('<a href="board_images.py?type_id=%(id)s">%(id)s, (%(name)s)</a>' %{'id':east_subtypes[s][0], 'name': east_subtypes[s][1]})
+        except:
+            pass
+        print('</td>')
+        print('<td>')
+        try:
+            print('<a href="board_images.py?type_id=%(id)s">%(id)s, (%(name)s)</a>' %{'id':hd_subtypes[s][0], 'name': hd_subtypes[s][1]})
+        except:
+            pass
+        print('</td>')
+        print('<td>')
+        try:
+            print('<a href="board_images.py?type_id=%(id)s">%(id)s, (%(name)s)</a>' %{'id':zp_subtypes[s][0], 'name': zp_subtypes[s][1]})
+        except:
+            pass
+        print('</td>')
+        print('</tr>')
+
+    print('</tbody>')
+    print('</table>')
+    print('</div>')
+    print('</div>')
+
+
+print('</div>')
 
 base.bottom()
     

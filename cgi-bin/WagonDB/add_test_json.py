@@ -22,7 +22,10 @@ def parse_data(form):
         print("test_type:", test_name)
         successful = base.cleanCGInumber(form.getvalue('successful'))
         print("successful:", successful)
-        comments = html.escape(form.getvalue('comments'))
+        try:
+            comments = html.escape(form.getvalue('comments'))
+        except:
+            comments = ''
         print("comments:", comments)    
         
         try:
