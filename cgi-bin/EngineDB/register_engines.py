@@ -230,7 +230,7 @@ def get_bare_code(barcode, typecode):
     return 200, (typecode, bc)
 
 # --- Engine CSV --------------------------------------------------
-def engine_file(prefix, n_lpgbts, engine_type):
+def engine_file(prefix, n_lpgbts, engine_type,ok_no_ldo):
     db  = connect(0)
     cur = db.cursor(buffered=True)
     boards = filter_boards(cur, prefix)
@@ -252,12 +252,12 @@ def engine_file(prefix, n_lpgbts, engine_type):
     written_boards = []
     count = 0
     for bc in boards:
-        print(bc)
+        #print(bc)
         if check_if_registered(cur, bc):
             continue
 
         tc, mf, batch = get_typecode(cur, bc), get_manufacturer(cur, bc), get_batch(cur, bc)
-        print(tc)
+        #print(tc)
         if tc == "EL-0QE" or tc == "EL-0QW" or tc == "EH-0QH" or tc == "EH-0QF":
             continue
         info = BATCH_INFO.get(engine_type, {}).get(batch)
@@ -286,7 +286,7 @@ def engine_file(prefix, n_lpgbts, engine_type):
         if tc is None:           missing.append("typecode")
         if mf is None:           missing.append("manufacturer")
         if batch is None:        missing.append("batch")
-        if ldo is None:          missing.append("LDO")
+        if ldo is None and not ok_no_ldo:          missing.append("LDO")
         if bare_tc is None or bare_sn is None:
             missing.append("bare code")
         if len(lpgbts) < n_lpgbts:
@@ -399,9 +399,9 @@ def lpgbt_file(prefix, engine_type, boards):
     buf.seek(0)
     return buf
 
-def zip_for_engine(etype):
+def zip_for_engine(etype, ok_no_ldo):
     cfg     = ENGINE_CONFIG[etype]
-    eng_buf, written_engines = engine_file(cfg['prefix'], cfg['n_lpgbts'], etype)
+    eng_buf, written_engines = engine_file(cfg['prefix'], cfg['n_lpgbts'], etype, ok_no_ldo)
     lpg_buf = lpgbt_file(cfg['prefix'], etype, written_engines)
 
     zip_buf = io.BytesIO()
@@ -422,6 +422,10 @@ def main():
         choices=ENGINE_CONFIG.keys(),
     )
     parser.add_argument(
+        '--ok_no_ldo',
+        action='store_true',
+    )
+    parser.add_argument(
         '-z', '--zip-out',
         required=False,
         default=None,
@@ -430,7 +434,7 @@ def main():
     args = parser.parse_args()
 
     zip_name = args.zip_out or f"{args.engine}_engine_reg.zip"
-    zip_data = zip_for_engine(args.engine)
+    zip_data = zip_for_engine(args.engine, args.ok_no_ldo)
 
     with open(zip_name, 'wb') as f:
         f.write(zip_data)
