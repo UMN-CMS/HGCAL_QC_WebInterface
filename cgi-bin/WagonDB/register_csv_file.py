@@ -17,7 +17,8 @@ LOCATION = "UMN"
 INSTITUTION = "UMN"
 
 MANU_RENAMES = { "Poly" : "PolyElectronics",
-                 "Piranha" : "Piranha EMS"}
+                 "Piranha" : "Piranha EMS",
+                 "Ninja" : "Ninja Circuits"}
 
 
 # Helper Functions
