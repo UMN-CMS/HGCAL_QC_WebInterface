@@ -2,6 +2,8 @@
 
 import numpy as np
 from connect import connect
+import re
+from collections import OrderedDict
 import sys
 import cgitb
 import mysql
@@ -12,6 +14,13 @@ import enum
 cgitb.enable()
 db = connect(0)
 cur=db.cursor()
+
+GROUPS = OrderedDict({
+    "LD Wagons": r"W(E|W)",
+    "Zippers": r"ZP",
+    "HD Wagons": "WH",
+    "Other": ".*",
+    })
 
 def fetch_list_tests():
     # gets the number of successful tests and number of boards with successful tests for each test
@@ -84,84 +93,91 @@ def render_list_tests():
     cur.execute('select board_id from Check_Out')
     shipped_board_ids = set(row[0] for row in cur.fetchall())
 
-    print('<div class="col-md-11 mx-4 my-4"><table class="table table-bordered table-hover table-active">')
-    print('<tr><th>Subtype<th>Nickname<th>Total Checked In<th>Awaiting Testing<th>QC Passed, Awaiting Registration<th>Ready for Shipping<th>Shipped<th>Failed QC</tr>')
 
-    for type_sn, boards in boards_by_type_sn.items():
-        nickname = board_info[boards[0]]['nickname']
-        bt_type_id = board_info[boards[0]]['bt_type_id']
-        stitch_types = stitch_types_by_subtype.get(bt_type_id, [])
+    groups = OrderedDict({name: [] for name in GROUPS})
+    for type_sn,boards in boards_by_type_sn.items():
+        name = next(x for x,y in GROUPS.items() if re.match(y, type_sn))
+        groups[name].append((type_sn,boards))
 
-        status_map = {}
-        print('<tr>')
-        print('<td>%s</td>' % type_sn)
-        print('<td>%s</td>' % nickname)
+    for name, group_boards in groups.items():
+        print('<div class="col-md-11 mx-4 my-4"><table class="table table-bordered table-hover table-active">')
+        print(f"<h2>{name}</h2>")
+        print('<tr><th>Subtype<th>Nickname<th>Total Checked In<th>Awaiting Testing<th>QC Passed, Awaiting Registration<th>Ready for Shipping<th>Shipped<th>Failed QC</tr>')
+        for type_sn, boards in group_boards:
+            nickname = board_info[boards[0]]['nickname']
+            bt_type_id = board_info[boards[0]]['bt_type_id']
+            stitch_types = stitch_types_by_subtype.get(bt_type_id, [])
 
-        print('<td>')
-        print('<div class="list-group list-group-flush">')
-        print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#boardstable%s">%s</a>' % (type_sn, len(boards)))
-        print('</div>')
+            status_map = {}
+            print('<tr>')
+            print('<td>%s</td>' % type_sn)
+            print('<td>%s</td>' % nickname)
 
-        print('<div class="collapse" id="boardstable%s">' % type_sn)
-        print('<div class="list-group list-group-flush">')
-        for full_id in boards:
-            board_id = board_info[full_id]['board_id']
-            failed = {}
-            outcomes = {}
-            for test_type_id, test_name in stitch_types:
-                result = test_results.get(board_id, {}).get(test_type_id)
-                outcomes[test_name] = result == 1
-                failed[test_name] = result == 0
-
-            num_tests_passed = sum(outcomes.values())
-            num_tests_req = len(outcomes)
-            num_tests_failed = sum(failed.values())
-
-            if board_id in shipped_board_ids:
-                status = 'Shipped'
-            elif num_tests_failed != 0:
-                status = 'Failed'
-            elif num_tests_passed == num_tests_req:
-                status = 'Passed'
-            elif (num_tests_passed == num_tests_req - 1 and not outcomes.get('Registered', False)):
-                status = 'Not Registered'
-            else:
-                status = 'Awaiting'
-
-            status_map[full_id] = status
-
-            print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': full_id})
-                
-        print('</div></div>')
-        print('</td>')
-
-        awaiting = [k for k,v in status_map.items() if v == 'Awaiting']
-        not_registered = [k for k,v in status_map.items() if v == 'Not Registered']
-        passed = [k for k,v in status_map.items() if v == 'Passed']
-        shipped = [k for k,v in status_map.items() if v == 'Shipped']
-        failed = [k for k,v in status_map.items() if v == 'Failed']
-
-        def print_status_column(status_id, items):
             print('<td>')
             print('<div class="list-group list-group-flush">')
-            print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#%s%s">%s</a>' % (status_id, type_sn, len(items)))
+            print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#boardstable%s">%s</a>' % (type_sn, len(boards)))
             print('</div>')
-            print('<div class="collapse" id="%s%s">' % (status_id, type_sn))
+
+            print('<div class="collapse" id="boardstable%s">' % type_sn)
             print('<div class="list-group list-group-flush">')
-            for b in items:
-                print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': b})
+            for full_id in boards:
+                board_id = board_info[full_id]['board_id']
+                failed = {}
+                outcomes = {}
+                for test_type_id, test_name in stitch_types:
+                    result = test_results.get(board_id, {}).get(test_type_id)
+                    outcomes[test_name] = result == 1
+                    failed[test_name] = result == 0
+
+                num_tests_passed = sum(outcomes.values())
+                num_tests_req = len(outcomes)
+                num_tests_failed = sum(failed.values())
+
+                if board_id in shipped_board_ids:
+                    status = 'Shipped'
+                elif num_tests_failed != 0:
+                    status = 'Failed'
+                elif num_tests_passed == num_tests_req:
+                    status = 'Passed'
+                elif (num_tests_passed == num_tests_req - 1 and not outcomes.get('Registered', False)):
+                    status = 'Not Registered'
+                else:
+                    status = 'Awaiting'
+
+                status_map[full_id] = status
+
+                print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': full_id})
+
             print('</div></div>')
             print('</td>')
 
-        print_status_column('awaiting', awaiting)
-        print_status_column('not_reg', not_registered)
-        print_status_column('passed', passed)
-        print_status_column('shipped', shipped)
-        print_status_column('failed', failed)
+            awaiting = [k for k,v in status_map.items() if v == 'Awaiting']
+            not_registered = [k for k,v in status_map.items() if v == 'Not Registered']
+            passed = [k for k,v in status_map.items() if v == 'Passed']
+            shipped = [k for k,v in status_map.items() if v == 'Shipped']
+            failed = [k for k,v in status_map.items() if v == 'Failed']
 
-        print('</tr>')
+            def print_status_column(status_id, items):
+                print('<td>')
+                print('<div class="list-group list-group-flush">')
+                print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#%s%s">%s</a>' % (status_id, type_sn, len(items)))
+                print('</div>')
+                print('<div class="collapse" id="%s%s">' % (status_id, type_sn))
+                print('<div class="list-group list-group-flush">')
+                for b in items:
+                    print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': b})
+                print('</div></div>')
+                print('</td>')
 
-    print('</table></div>')
+            print_status_column('awaiting', awaiting)
+            print_status_column('not_reg', not_registered)
+            print_status_column('passed', passed)
+            print_status_column('shipped', shipped)
+            print_status_column('failed', failed)
+
+            print('</tr>')
+
+        print('</table></div>')
 
     print('<div class="row">')
     print('<div class="col-md-4 mx-4 my-2">')
