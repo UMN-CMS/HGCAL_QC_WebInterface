@@ -115,7 +115,7 @@ async def getLatestResults(
 
     
     all_data = []
-    for db in (dbs or getBothConnections()):
+    for db in await getBothConnections():
         cur = db.cursor(dictionary=True)
         cur.execute(query, where_params)
         data = list(cur.fetchall())
