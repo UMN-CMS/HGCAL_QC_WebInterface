@@ -7,6 +7,9 @@ import os
 from connect import connect
 
 form = cgi.FieldStorage()
+db = connect(0)
+cur = db.cursor()
+
 if form.getvalue("typecode"):
     typecode = form.getvalue("typecode")
     print('Content-Type: text/plain')
@@ -23,9 +26,6 @@ else:
     base.header(title='Components List')
     base.top()
 
-
-    db = connect(0)
-    cur = db.cursor()
 
     print('<div class="col-md-11 mx-4 my-4"><table class="table table-bordered table-hover table-active">')
     print('<tr><th>Typecode<th># Known<th># Available</tr>')
