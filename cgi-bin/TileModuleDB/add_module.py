@@ -7,7 +7,7 @@ import home_page_list
 #cgi header
 print("Content-type: text/html\n")
 
-base.header(title='Add a new module to HGCAL Wagon Test')
+base.header(title='Add a new module to HGCAL Tile Module Test')
 base.top()
 
 # calls this function for the form

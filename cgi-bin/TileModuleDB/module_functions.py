@@ -62,8 +62,7 @@ def add_test_tab(barcode, board_id):
     # adds header
     print('<div class="row">')
     print('<div class="col-md-5 pt-4 ps-5 mx-2 my-2">')
-    # TODO replace Wagon
-    print('<h2>Wagon Test Info for %s</h2>' % barcode)
+    print('<h2>Tile Test Info for %s</h2>' % barcode)
     print('</div>')
     print('</div>')
     

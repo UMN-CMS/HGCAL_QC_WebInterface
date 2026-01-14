@@ -36,7 +36,6 @@ def top(admin=False):
     <div class="row">
         <div class="col-4">
         ''')
-    # TODO replace with your board and university
     print('''
         <a href="home_page.py" class="d-flex text-decoration-none ">
             <h1 class="text-dark">HGCAL Board Test</h1>
@@ -57,7 +56,7 @@ def top(admin=False):
     # creates the navbar
     print('''<nav id="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
   <div class="container-fluid">
-    <a class="navbar-brand" href="home_page.py">WagonDB</a>
+    <a class="navbar-brand" href="home_page.py">TileModuleDB</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -100,13 +99,14 @@ def top(admin=False):
           <a class="nav-link" href="checkout_summary.py">Checkout Summary</a>
         </li>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Summary
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Add Boards
           </a>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <li><a class="dropdown-item" href="summary.py">Board Summary</a></li>
-            <li><a class="dropdown-item" href="tester_summary.py">Tester Summary</a></li>
-            <li><a class="dropdown-item" href="board_images.py">Photo Repository</a></li>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <li><a class="dropdown-item" href="board_checkin.py?major_type=TB">Add Tile Board</a></li>
+            <li><a class="dropdown-item" href="board_checkin.py?major_type=TQ">Add ProtoModule</a></li>
+            <li><a class="dropdown-item" href="board_checkin.py?major_type=TM">Add Tile Module</a></li>
+            <li><a class="dropdown-item" href="create_tile_stock.py">Add Tiles</a></li>
           </ul>
         </li>
 ''')

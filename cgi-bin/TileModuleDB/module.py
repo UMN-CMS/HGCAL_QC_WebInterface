@@ -14,7 +14,7 @@ print("Content-type: text/html\n")
 # gets serial number and board_id
 form = cgi.FieldStorage()
 serial_num = form.getvalue('full_id')
-base.header(title='Wagon DB')
+base.header(title='TileModule DB')
 base.top()
 
 db = connect(0)

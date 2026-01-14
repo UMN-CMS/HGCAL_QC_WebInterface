@@ -9,7 +9,7 @@ cgitb.enable()
 #cgi header
 print("content-type: text/html\n\n")
 
-base.header(title='Wagon Test Home Page')
+base.header(title='Tile Module Test Home Page')
 base.top()
 
 print('<div class="row">')
