@@ -46,10 +46,12 @@ if form.getvalue('webpage'):
     try:
         admin = connect_admin(form.getvalue('password'))
         cursor = admin.cursor()
-        board_check_functions.board_checkout(board_id, person_id, comments)
+        location = form.getvalue("location")
+        board_check_functions.board_checkout(board_id, person_id, comments, location)
     except:
         print("Administrative Access Denied.")
 else:
-    board_check_functions.board_checkout(board_id, person_id, comments)
+    location = form.getvalue("location")
+    board_check_functions.board_checkout(board_id, person_id, comments, location)
 
 base.bottom()
