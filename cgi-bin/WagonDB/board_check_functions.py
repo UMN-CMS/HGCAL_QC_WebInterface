@@ -75,8 +75,8 @@ def board_checkout(board_id, person_id, comments, location=None):
         checkin_id = cur.fetchall()[0][0]
         print(checkin_id)
       
-        # checks if the board has already been checked out
-        sql = "SELECT checkin_id, person_id FROM Check_Out WHERE board_id = %s" % board_id
+        # checks if the board has already been checked out for this check-in
+        sql = "SELECT checkin_id, person_id FROM Check_Out WHERE checkin_id = %s AND board_id = %s" % (checkin_id, board_id)
         cur.execute(sql)
         checkouts = cur.fetchall()
         if checkouts:
