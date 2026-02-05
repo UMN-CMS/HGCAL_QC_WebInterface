@@ -80,8 +80,7 @@ def board_checkout(board_id, person_id, comments, location=None):
         cur.execute(sql)
         checkouts = cur.fetchall()
         if checkouts:
-            checkout_id = checkouts[-1][0]
-            sql = "UPDATE Check_Out SET comment='%s', person_id=%s, checkout_date=NOW() WHERE checkout_id=%s" % (comments, person_id, checkout_id)
+            sql = "UPDATE Check_Out SET comment='%s', person_id=%s, checkout_date=NOW() WHERE checkin_id=%s AND board_id=%s" % (comments, person_id, checkin_id, board_id)
             cur.execute(sql)
             sql = "UPDATE Board SET location='%s' WHERE board_id=%i" % (board_location, board_id)
             cur.execute(sql)
