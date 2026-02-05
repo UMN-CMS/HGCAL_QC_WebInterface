@@ -34,6 +34,7 @@ except:
         raise Exception("This user does not exist in the Testing Database.")
         
 try:
+    location = form.getvalue("location")
     comments = form.getvalue("comments")
 except:
     location = form.getvalue("location")
