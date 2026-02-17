@@ -27,6 +27,11 @@ def format_ts(ts):
     dt = datetime.fromtimestamp(ts, tz=CENTRAL)
     return dt.strftime("%Y-%m-%d %H:%M:%S %Z")
 
+def formatTimeOnly(ts):
+    dt = datetime.fromtimestamp(ts, tz=CENTRAL)
+    return dt.strftime("%I:%M %p")
+
+
 print("""
 <!DOCTYPE html>
 <html>
@@ -38,6 +43,13 @@ print("""
       font-family: system-ui, sans-serif;
       margin: 2em;
     }
+    .thermal-title {
+      margin-bottom: 1em;
+      font-size: 2.5em;
+      font-weight: bold;
+      text-align: center;
+    }
+
     .status {
       padding: 1.2em;
       margin-bottom: 2em;
@@ -78,9 +90,24 @@ print("""
 <body>
 """)
 
+
+est_duration = 3.5 * 60 * 60
+
+est_comp = ""
+if current_state == "RUNNING":
+    est_comp_time = formatTimeOnly(current["timestamp"] + est_duration)
+    est_comp = f"Approx Completion: {est_comp_time}<br>"
+
+print(f"""
+<div class="thermal-title">
+  Thermal Cycler Status
+</div>
+""")
+
 print(f"""
 <div class="status {html.escape(current_state)}">
-  CURRENT STATUS: {html.escape(current_state)}<br>
+  CURRENT STATUS: {html.escape(current_state)} <br>
+  {est_comp}
   <span style="font-size: 0.6em; font-weight: normal;">
     since {format_ts(current["timestamp"])}
   </span>
