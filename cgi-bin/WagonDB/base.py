@@ -139,7 +139,7 @@ def top(admin=False):
           </ul>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="teststand_debug.py">Test Stand Debug</a>
+          <a class="nav-link" href="https://cmslab1.spa.umn.edu/Factory/EngineDB/thermal_status.py">Thermal Cycler Status</a>
         </li>
       </ul>
     </div>
