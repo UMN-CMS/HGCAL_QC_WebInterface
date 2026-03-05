@@ -14,12 +14,13 @@ import sys
 import json
 import cgitb
 import mariadb
+import mysql.connector
 
 #cgitb.enable()
 
 def add_component(cnx,cur,barcode,typecode):
     try:
-        cur.execute('INSERT INTO COMPONENT_STOCK (barcode, typecode) VALUES (?,?)',(barcode,typecode,))
+        cur.execute('INSERT INTO COMPONENT_STOCK (barcode, typecode) VALUES (?,?)',(barcode,typecode))
         cnx.commit()
         return (200,"Ok",)
     except mariadb.Error as e:
@@ -28,13 +29,15 @@ def add_component(cnx,cur,barcode,typecode):
 def get_used_for(cur,barcode):
     retval={}
     try:
-        cur.execute("SELECT barcode,typecode from COMPONENT_STOCK JOIN COMPONENT_USAGE WHERE COMPONENT_STOCK.component_id=COMPONENT_USAGE.component_id AND COMPONENT_USAGE.used_in_barcode LIKE ?",(barcode,))        
+        cur.execute("SELECT barcode,typecode from COMPONENT_STOCK JOIN COMPONENT_USAGE WHERE COMPONENT_STOCK.component_id=COMPONENT_USAGE.component_id AND COMPONENT_USAGE.used_in_barcode LIKE '%s'"%(barcode))        
         for (barcode,typecode) in cur:
             if typecode not in retval:
                 retval[typecode]=[]
             retval[typecode].append(barcode)
         return (200,retval,)
     except mariadb.Error as e:
+        return (400,f"Error on get_used_for: {e}")
+    except mysql.connector.Error as e:
         return (400,f"Error on get_used_for: {e}")
 
 def get_unused_stock(cur,typecode,quantity=1):
@@ -45,27 +48,36 @@ def get_unused_stock(cur,typecode,quantity=1):
             for (typecode,barcode) in cur:
                 retval.append((typecode,barcode))
         else:
-            cur.execute("SELECT barcode FROM COMPONENT_STOCK WHERE typecode=? AND component_id NOT IN (SELECT component_id from COMPONENT_USAGE) ORDER BY barcode LIMIT ?",(typecode,quantity))
-            for (barcode) in cur:
-                retval.append(barcode)
+            cur.execute("SELECT barcode FROM COMPONENT_STOCK WHERE typecode='%s' AND component_id NOT IN (SELECT component_id from COMPONENT_USAGE) ORDER BY barcode LIMIT %d"%(typecode,quantity))
+            for barcode in cur:
+                if isinstance(barcode,list) or isinstance(barcode,tuple):
+                    retval.extend(barcode)
+                else:
+                    retval.append(barcode)
         return (200,retval,)    
     except mariadb.Error as e:
+        return (400,f"Error on get_unused_stock: {e}")
+    except mysql.connector.Error as e:
         return (400,f"Error on get_unused_stock: {e}")
 
 def mark_used(ctx,cur,barcode,tomake):
     try:
-        cur.execute("SELECT component_id FROM COMPONENT_STOCK WHERE barcode=?",(barcode,))
+        cur.execute("SELECT component_id FROM COMPONENT_STOCK WHERE barcode='%s'"%(barcode,))
         row=cur.fetchone()
         if row is None:
             return (404,"Barcode '%s' not found in stock"%(barcode));
         cid=int(row[0])
-        
-        if tomake is not None and len(tomake)>10:
-            cur.execute("INSERT INTO COMPONENT_USAGE (component_id, used_in_barcode) VALUES (?,?)",(cid,tomake,))
+        if tomake is not None: #and len(tomake)>10
+            cur.execute("INSERT INTO COMPONENT_USAGE (component_id, used_in_barcode) VALUES (%d,'%s')"%(cid,tomake))
         else:
-            cur.execute("INSERT INTO COMPONENT_USAGE (component_id) VALUES (?)",(cid,))
+            cur.execute("INSERT INTO COMPONENT_USAGE (component_id) VALUES (%d)"%(cid))
         ctx.commit()
     except mariadb.Error as e:
+        if e.errno == 1062:
+            return (409,"Barcode %s already used to make something else"%(barcode))
+        else:
+            return (400,f"Error on mark_used: {e}")
+    except mysql.connector.Error as e:
         if e.errno == 1062:
             return (409,"Barcode %s already used to make something else"%(barcode))
         else:
@@ -78,6 +90,7 @@ def argas(args,name,notprovided=None):
     return notprovided
 
 args={}
+
 if __name__ == "__main__":
     if "REQUEST_METHOD" in os.environ:
         form = cgi.FieldStorage()
@@ -85,7 +98,6 @@ if __name__ == "__main__":
         for key in knowns:
             if key in form:
                 args[key]=form.getvalue(key)
-
     else:
         import argparse
         parser = argparse.ArgumentParser(description="Components")

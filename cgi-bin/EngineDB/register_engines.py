@@ -47,6 +47,7 @@ BATCH_INFO = {
     'LD': {
         '1': ('2024-11-22', 'Preproduction'),
         '2': ('2025-07-02', 'Production'),
+        '3': ('2025-11-18', 'Production'),
     },
 }
 
@@ -181,6 +182,14 @@ def get_ldo_id(cur, barcode):
         logger.error(f"Error getting LDO for {barcode}: {e}")
         return None
 
+def cleanup_ldo_id(ldo):
+    if ldo is None: return ldo
+    elif ldo[-6:]=="LDO W1":
+        return "LDO W1 "+ldo[0:6]
+    elif ldo[0]==" ":
+        return ldo[1:]
+    else: return ldo
+    
 def get_bare_code(barcode, typecode):
     """
     barcode:   e.g. "320EL10E2020001"
@@ -211,12 +220,13 @@ def get_bare_code(barcode, typecode):
 
     # 5) fetch all unused stock for this typecode
     st, stock_list = get_unused_stock(stock_cur, typecode, quantity=9999)
+
+    if st != 200:
+        return st, f"Error fetching unused stock: {stock_list}"
+
     stock_iter = iter(stock_list)
     bc = next(stock_iter)[0]
 
-#    print(stock_list)
-    if st != 200:
-        return st, f"Error fetching unused stock: {stock_list}"
 
     # 6) mark it used for this barcode
     mark_db  = connect(1)
@@ -269,6 +279,7 @@ def engine_file(prefix, n_lpgbts, engine_type,ok_no_ldo):
         name = get_name(bc, engine_type)
         lpgbts = get_lpgbt_ids(cur, bc)
         ldo = get_ldo_id(cur, bc)
+        ldo = cleanup_ldo_id(ldo)
 
         status, payload = get_bare_code(bc, tc)
         if status != 200:

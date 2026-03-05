@@ -5,6 +5,7 @@ import json
 import csv
 import logging
 import argparse
+import components
 from connect import connect
 
 # Set up logging
@@ -20,7 +21,7 @@ MANU_RENAMES = { "Poly" : "PolyElectronics" }
 
 # Helper Functions
 def filter_boards(cur) -> list:
-    """Fetch and filter board IDs that start with '320WW' or '320WE'."""
+    """Fetch and filter board IDs that start with '320WH'."""
     try:
         cur.execute('SELECT full_id FROM Board')
         return [board[0] for board in cur.fetchall() if board[0].startswith('320WH')]
@@ -108,6 +109,8 @@ BATCH_BOARD_DATES = {
     "WH-31A0:1" : "2024-12-02",
     "WH-30B0:1" : "2025-01-20",
     "WH-20A0:1" : "2025-01-27", "WH-21A0:1" : "2025-01-27",
+    "WH-30BT:1" : "2025-10-27", "WH-30BD:1" : "2025-10-27",
+    "WH-30DT:1" : "2025-10-27", "WH-30DD:1" : "2025-10-27",
 }
 
 def get_date(typecode, batch):
@@ -128,9 +131,12 @@ def get_batch(cur, barcode):
             return None
         sn = sn_result[0]
 
-        # Return the second character of the sn, which is the batch character.
-        if len(sn) >= 2:
-            return sn[1]
+        # For preseries, return the second character of the sn, which is the batch character.        
+        if len(sn) >= 3:
+            if (barcode[3]=='0'):
+                return sn[1]
+            else:
+                return sn[2]
         else:
             logger.warning(f"Serial number '{sn}' is too short to extract the second character")
             return None
@@ -138,14 +144,77 @@ def get_batch(cur, barcode):
         logger.error(f"Error getting second character from serial number for barcode {barcode}: {e}")
         return None
 
-def get_description(batch):
+def get_bare_board(ctx, cur, barcode):
+    """Determine what kind of ECON is required and allocate out of the components tables"""
+    retval = []
+    used = components.get_used_for(cur, barcode)
+    if used[0]!=200:
+        logger.error(f"Problem in the used_for : {used[0]}")
+        return []
+    used=used[1]
+
+    barecode="WH-%s1"%(barcode[3+2:3+2+3])
+    if barecode in used:
+        return (barecode,used[barecode][0])
+    bbid=components.get_unused_stock(cur,barecode)
+    if bbid[0]==200 and len(bbid[1])>0:
+        components.mark_used(ctx,cur,bbid[1][0],barcode)
+        return (barecode,bbid[1][0])
+    else:
+        logger.error(f,"No bare board available for {barecode}")
+        return ("","")
+
+def get_econ(ctx, cur, used, econ_tc, wagon_bc):
+    if (econ_tc in used) and (len(used[econ_tc])>0):
+        econ_bc = used[econ_tc][0]
+        used[econ_tc]=used[econ_tc][1:]
+        return econ_bc
+    else:
+        stock = components.get_unused_stock(cur,econ_tc)
+        if stock[0]==200 and len(stock[1])>0:
+            components.mark_used(ctx, cur, stock[1][0], wagon_bc)
+            return stock[1][0]
+        else:
+            logger.error(f,"No {econ_tc} available for {wagon_bc}")
+            return None
+
+def get_econs(ctx, cur, barcode):
+    """Determine what kind of ECON is required and allocate out of the components tables"""
+    print(barcode)
+    retval = []
+    used = components.get_used_for(cur, barcode)
+    if used[0]!=200:
+        logger.error(f"Problem in the used_for : {used[0]}")
+        return []
+    used=used[1]
+    nmodules=int(barcode[3+2+0])+int(barcode[3+2+1])
+    for nmod in range(1,nmodules+1):
+        econd_code = "ECON-D-"+barcode[3+2+4+int((nmod-1)/2)]
+        econt_code = "ECON-T"
+        # go
+        retval.append("IC-ECD")
+        retval.append(get_econ(ctx, cur, used, econd_code, barcode))
+        if barcode[3+2+3]=='T':
+            retval.append("IC-ECT")
+            retval.append(get_econ(ctx, cur, used, econt_code, barcode))
+        else:
+            retval.append("")
+            retval.append("")
+    for nmod in range(nmodules,4):
+        retval.append("")
+        retval.append("")
+        retval.append("")
+        retval.append("")
+    return retval
+    
+def get_description(barcode,batch):
     """Check if the batch character is a number or a letter to assign a comment field."""
-    return "Pre-series" if batch.isdigit() else "Pre-production" if batch=="A" else "Production"
+    return "Pre-series" if barcode[3+3+2]=='0' else "Pre-production" if batch=="1" else "Production"
  
 def run(csv_file):
     """Main execution function."""
     try:
-        db = connect(0)
+        db = connect(1)
         cur = db.cursor()
         ofile = None
 
@@ -158,34 +227,52 @@ def run(csv_file):
             writer = csv.writer(ofile)
 
         # Write the header row
-        writer.writerow([
+        necons=4*2 
+        header_row=[
             "LABEL_TYPECODE", "SERIAL_NUMBER", "BARCODE", "LOCATION",
             "INSTITUTION", "MANUFACTURER", "NAME_LABEL", "PRODUCTION_DATE",
-	    "BATCH_NUMBER", "COMMENT_DESCRIPTION", 
-        ])
+	    "BATCH_NUMBER", "COMMENT_DESCRIPTION",
+            "MADE-FROM-TYPECODE[0]", "MADE-FROM-SN[0]"  # For the bare board
+            ]
+        for i in range(1,necons+1):
+            header_row.append("MADE-FROM-TYPECODE[%d]"%i)
+            header_row.append("MADE-FROM-SN[%d]"%i)
+        writer.writerow(header_row)
 
         success = 0
         
         for barcode in all_hd_wagons:
-            logger.info(f"Processing barcode: {barcode}")
+
+            # for now, ignore preseries
+            if barcode[3+2+3]=='0':
+                logger.info(f"Skipping preseries {barcode}")
+                continue
             
             if check_if_registered(cur, barcode):
                 logger.info(f"Skipping {barcode}, already registered")
                 continue
 
+            logger.info(f"Processing barcode: {barcode}")
+            
             label_typecode = get_typecode(cur, barcode)
             manufacturer = get_manufacturer(cur, barcode)
             batch = get_batch(cur, barcode)
             name_label = get_name(barcode)
             production_date = get_date(label_typecode, batch)
-            comment = get_description(batch)
+            comment = get_description(barcode, batch)
 
-            writer.writerow([
+            bareboard = get_bare_board(db, cur, barcode)
+            econs = get_econs(db, cur, barcode)
+            
+            items = [
                 label_typecode, barcode, barcode, LOCATION,
                 INSTITUTION, manufacturer, name_label, production_date,
-                batch, comment,
-            ])
-
+                batch, comment]
+            items.extend(bareboard)
+            items.extend(econs)
+            
+            writer.writerow(items)
+    
             success += 1
 
         logger.info(f"CSV file for {success} HD wagons created successfully.")
