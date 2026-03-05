@@ -63,34 +63,36 @@ def board_checkout_form_sn(full):
     print("</div>")
     print("</form>")
 
-def board_checkout(board_id, person_id, comments):
+def board_checkout(board_id, person_id, comments, location=None):
     # this function is also used by the Testing GUI
     db = connect(1)
     cur = db.cursor()
-   
+    board_location = location if location else comments
+
     try:
         # gets the check in id for this board
         cur.execute('select checkin_id from Check_In where board_id=%s' % board_id)
         checkin_id = cur.fetchall()[0][0]
         print(checkin_id)
       
-        # checks if the board has already been checked out
-        sql = "SELECT checkin_id, person_id FROM Check_Out WHERE board_id = %s" % board_id
+        # checks if the board has already been checked out for this check-in
+        sql = "SELECT checkin_id, person_id FROM Check_Out WHERE checkin_id = %s AND board_id = %s" % (checkin_id, board_id)
         cur.execute(sql)
         checkouts = cur.fetchall()
         if checkouts:
-            checkout_id = checkouts[-1][0]
-            checkout_person = checkouts[-1][1]
-            print('Error: This board has already been checked out.')
+            sql = "UPDATE Check_Out SET comment='%s', person_id=%s, checkout_date=NOW() WHERE checkin_id=%s AND board_id=%s" % (comments, person_id, checkin_id, board_id)
+            cur.execute(sql)
+            sql = "UPDATE Board SET location='%s' WHERE board_id=%i" % (board_location, board_id)
+            cur.execute(sql)
+            db.commit()
+            print('Updated')
 
         else:
             # otherwise, checks the board out
             sql = "INSERT INTO Check_Out (checkin_id, board_id, person_id, comment, checkout_date) VALUES (%s, %s, %s, '%s', NOW())" % (checkin_id, board_id, person_id, comments)        
             cur.execute(sql)
 
-            location = comments
-           
-            sql = "UPDATE Board SET location='%s' WHERE board_id=%i" % (location, board_id)
+            sql = "UPDATE Board SET location='%s' WHERE board_id=%i" % (board_location, board_id)
             cur.execute(sql)
             
             db.commit()

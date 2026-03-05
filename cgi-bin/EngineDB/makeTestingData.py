@@ -746,7 +746,7 @@ def get_board_states():
                 status = 'Shipped'
             elif num_tests_failed != 0:
                 try:
-                    if (failed.get('Thermal Cycle') is True and 
+                    if (failed.get('Thermal Cycle') is True and num_tests_failed == 1 and 
                     json.loads(test_data.get(board_id, {}).get(24))['test_data']['status_num'] in (2, 3)):
                         status = 'Passed QC Minus Thermal Cycle'
                     else:
@@ -756,7 +756,7 @@ def get_board_states():
             elif num_tests_passed == num_tests_req:
                 status = 'Ready for Shipping'
             elif (
-                outcomes.get('Thermal Cycle') is False and 
+                outcomes.get('Thermal Cycle') is False and  
                 sum(v for k,v in outcomes.items() if k != 'Thermal Cycle' and k != 'Registered') == num_tests_req - 2
             ):
                 status = 'Passed QC Minus Thermal Cycle'

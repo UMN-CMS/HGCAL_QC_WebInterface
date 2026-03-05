@@ -117,7 +117,7 @@ def render_list_tests():
                 status = 'Shipped'
             elif num_tests_failed != 0:
                 try:
-                    if (failed.get('Thermal Cycle') is True and 
+                    if (failed.get('Thermal Cycle') is True and num_tests_failed==1 and
                     json.loads(test_data.get(board_id, {}).get(24))['test_data']['status_num'] in (2, 3)):
                         status = 'Thermal'
                     else:

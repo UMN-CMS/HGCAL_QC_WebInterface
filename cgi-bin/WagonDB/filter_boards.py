@@ -32,7 +32,7 @@ from datetime import datetime as dt
 import datetime
 import makeTestingData as mTD
 
-csv_SC, csv_WE, csv_WH, csv_WW, csv_ZP = mTD.get_board_states()
+csv_CI, csv_SC, csv_WE, csv_WH, csv_WW, csv_ZP = mTD.get_board_states()
 stitch_types = mTD.get_stitch_types()
 WE = pd.read_csv(csv_WE, parse_dates=['Check In Time'])
 WW = pd.read_csv(csv_WW, parse_dates=['Check In Time'])

@@ -284,11 +284,11 @@ def board_info(sn):
     if registered:
         if registered[0][0] == 1:
             registered = '<td class="bg-success">&nbsp</td>'
-            registered = '<td colspan=1><span class="badge bg-success rounded-pill">Done</span></td>'
+            registered = '<td colspan=2><span class="badge bg-success rounded-pill">Done</span></td>'
         else:
-            registered = '<td class="bg-danger">&nbsp</td>'
+            registered = '<td colspan="2"class="bg-danger">&nbsp</td>'
     else:
-        registered = '<td>Board has not been registered.</td>'
+        registered = '<td colspan="2">Board has not been registered.</td>'
 
     # does the same thing as the home page to determine how many tests have passed
     cur.execute('select type_id from Board where board_id=%s' % board_id)
@@ -322,7 +322,7 @@ def board_info(sn):
     print('<th colspan=2>Location</th>')
     print('<th colspan=1>Resistance ID</th>')
     print('<th colspan=1>Testing Status</th>')
-    print('<th colspan=1>Registered?</th>')
+    print('<th colspan=2>Registered?</th>')
     print('</tr>')
     print('<tr>')
     print('<td colspan=2>%s</td>' % location)
@@ -344,7 +344,7 @@ def board_info(sn):
     print('<th colspan=2>Comments</th>')
     print('<th colspan=1>Date Received</th>')
     print('<th colspan=1>Manufacturer</th>')
-    print('<th colspan=1>Date Shipped</th>')
+    print('<th colspan=2>Date Shipped</th>')
     print('</tr>')
     print('<tr>')
     print('<td colspan=2>%s</td>' % info_com)
@@ -369,8 +369,8 @@ def board_info(sn):
     if board_id in ids:
         cur.execute('select checkout_date,comment from Check_Out where board_id=%s' % board_id)
         checkout = cur.fetchall()[0]
-        #print('<td>%s</td>' % checkout[1])
-        print('<td>%s</td>' % checkout[0])
+        print('<td>%s</td>' %  checkout[1] )
+        print('<td>%s</td>' % checkout[0] )
     else:
         print('<td colspan=1> Board has not been shipped. </td>')
         
