@@ -10,23 +10,20 @@ the stock items that would be used.
 
 import argparse
 import csv
-import importlib.util
 import io
 import json
 import logging
 import os
 import sys
 import zipfile
-from pathlib import Path
 
 import cgi
 import mysql.connector
 
-from connect import connect as wagon_connect
-
-
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
+from connect import connect
 
 
 LOCATION = "UMN"
@@ -36,7 +33,7 @@ WAGON_LABEL_TYPECODE = "ZP-LMZ2"
 WAGON_NAME_PREFIX = "lpGBT Mezzanine"
 WAGON_COMMENT = "Production"
 WAGON_PRODUCTION_DATES = {
-    "2": "UNKNOWN",
+    "2": "2026-03-23",
 }
 
 LPGBT_TYPECODE = "IC-LPG"
@@ -59,19 +56,6 @@ MANU_RENAMES = {
 }
 
 
-def load_enginedb_connect():
-    engine_connect_path = Path(__file__).resolve().parents[1] / "EngineDB" / "connect.py"
-    spec = importlib.util.spec_from_file_location("enginedb_connect_register_zplmz2", engine_connect_path)
-    module = importlib.util.module_from_spec(spec)
-    if spec.loader is None:
-        raise ImportError(f"Could not load EngineDB connect module from {engine_connect_path}")
-    spec.loader.exec_module(module)
-    return module.connect
-
-
-engine_connect = load_enginedb_connect()
-
-
 def decode_blob(blob):
     if blob is None:
         return None
@@ -92,7 +76,7 @@ def get_lpgbt_test_type_id(cur):
     return row[0] if row else None
 
 
-def get_wagon_boards(cur):
+def get_zplmz2_boards(cur):
     cur.execute('SELECT full_id FROM Board WHERE type_id = %s ORDER BY full_id', (WAGON_TYPE_SN,))
     return [row[0] for row in cur.fetchall()]
 
@@ -147,9 +131,11 @@ def get_batch(cur, barcode):
     if not row or row[0] is None:
         return None
     sn = str(row[0])
-    if len(sn) < 2:
+    if len(sn) < 1:
         return None
-    return sn[1]
+    # EngineDB-backed ZPLMZ2 boards follow the same batch convention as
+    # register_engines.py: the first SN character is the batch.
+    return sn[0]
 
 
 def get_production_date(batch):
@@ -293,19 +279,24 @@ def build_board_lpgbt_map(engine_cur, boards, lpgbt_test_type_id):
         valid[barcode] = lpgbt_id
         reverse[lpgbt_id] = barcode
 
+    logger.info(
+        "Selected %d ZPLMZ2 boards with a successful '%s' test",
+        len(valid),
+        LPGBT_TEST_NAME,
+    )
     return valid, reverse
 
 
-def filter_exportable_boards(wagon_cur, board_to_lpgbt):
+def filter_exportable_boards(source_cur, board_to_lpgbt):
     filtered = {}
 
     for barcode, lpgbt_id in sorted(board_to_lpgbt.items()):
         missing = []
-        if get_typecode(wagon_cur, barcode) is None:
+        if get_typecode(source_cur, barcode) is None:
             missing.append("typecode")
-        if get_manufacturer(wagon_cur, barcode) is None:
+        if get_manufacturer(source_cur, barcode) is None:
             missing.append("manufacturer")
-        if get_batch(wagon_cur, barcode) is None:
+        if get_batch(source_cur, barcode) is None:
             missing.append("batch")
         if len(barcode) <= 8 or barcode[8] not in LPGBT_VERSIONS:
             missing.append("supported lpGBT version")
@@ -319,7 +310,7 @@ def filter_exportable_boards(wagon_cur, board_to_lpgbt):
     return filtered
 
 
-def build_board_csv(wagon_cur, board_to_lpgbt):
+def build_board_csv(source_cur, board_to_lpgbt):
     buf = io.StringIO()
     writer = csv.writer(buf)
     writer.writerow([
@@ -330,9 +321,9 @@ def build_board_csv(wagon_cur, board_to_lpgbt):
 
     count = 0
     for barcode in sorted(board_to_lpgbt):
-        typecode = get_typecode(wagon_cur, barcode)
-        manufacturer = get_manufacturer(wagon_cur, barcode)
-        batch = get_batch(wagon_cur, barcode)
+        typecode = get_typecode(source_cur, barcode)
+        manufacturer = get_manufacturer(source_cur, barcode)
+        batch = get_batch(source_cur, barcode)
         lpgbt_id = board_to_lpgbt[barcode]
 
         missing = []
@@ -464,36 +455,34 @@ def build_lpgbt_csv(board_to_lpgbt, lpgbt_to_board, stock_assignments):
 
 
 def make_zip(debug=False):
-    wagon_db = wagon_connect(0)
-    wagon_cur = wagon_db.cursor(buffered=True)
-    engine_read_db = engine_connect(0)
+    engine_read_db = connect(0)
     engine_read_cur = engine_read_db.cursor(buffered=True)
     engine_write_db = None
 
     try:
-        registered_test_type_id = get_registered_test_type_id(wagon_cur)
+        registered_test_type_id = get_registered_test_type_id(engine_read_cur)
         if registered_test_type_id is None:
-            raise RuntimeError(f"Could not find WagonDB test type '{REGISTERED_TEST_NAME}'")
+            raise RuntimeError(f"Could not find EngineDB test type '{REGISTERED_TEST_NAME}'")
 
         lpgbt_test_type_id = get_lpgbt_test_type_id(engine_read_cur)
         if lpgbt_test_type_id is None:
             raise RuntimeError(f"Could not find EngineDB test type '{LPGBT_TEST_NAME}'")
 
-        boards = get_wagon_boards(wagon_cur)
+        boards = get_zplmz2_boards(engine_read_cur)
         unregistered_boards = []
         for barcode in boards:
-            if is_registered(wagon_cur, barcode, registered_test_type_id):
-                logger.info("Skipping %s, already registered in WagonDB", barcode)
+            if is_registered(engine_read_cur, barcode, registered_test_type_id):
+                logger.info("Skipping %s, already registered in EngineDB", barcode)
                 continue
             unregistered_boards.append(barcode)
 
         board_to_lpgbt, _ = build_board_lpgbt_map(engine_read_cur, unregistered_boards, lpgbt_test_type_id)
-        board_to_lpgbt = filter_exportable_boards(wagon_cur, board_to_lpgbt)
+        board_to_lpgbt = filter_exportable_boards(engine_read_cur, board_to_lpgbt)
         lpgbt_to_board = {lpgbt_id: barcode for barcode, lpgbt_id in board_to_lpgbt.items()}
 
-        board_buf = build_board_csv(wagon_cur, board_to_lpgbt)
+        board_buf = build_board_csv(engine_read_cur, board_to_lpgbt)
         if not debug and board_to_lpgbt:
-            engine_write_db = engine_connect(1)
+            engine_write_db = connect(1)
 
         stock_assignments = assign_stock_serial(engine_read_cur, engine_write_db, board_to_lpgbt, debug)
         lpgbt_buf = build_lpgbt_csv(board_to_lpgbt, lpgbt_to_board, stock_assignments)
@@ -505,8 +494,6 @@ def make_zip(debug=False):
 
         return zip_buf.getvalue()
     finally:
-        wagon_cur.close()
-        wagon_db.close()
         engine_read_cur.close()
         engine_read_db.close()
         if engine_write_db is not None:
