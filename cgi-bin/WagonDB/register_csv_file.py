@@ -206,6 +206,10 @@ def run(csv_file,selected=None):
                 logger.info(f"Skipping {barcode}, already registered")
                 continue
 
+            if barcode.startswith("320WE4") or barcode.startswith("320WE31"):
+                logger.info(f"Skipping {barcode}, use separate script for four-module wagons")
+                continue
+
             label_typecode = get_typecode(cur, barcode)
             manufacturer = get_manufacturer(cur, barcode)
             batch = get_batch(cur, barcode)

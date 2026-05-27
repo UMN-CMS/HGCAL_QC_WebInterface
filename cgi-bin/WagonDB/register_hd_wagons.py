@@ -2,7 +2,6 @@
 
 import sys
 import json 
-import csv
 import logging
 import argparse
 import components
@@ -14,10 +13,82 @@ logger = logging.getLogger(__name__)
 
 # Constants
 LOCATION = "UMN"
-INSTITUTION = "UMN"
+INSTITUTION = "University of Minnesota"
 
 MANU_RENAMES = { "Poly" : "PolyElectronics" }
 
+KOPS = {
+    'IC-ECD':'ECON-D',
+    'IC-ECD-A':'ECON-D-A',
+    'IC-ECD-B':'ECON-D-B',
+    'IC-ECD-D':'ECON-D-D',
+    'IC-ECD-F':'ECON-D-F',
+    'IC-ECT':'ECON-T',
+    'WH-21AT':'HD Wagon 2F Bottom D and T - Avocado',
+    'WH-21AT-AAA':'HD Wagon 2F Bottom D and T - Qual AAA - Avocado',
+    'WH-21AD':'HD Wagon 2F Bottom D only - Avocado',
+    'WH-21AD-AAA':'HD Wagon 2F Bottom D only - Qual AAA - Avocado',
+    'WH-21A1':'HD Wagon 2F Bottom PCB - Avocado',
+    'WH-20AT':'HD Wagon 2F D and T - Grapes',
+    'WH-20AT-BA':'HD Wagon 2F D and T - Qual BA - Grapes',
+    'WH-20AD':'HD Wagon 2F D only - Grapes',
+    'WH-20A1':'HD Wagon 2F PCB - Grapes',
+    'WH-31AT':'HD Wagon 3F LR D and T - Apple',
+    'WH-31AT-AAAA':'HD Wagon 3F LR D and T - Qual AAAA - Apple',
+    'WH-31AD':'HD Wagon 3F LR D only - Apple',
+    'WH-31AD-AAAA':'HD Wagon 3F LR D only - Qual AAAA - Apple',
+    'WH-31A1':'HD Wagon 3F LR PCB - Apple',
+    'WH-31BT':'HD Wagon 3F Top D and T - Cherry',
+    'WH-31BT-AAAA':'HD Wagon 3F Top D and T - Qual AAAA - Cherry',
+    'WH-31BT-BAAA':'HD Wagon 3F Top D and T - Qual BAAA - Cherry',
+    'WH-31BD':'HD Wagon 3F Top D only - Cherry',
+    'WH-31B1':'HD Wagon 3F Top PCB - Cherry',
+    'WH-30AT':'HD Wagon 3F TypeA D and T - Pineapple',
+    'WH-30A0':'HD Wagon 3F TypeA D and T - Pineapple -PRESERIES',
+    'WH-30AT-AAA':'HD Wagon 3F TypeA D and T - Qual AAA - Pineapple',
+    'WH-30AD':'HD Wagon 3F TypeA D only - Pineapple',
+    'WH-30AD-AAA':'HD Wagon 3F TypeA D only - Qual AAA - Pineapple',
+    'WH-30A1':'HD Wagon 3F TypeA PCB - Pineapple',
+    'WH-30BT':'HD Wagon 3F TypeB D and T - Banana',
+    'WH-30BT-AAA':'HD Wagon 3F TypeB D and T - Qual AAA - Banana',
+    'WH-30BT-BAA':'HD Wagon 3F TypeB D and T - Qual BAA - Banana',
+    'WH-30BD':'HD Wagon 3F TypeB D only - Banana',
+    'WH-30BD-AAA':'HD Wagon 3F TypeB D only - Qual AAA - Banana',
+    'WH-30B1':'HD Wagon 3F TypeB PCB - Banana',
+    'WH-30CT':'HD Wagon 3F TypeC D and T - Pumpkin',
+    'WH-30CT-AAA':'HD Wagon 3F TypeC D and T - Qual AAA - Pumpkin',
+    'WH-30CD':'HD Wagon 3F TypeC D only - Pumpkin',
+    'WH-30C1':'HD Wagon 3F TypeC PCB - Pumpkin',
+    'WH-30DT':'HD Wagon 3F TypeD D and T - Donut',
+    'WH-30DT-AAA':'HD Wagon 3F TypeD D and T - Qual AAA - Donut',
+    'WH-30DT-BAB':'HD Wagon 3F TypeD D and T - Qual BAB - Donut',
+    'WH-30DD':'HD Wagon 3F TypeD D only - Donut',
+    'WH-30D1':'HD Wagon 3F TypeD PCB - Donut',
+    'WH-30DD-AAA':'HD Wagon 3F TypeD D only - Qual AAA - Donut'
+}
+
+class MyXML():
+    def __init__(self, writer):
+        self.writer=writer
+        self.stack=[]
+        self.writer.write("<?xml version='1.1'?>\n")
+        
+    def open_tag(self, tag, attr=None):
+        if attr is None:
+            self.writer.write("%s<%s>\n"%(' '*len(self.stack)*2,tag))
+            self.stack.append(tag)
+
+    def close_tag(self, tag=None):
+        if tag is not None:
+            if tag!=self.stack[-1]:
+                print("Non-matching tags '%s' != '%s'"%(tag,self.stack[-1]))
+        self.writer.write("%s</%s>\n"%(' '*(len(self.stack)-1)*2,tag))
+        self.stack=self.stack[:-1]
+
+    def simple_item(self, tag, value, attr=None):
+        if attr is None:
+            self.writer.write("%s<%s>%s</%s>\n"%(' '*len(self.stack)*2,tag,value,tag))
+        
 
 # Helper Functions
 def filter_boards(cur) -> list:
@@ -111,6 +182,9 @@ BATCH_BOARD_DATES = {
     "WH-20A0:1" : "2025-01-27", "WH-21A0:1" : "2025-01-27",
     "WH-30BT:1" : "2025-10-27", "WH-30BD:1" : "2025-10-27",
     "WH-30DT:1" : "2025-10-27", "WH-30DD:1" : "2025-10-27",
+    "WH-30BT:2" : "2026-03-19", "WH-30BD:2" : "2026-03-19",
+    "WH-30DT:2" : "2026-03-26", "WH-30DD:2" : "2026-03-26",
+    "WH-21AT:2" : "2026-03-19", "WH-21AD:2" : "2026-03-19",
 }
 
 def get_date(typecode, batch):
@@ -178,40 +252,69 @@ def get_econ(ctx, cur, used, econ_tc, wagon_bc):
             logger.error(f,"No {econ_tc} available for {wagon_bc}")
             return None
 
-def get_econs(ctx, cur, barcode):
-    """Determine what kind of ECON is required and allocate out of the components tables"""
-    print(barcode)
-    retval = []
-    used = components.get_used_for(cur, barcode)
-    if used[0]!=200:
-        logger.error(f"Problem in the used_for : {used[0]}")
-        return []
-    used=used[1]
+def get_full_typecode(ctx, cur, barcode):
     nmodules=int(barcode[3+2+0])+int(barcode[3+2+1])
+    typecode=barcode[3:5]+"-"+barcode[5:9]+"-"
+
+    cur.execute("select attach from Attachments inner join Test where Test.test_id=Attachments.test_id and Test.test_type_id=29 and Test.board_id=(SELECT board_id from Board where full_id='%s')"%(barcode))
+    n=0
+    attach=""
+    for result in cur:
+        attach=result[0]
+        if n>0:
+            logger.warning("Multiple attachments for ECONs, confusing!")
+    econ_info=json.loads(attach)
+    retval=[]
     for nmod in range(1,nmodules+1):
-        econd_code = "ECON-D-"+barcode[3+2+4+int((nmod-1)/2)]
-        econt_code = "ECON-T"
+        typecode+=econ_info["ECOND-M%d"%nmod]["full_id"][8]
+    return typecode
+        
+def get_econs(ctx, cur, barcode, writer):
+    """Find ECON scan data in DB"""
+
+    nmodules=int(barcode[3+2+0])+int(barcode[3+2+1])
+    typecode=barcode[3:5]+"-"+barcode[5:9]+"-"
+
+    cur.execute("select attach from Attachments inner join Test where Test.test_id=Attachments.test_id and Test.test_type_id=29 and Test.board_id=(SELECT board_id from Board where full_id='%s')"%(barcode))
+    n=0
+    attach=""
+    for result in cur:
+        attach=result[0]
+        if n>0:
+            logger.warning("Multiple attachments for ECONs, confusing!")
+    econ_info=json.loads(attach)
+    retval=[]
+    for nmod in range(1,nmodules+1):
         # go
-        retval.append("IC-ECD")
-        retval.append(get_econ(ctx, cur, used, econd_code, barcode))
-        if barcode[3+2+3]=='T':
-            retval.append("IC-ECT")
-            retval.append(get_econ(ctx, cur, used, econt_code, barcode))
-        else:
-            retval.append("")
-            retval.append("")
-    for nmod in range(nmodules,4):
-        retval.append("")
-        retval.append("")
-        retval.append("")
-        retval.append("")
-    return retval
+        writer.open_tag("PART")
+        writer.simple_item("KIND_OF_PART",KOPS["IC-ECD-%s"%(econ_info["ECOND-M%d"%nmod]["full_id"][8])])
+        writer.simple_item("SERIAL_NUMBER",econ_info["ECOND-M%d"%nmod]["full_id"])
+        writer.open_tag("PREDEFINED_ATTRIBUTES")
+        writer.open_tag("ATTRIBUTE")
+        writer.simple_item("NAME","ECON Position")
+        writer.simple_item("VALUE","M%d"%nmod)
+        writer.close_tag("ATTRIBUTE")
+        writer.close_tag("PREDEFINED_ATTRIBUTES")
+        writer.close_tag("PART")
+
+        typecode+=econ_info["ECOND-M%d"%nmod]["full_id"][8]
+        if barcode[3+2+3]=='T':            
+            writer.open_tag("PART")
+            writer.simple_item("KIND_OF_PART",KOPS["IC-ECT"])
+            writer.simple_item("SERIAL_NUMBER",econ_info["ECONT-M%d"%nmod]["full_id"])
+            writer.open_tag("PREDEFINED_ATTRIBUTES")
+            writer.open_tag("ATTRIBUTE")
+            writer.simple_item("NAME","ECON Position")
+            writer.simple_item("VALUE","M%d"%nmod)
+            writer.close_tag("ATTRIBUTE")
+            writer.close_tag("PREDEFINED_ATTRIBUTES")
+            writer.close_tag("PART")
     
 def get_description(barcode,batch):
     """Check if the batch character is a number or a letter to assign a comment field."""
     return "Pre-series" if barcode[3+3+2]=='0' else "Pre-production" if batch=="1" else "Production"
- 
-def run(csv_file):
+
+def run(xml_file, bconly):
     """Main execution function."""
     try:
         db = connect(1)
@@ -220,12 +323,14 @@ def run(csv_file):
 
         all_hd_wagons = filter_boards(cur)
 
-        if csv_file is None:
-            writer = csv.writer(sys.stdout)
+        if xml_file is None:
+            writer = MyXML(sys.stdout)
         else:
-            ofile = open(csv_file, mode='w', newline='')
-            writer = csv.writer(ofile)
+            writer = MyXML(open(xml_file, mode='w'))
 
+        writer.open_tag("ROOT")
+        writer.open_tag("PARTS")
+            
         # Write the header row
         necons=4*2 
         header_row=[
@@ -237,11 +342,14 @@ def run(csv_file):
         for i in range(1,necons+1):
             header_row.append("MADE-FROM-TYPECODE[%d]"%i)
             header_row.append("MADE-FROM-SN[%d]"%i)
-        writer.writerow(header_row)
+#        writer.writerow(header_row)
 
         success = 0
         
         for barcode in all_hd_wagons:
+
+            if bconly is not None and bconly!=barcode:
+                continue
 
             # for now, ignore preseries
             if barcode[3+2+3]=='0':
@@ -261,33 +369,55 @@ def run(csv_file):
             production_date = get_date(label_typecode, batch)
             comment = get_description(barcode, batch)
 
+            writer.open_tag("PART")
+            label_typecode=get_full_typecode(db,cur,barcode)
+            writer.simple_item("KIND_OF_PART",KOPS[label_typecode])
+            writer.simple_item("SERIAL_NUMBER",barcode)
+            writer.simple_item("BARCODE",barcode)
+            writer.simple_item("NAME_LABEL",name_label)
+            writer.simple_item("PRODUCTION_DATE",production_date)
+            writer.simple_item("MANUFACTURER",manufacturer)
+            writer.simple_item("LOCATION",LOCATION)
+            writer.simple_item("INSTITUTION",INSTITUTION)
+            writer.simple_item("BATCH_NUMBER",batch)
+            writer.simple_item("COMMENT_DESCRIPTION",comment)
+
+            writer.open_tag("CHILDREN")
+            
             bareboard = get_bare_board(db, cur, barcode)
-            econs = get_econs(db, cur, barcode)
+            writer.open_tag("PART")
+            writer.simple_item("KIND_OF_PART",KOPS[bareboard[0]])
+            writer.simple_item("SERIAL_NUMBER",bareboard[1])
+            writer.close_tag("PART")
+
             
-            items = [
-                label_typecode, barcode, barcode, LOCATION,
-                INSTITUTION, manufacturer, name_label, production_date,
-                batch, comment]
-            items.extend(bareboard)
-            items.extend(econs)
+            get_econs(db, cur, barcode, writer)
+
+            writer.close_tag("CHILDREN")
+            writer.close_tag("PART")
             
-            writer.writerow(items)
+            
+#            writer.writerow(items)
     
             success += 1
 
-        logger.info(f"CSV file for {success} HD wagons created successfully.")
-        if ofile is not None:
-            ofile.close()
+        writer.close_tag("PARTS")
+        writer.close_tag("ROOT")
+
+        logger.info(f"XML file for {success} HD wagons created successfully.")
+#        if ofile is not None:
+#            ofile.close()
 
     except Exception as e:
         logger.error(f"Critical error in run function: {e}")
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Register LD wagons by exporting data to a CSV file.")
-    parser.add_argument("-o", "--output", type=str, default=None, help="Output CSV file name (e.g., output.csv)")
+    parser = argparse.ArgumentParser(description="Register LD wagons by exporting data to an XML file.")
+    parser.add_argument("-o", "--output", type=str, default=None, help="Output XML file name (e.g., output.xml)")
+    parser.add_argument("-b","--barcode",type=str, default=None, help="Only process the given barcode")
     args = parser.parse_args()
 
     if args.output is None:        
-        print("Content-type: text/csv")
-        print('Content-disposition: attachment; filename="hd_wagons_register.csv"\n')
-    run(args.output)
+        print("Content-type: text/xml")
+        print('Content-disposition: attachment; filename="hd_wagons_register.xml"\n')
+    run(args.output,args.barcode)
