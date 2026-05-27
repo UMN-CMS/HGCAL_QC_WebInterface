@@ -16,7 +16,10 @@ try:
     print('<div class="col-md-12 pt-4 ps-5 mx-2 my-2">')
     print('</div>')
     print('</div>')
-    home_page_list.render_list_tests()
+
+    suppressed=["EH03F0","EH0QF0","EH0QH0","EL0300","EL0QE1","EL0QW1"]
+    
+    home_page_list.render_list_tests(suppressed)
 
     print('<div class="row">')
     print('<div class="col-md-12 pt-4 ps-5 mx-2 my-2">')
