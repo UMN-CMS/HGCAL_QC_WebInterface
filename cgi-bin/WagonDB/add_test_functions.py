@@ -165,7 +165,7 @@ def get_previous_test_results(serial_num):
 
     print('Begin3')
     try:
-        cur.execute('select test_type, name from Test_Type where required=1 order by relative_order ASC')
+        cur.execute('select test_type, name from Test_Type order by relative_order ASC')
         test_types = cur.fetchall()
         cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
         temp = cur.fetchall()

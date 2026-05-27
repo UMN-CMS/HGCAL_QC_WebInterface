@@ -1,6 +1,5 @@
 #!./cgi_runner.sh
 
-# framework for creating dynamic plots
 import sys
 import pandas as pd
 import csv
@@ -22,25 +21,25 @@ from bokeh.models import (
     TableColumn,
     Select,
     Label,
-    NumericInput,
+    Text,
+    HoverTool,
 )
 from bokeh.embed import json_item
-from bokeh.palettes import d3, brewer
+from bokeh.palettes import d3, brewer, Turbo256
 from bokeh.layouts import column, row
 import json
 import makeTestingData as mTD
 
-#import all data from csv files and set it up properly
 TestData = pd.read_csv(mTD.get_test(), parse_dates=['Time'])
 BoardData = pd.read_csv(mTD.get_board())
 PeopleData = pd.read_csv(mTD.get_people())
+TestTypeData = pd.read_csv(mTD.get_test_types())
+TestTypeData = TestTypeData.rename(columns={'Name':'Test Name'})
 mergetemp = TestData.merge(BoardData, on='Board ID', how='left')
 AllData = mergetemp.merge(PeopleData, on='Person ID', how='left')
 AllData = AllData.rename(columns={'Successful':'Outcome'})
 AllData['Outcome'] = AllData['Outcome'].replace(0, 'Unsuccessful')
 AllData['Outcome'] = AllData['Outcome'].replace(1, 'Successful')
-TestTypeData = pd.read_csv(mTD.get_test_types())
-TestTypeData = TestTypeData.rename(columns={'Name':'Test Name'})
 AllData = AllData.merge(TestTypeData, on='Test Type ID', how='left')
 
 filter_code=('''
@@ -118,26 +117,25 @@ return indices;
 
 ''')
 
-#create a color pallete to be used on graphs
-colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10][2], d3['Category10'][10][3], d3['Category10'][10][4], d3['Category10'][10][5], d3['Category10'][10][6], d3['Category10'][10][7], d3['Category10'][10][8], d3['Category10'][10][9], brewer['Accent'][8][0], brewer['Accent'][8][3], brewer['Dark2'][8][0], brewer['Dark2'][8][2], brewer['Dark2'][8][3], brewer['Dark2'][8][4], brewer['Dark2'][8][5], brewer['Dark2'][8][6]]
+#colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10][2], d3['Category10'][10][3], d3['Category10'][10][4], d3['Category10'][10][5], d3['Category10'][10][6], d3['Category10'][10][7], d3['Category10'][10][8], d3['Category10'][10][9], brewer['Accent'][8][0], brewer['Accent'][8][3], brewer['Dark2'][8][0], brewer['Dark2'][8][2], brewer['Dark2'][8][3], brewer['Dark2'][8][4], brewer['Dark2'][8][5], brewer['Dark2'][8][6], d3['Category20'][20][1], d3['Category20'][20][9], d3['Category20c'][20][19]]
+
+def get_colors(n):
+    step = len(Turbo256) // n
+    return [Turbo256[i*step] for i in range(n)]
 
 def Plot(data, view, widgets, date_range, modules):
-    # creates a column data source for a line chart for each person
     tsd = {}
     for i in modules:
-        tsd[i] = ColumnDataSource(data={'dates':[], 'counts':[]})
+        tsd[i] = ColumnDataSource(data={'dates':[], 'counts':[], 'user':[]})
     
     dt = ColumnDataSource(data={'Person Name':[], 'counts':[]})
     x = CustomJS(args=dict(tsd=tsd, data=data, view=view, dt=dt, date_range=date_range, modules=modules),code='''
-// create arrays to be filled
 const names = [];
 const completed = [];
-console.log(data.data)
 for (let t = 0; t < modules.length; t++) {
-    // create and modify the mask
     const indices = view.filters[0].compute_indices(data);
     let mask = new Array(data.data['Test ID'].length).fill(false);
-    [...indices].forEach((x)=>{mask[x] = true;})
+    [...indices].forEach((x)=>{mask[x] = indices.get(x);})
     for (let m = 0; m < mask.length; m++) {
         if (mask[m] == true && data.data['Person Name'][m] == modules[t]) {
             mask[m] = true;
@@ -145,49 +143,33 @@ for (let t = 0; t < modules.length; t++) {
             mask[m] = false;
         }
     }
+
     let count = 0;
     const dates = [];
+    const user = [];
     const counts = [];
-
-    // this will go through every day and find the number of tests done that day and add that to the total
-    // the day and the total number of tests after that day will be recorded
-    // by incorporating this mask, it allows the data to be filtered properly by the date range widget
     for (let m = 0; m < mask.length; m++) {
         if (mask[m] ==  true) {
-
-            // gets the date of the current index
             let temp_date = new Date(data.data['Time'][m]);
-
-            // makes it a string
             let new_date = temp_date.toLocaleDateString();
-
-            // creates a Date object
             let date = new Date(new_date);
-
-            // converts to Central Time
             if (String(date).includes('Daylight')) {
                 date = new Date(date.setHours(date.getHours() - 5));
             } else {
                 date = new Date(date.setHours(date.getHours() - 6));
             }
-
-            // iterate over all the days in the selected range
             for (let i = 0; i < date_range.length; i++) {
-
-                // set up date range to span one day
                 let day0 = new Date(date_range[i]);
                 let day1 = new Date(date_range[i]);
                 day1 = new Date(day1.setDate(day1.getDate() + 1));
-
-                // check if date is before the current iterated day
                 if (date <= day1) {
                     for (let j = 0; j < mask.length; j++) {
                         if (mask[j] == true && data.data['Time'][j] >= day0 && data.data['Time'][j] <= day1){
-                            // count tests done that day
                             count++; 
                         }
                     }
                     dates.push(day0.getTime());
+                    user.push(modules[t]);
                     counts.push(count);
                 }
             }
@@ -196,9 +178,9 @@ for (let t = 0; t < modules.length; t++) {
     }
     tsd[modules[t]].data['dates'] = dates;
     tsd[modules[t]].data['counts'] = counts;
+    tsd[modules[t]].data['user'] = user;
     tsd[modules[t]].change.emit()
     names.push(modules[t])
-    // grabs the last element
     completed.push(counts.slice(-1))
 }
 dt.data['Person Name'] = names;
@@ -209,13 +191,10 @@ dt.change.emit()
         widget.js_on_change('value', x)
     return tsd, dt
 
-
 def Filter():
-    # create column data source
-    df_temp = AllData
-    df_temp = df_temp.dropna()
-    ds = ColumnDataSource(df_temp)
-    # see bit_error_ratePlots.py for more details on widgets and creating bokeh plots
+    df = AllData
+    df = df.dropna()
+    ds = ColumnDataSource(df)
     mc_widgets = {}
     dr_widgets = {}
     multi_choice = (lambda x,y: MultiChoice(options=x, value=[], title=y), 'value')
@@ -227,11 +206,12 @@ def Filter():
     while min_date <= today:
         date_range.append(min_date)
         min_date += datetime.timedelta(days=1)
-    # testers are being compared so the modules to iterate over are the people
     modules = np.unique(ds.data['Person Name'].tolist())
     columns = ['Major Type', 'Sub Type', 'Full ID', 'Test Name', 'Outcome','Start Date', 'End Date']
     data = [ds.data['Major Type'].tolist(), ds.data['Sub Type'].tolist(), ds.data['Full ID'].tolist(), ds.data['Test Name'].tolist(), ds.data['Outcome'].tolist(), date_range, date_range]
     t = [multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
+
+    height = max(400, 25 * len(modules))
 
     p = figure(
         title='Total Tests Over Time',
@@ -239,6 +219,7 @@ def Filter():
         y_axis_label='Number of Tests',
         tools='pan,wheel_zoom,box_zoom,reset,save',
         width = 1200,
+        height = height,
         x_axis_type='datetime',
         )
 
@@ -267,10 +248,24 @@ def Filter():
     view = CDSView(source=ds, filters=[custom_filter])
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
-    tsd, dt = Plot(ds,view, widgets.values(), date_range, modules)
-    for i in range(len(modules)):
-        # dates and counts are the field names from the data source to be plotted on x and y
-        p.line('dates', 'counts', source=tsd[modules[i]], legend_label=modules[i], color=colors[i], line_width=2)
+    tsd,dt = Plot(ds, view, widgets.values(), date_range, modules)
+    colors = get_colors(len(modules))
+    renderers = []
+    for i,e in enumerate(modules):
+        r = p.line('dates', 'counts', source=tsd[e], legend_label=e, color=colors[i], line_width=2)
+        renderers.append(r)
+
+    hover = HoverTool(
+            renderers = renderers,
+            tooltips=[
+                ("User", "@user"),
+                ("Tests", "@counts"),
+                ("Date", "@dates{%F}")
+                ],
+            formatters={"@dates": "datetime"},
+            mode="mouse"
+        )
+    p.add_tools(hover)
         
     table_columns = [
                     TableColumn(field='Person Name', title='Person Name'),
@@ -280,15 +275,15 @@ def Filter():
     p.legend.click_policy='hide'
     p.legend.label_text_font_size = '8pt'
     p.legend.location = 'top_left'
+    p.add_layout(p.legend[0], 'right')
     w = [*widgets.values()]
 
-    # update options for serial numbers upon selecting a subtype
     subtypes = {}
     for major in np.unique(ds.data['Major Type'].tolist()).tolist():
-        subtypes[major] = np.unique(df_temp.query('`Major Type` == @major')['Sub Type'].values.tolist()).tolist()
+        subtypes[major] = np.unique(df.query('`Major Type` == @major')['Sub Type'].values.tolist()).tolist()
     serial_numbers = {}
     for s in np.unique(ds.data['Sub Type'].tolist()).tolist():
-        serial_numbers[s] = np.unique(df_temp.query('`Sub Type` == @s')['Full ID'].values.tolist()).tolist()
+        serial_numbers[s] = np.unique(df.query('`Sub Type` == @s')['Full ID'].values.tolist()).tolist()
     
     all_subtypes = np.unique(ds.data['Sub Type'].tolist()).tolist()
     all_serials = np.unique(ds.data['Full ID'].tolist()).tolist()
@@ -311,6 +306,6 @@ if (this.value.length != 0) {
 '''))
     w[1].js_on_change('value', update_options_2)
 
-    plot_json = json.dumps(json_item(column(row(w[0:3]), row(w[3:]), p, data_table)))
+    plot_json = json.dumps(json_item(column(row(w[0:3]), row(w[3:5]), row(w[5:]), p, data_table)))
     return plot_json
 

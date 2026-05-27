@@ -93,16 +93,18 @@ def render_list_tests():
     cur.execute('select board_id from Check_Out')
     shipped_board_ids = set(row[0] for row in cur.fetchall())
 
+    cur.execute('select board_id from Grades')
+    graded_board_ids = set(row[0] for row in cur.fetchall())
 
     groups = OrderedDict({name: [] for name in GROUPS})
     for type_sn,boards in boards_by_type_sn.items():
         name = next(x for x,y in GROUPS.items() if re.match(y, type_sn))
         groups[name].append((type_sn,boards))
-
+        
     for name, group_boards in groups.items():
-        print('<div class="col-md-11 mx-4 my-4"><table class="table table-bordered table-hover table-active">')
+        print('<div class="col-md-11 mx-4 my-4" style="overflow-y: auto"><table class="table table-bordered table-hover table-active">')
         print(f"<h2>{name}</h2>")
-        print('<tr><th>Subtype<th>Nickname<th>Total Checked In<th>Awaiting Testing<th>QC Passed, Awaiting Registration<th>Ready for Shipping<th>Shipped<th>Failed QC</tr>')
+        print('<thead><tr><th>Subtype<th>Nickname<th>Total Checked In<th>Awaiting Testing<th>QC Passed, Awaiting Registration<th>Ready for Shipping<th>Shipped<th>Failed QC<th>Dead</tr></thead>')
         for type_sn, boards in group_boards:
             nickname = board_info[boards[0]]['nickname']
             bt_type_id = board_info[boards[0]]['bt_type_id']
@@ -135,6 +137,10 @@ def render_list_tests():
 
                 if board_id in shipped_board_ids:
                     status = 'Shipped'
+                elif board_id in graded_board_ids:
+                    cur.execute('select grade from Grades where board_id=%s' % board_id)
+                    if cur.fetchall()[0][0] == "F":
+                        status = 'Dead'
                 elif num_tests_failed != 0:
                     status = 'Failed'
                 elif num_tests_passed == num_tests_req:
@@ -156,6 +162,7 @@ def render_list_tests():
             passed = [k for k,v in status_map.items() if v == 'Passed']
             shipped = [k for k,v in status_map.items() if v == 'Shipped']
             failed = [k for k,v in status_map.items() if v == 'Failed']
+            dead = [k for k,v in status_map.items() if v == 'Dead']
 
             def print_status_column(status_id, items):
                 print('<td>')
@@ -174,6 +181,7 @@ def render_list_tests():
             print_status_column('passed', passed)
             print_status_column('shipped', shipped)
             print_status_column('failed', failed)
+            print_status_column('dead', dead)
 
             print('</tr>')
 

@@ -11,8 +11,6 @@ cgitb.enable()
 
 base_url = connect.get_base_url()
 
-# rerouts page
-print("Location: summary.py\n\n")
 #cgi header
 print("Content-type: text/html\n")
 

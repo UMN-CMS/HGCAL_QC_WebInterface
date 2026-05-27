@@ -163,6 +163,7 @@ def get_is_ready_for_thermal(full_id):
     num_tests_failed = sum(failed.values())
 
     if num_tests_passed == num_tests_req or (num_tests_passed == num_tests_req - 1 and not outcomes.get('Registered', False)):
+    #if outcomes.get('Thermal Cycle') is True:
         return 'Already passed thermal testing'
     elif (
         outcomes.get('Thermal Cycle') is False and 
@@ -239,7 +240,7 @@ def get_previous_test_results(serial_num):
 
     print('Begin3')
     try:
-        cur.execute('select test_type, name from Test_Type where required=1 order by relative_order ASC')
+        cur.execute('select test_type, name from Test_Type order by relative_order ASC')
         test_types = cur.fetchall()
         cur.execute('select test_type_id from Type_test_stitch where type_id=%s' % type_id)
         temp = cur.fetchall()

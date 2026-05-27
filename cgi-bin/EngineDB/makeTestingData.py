@@ -751,7 +751,7 @@ def get_board_states():
                         status = 'Passed QC Minus Thermal Cycle'
                     else:
                         status = 'Failed QC'
-                except KeyError as e:
+                except (KeyError, TypeError) as e:
                     status = 'Failed QC'
             elif num_tests_passed == num_tests_req:
                 status = 'Ready for Shipping'

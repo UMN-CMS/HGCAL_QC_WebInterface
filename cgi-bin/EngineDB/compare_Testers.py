@@ -22,9 +22,10 @@ from bokeh.models import (
     Select,
     Label,
     Text,
+    HoverTool,
 )
 from bokeh.embed import json_item
-from bokeh.palettes import d3, brewer
+from bokeh.palettes import d3, brewer, Turbo256
 from bokeh.layouts import column, row
 import json
 import makeTestingData as mTD
@@ -116,12 +117,16 @@ return indices;
 
 ''')
 
-colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10][2], d3['Category10'][10][3], d3['Category10'][10][4], d3['Category10'][10][5], d3['Category10'][10][6], d3['Category10'][10][7], d3['Category10'][10][8], d3['Category10'][10][9], brewer['Accent'][8][0], brewer['Accent'][8][3], brewer['Dark2'][8][0], brewer['Dark2'][8][2], brewer['Dark2'][8][3], brewer['Dark2'][8][4], brewer['Dark2'][8][5], brewer['Dark2'][8][6], d3['Category20'][20][1], d3['Category20'][20][9], d3['Category20c'][20][19]]
+#colors = [d3['Category10'][10][0], d3['Category10'][10][1], d3['Category10'][10][2], d3['Category10'][10][3], d3['Category10'][10][4], d3['Category10'][10][5], d3['Category10'][10][6], d3['Category10'][10][7], d3['Category10'][10][8], d3['Category10'][10][9], brewer['Accent'][8][0], brewer['Accent'][8][3], brewer['Dark2'][8][0], brewer['Dark2'][8][2], brewer['Dark2'][8][3], brewer['Dark2'][8][4], brewer['Dark2'][8][5], brewer['Dark2'][8][6], d3['Category20'][20][1], d3['Category20'][20][9], d3['Category20c'][20][19]]
+
+def get_colors(n):
+    step = len(Turbo256) // n
+    return [Turbo256[i*step] for i in range(n)]
 
 def Plot(data, view, widgets, date_range, modules):
     tsd = {}
     for i in modules:
-        tsd[i] = ColumnDataSource(data={'dates':[], 'counts':[]})
+        tsd[i] = ColumnDataSource(data={'dates':[], 'counts':[], 'user':[]})
     
     dt = ColumnDataSource(data={'Person Name':[], 'counts':[]})
     x = CustomJS(args=dict(tsd=tsd, data=data, view=view, dt=dt, date_range=date_range, modules=modules),code='''
@@ -141,6 +146,7 @@ for (let t = 0; t < modules.length; t++) {
 
     let count = 0;
     const dates = [];
+    const user = [];
     const counts = [];
     for (let m = 0; m < mask.length; m++) {
         if (mask[m] ==  true) {
@@ -163,6 +169,7 @@ for (let t = 0; t < modules.length; t++) {
                         }
                     }
                     dates.push(day0.getTime());
+                    user.push(modules[t]);
                     counts.push(count);
                 }
             }
@@ -171,6 +178,7 @@ for (let t = 0; t < modules.length; t++) {
     }
     tsd[modules[t]].data['dates'] = dates;
     tsd[modules[t]].data['counts'] = counts;
+    tsd[modules[t]].data['user'] = user;
     tsd[modules[t]].change.emit()
     names.push(modules[t])
     completed.push(counts.slice(-1))
@@ -203,12 +211,15 @@ def Filter():
     data = [ds.data['Major Type'].tolist(), ds.data['Sub Type'].tolist(), ds.data['Full ID'].tolist(), ds.data['Test Name'].tolist(), ds.data['Outcome'].tolist(), date_range, date_range]
     t = [multi_choice, multi_choice, multi_choice, multi_choice, multi_choice, start_date, end_date]
 
+    height = max(400, 25 * len(modules))
+
     p = figure(
         title='Total Tests Over Time',
         x_axis_label='Date',
         y_axis_label='Number of Tests',
         tools='pan,wheel_zoom,box_zoom,reset,save',
-        width = 925,
+        width = 1200,
+        height = height,
         x_axis_type='datetime',
         )
 
@@ -238,8 +249,23 @@ def Filter():
     all_widgets = {**mc_widgets, **dr_widgets}
     widgets = {k:w['widget'] for k,w in all_widgets.items()}
     tsd,dt = Plot(ds, view, widgets.values(), date_range, modules)
-    for i in range(len(modules)):
-        p.line('dates', 'counts', source=tsd[modules[i]], legend_label=modules[i], color=colors[i], line_width=2)
+    colors = get_colors(len(modules))
+    renderers = []
+    for i,e in enumerate(modules):
+        r = p.line('dates', 'counts', source=tsd[e], legend_label=e, color=colors[i], line_width=2)
+        renderers.append(r)
+
+    hover = HoverTool(
+            renderers = renderers,
+            tooltips=[
+                ("User", "@user"),
+                ("Tests", "@counts"),
+                ("Date", "@dates{%F}")
+                ],
+            formatters={"@dates": "datetime"},
+            mode="mouse"
+        )
+    p.add_tools(hover)
         
     table_columns = [
                     TableColumn(field='Person Name', title='Person Name'),
@@ -249,6 +275,7 @@ def Filter():
     p.legend.click_policy='hide'
     p.legend.label_text_font_size = '8pt'
     p.legend.location = 'top_left'
+    p.add_layout(p.legend[0], 'right')
     w = [*widgets.values()]
 
     subtypes = {}

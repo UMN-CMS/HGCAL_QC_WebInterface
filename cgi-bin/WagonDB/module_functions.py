@@ -313,19 +313,28 @@ def board_info(sn):
 
     num = outcomes.count(True)
     total = len(names)
+
+    cur.execute('select grade from Grades where board_id=%s' % board_id)
+    grade = cur.fetchall()
+    if grade:
+        grade = grade[0][0]
+    else:
+        grade = "No grade info"
  
     # adds info
     print('<div class="col-md-11 pt-2 px-4 mx-2 my-2">')
     print('<table class="table table-bordered table-hover table-active">')
     print('<tbody>')
     print('<tr>')
-    print('<th colspan=2>Location</th>')
+    print('<th colspan=1>Location</th>')
+    print('<th colspan=1>Grade</th>')
     print('<th colspan=1>Resistance ID</th>')
     print('<th colspan=1>Testing Status</th>')
     print('<th colspan=2>Registered?</th>')
     print('</tr>')
     print('<tr>')
-    print('<td colspan=2>%s</td>' % location)
+    print('<td colspan=1>%s</td>' % location)
+    print('<td colspan=1>%s</td>' % grade)
     print('<td colspan=1>%s</td>' % id_resistance)
     if num == total:
         print('<td colspan=1><span class="badge bg-success rounded-pill">Done</span></td>')
@@ -389,7 +398,7 @@ def board_info(sn):
 
 def add_board_info(board_id, sn, info, passwd):
     try:
-        db = connect_admin(passwd, db_name)
+        db = connect_admin(passwd)
         cur = db.cursor()
     except Exception as e:
         print("Administrative access denied")
