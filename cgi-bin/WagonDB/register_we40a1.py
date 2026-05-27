@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 
 """
-Produce a WE-40A1 (4-module wagon) registration CSV.
+Produce a 4-module wagon registration CSV.
 
-For each unregistered WE-40A1 board in WagonDB, extracts the lpGBT ID from
+For each unregistered four module board in WagonDB, extracts the lpGBT ID from
 the "Mod4 LMezz Id" test, then looks up the matching ZP-LMZ2 board in
-EngineDB by lpGBT ID. The CSV links each WE-40A1 to its ZP-LMZ2 daughter
+EngineDB by lpGBT ID. The CSV links each four module to its ZP-LMZ2 daughter
 via the MADE-FROM columns.
 """
 
@@ -30,8 +30,7 @@ from connect import connect
 LOCATION = "UMN"
 INSTITUTION = "UMN"
 
-WAGON_TYPE_PREFIX = "320WE4"
-PRODUCTION_DATE = "2026-02-03"
+WAGON_TYPE_PREFIX = ["320WE4","320WE31"]
 COMMENT_DESCRIPTION = "Production"
 
 LPGBT_TEST_NAME = "Mod4 LMezz Id"
@@ -73,7 +72,7 @@ def decode_blob(blob):
 
 def filter_boards(cur):
     cur.execute('SELECT full_id FROM Board')
-    return [row[0] for row in cur.fetchall() if row[0].startswith(WAGON_TYPE_PREFIX)]
+    return [row[0] for row in cur.fetchall() if (row[0].startswith(WAGON_TYPE_PREFIX[0]) or row[0].startswith(WAGON_TYPE_PREFIX[1]))]
 
 
 def check_if_registered(cur, barcode):
@@ -127,6 +126,11 @@ def get_batch(cur, barcode):
 
 def get_name(barcode):
     return f"4 Module Wagon {barcode}"
+
+def get_production_date(barcode):
+    if barcode.startswith("320WE40A1"): return "2026-02-03"
+    if barcode.startswith("320WE31A1"): return "2026-02-24"
+    return "UNKNOWN"
 
 
 # -------- lpGBT ID from WagonDB (WE-40A1 test) --------
@@ -288,7 +292,7 @@ def run(csv_file, debug=False):
 
         # WagonDB: get WE-40A1 boards
         all_boards = filter_boards(wagon_cur)
-        logger.info("Found %d WE-40A1 boards", len(all_boards))
+        logger.info("Found %d four module wagons", len(all_boards))
 
         ofile = None
         if csv_file is None:
@@ -342,7 +346,7 @@ def run(csv_file, debug=False):
                 INSTITUTION,
                 manufacturer,
                 get_name(barcode),
-                PRODUCTION_DATE,
+                get_production_date(barcode),
                 batch,
                 COMMENT_DESCRIPTION,
                 ZPLMZ2_LABEL_TYPECODE,
