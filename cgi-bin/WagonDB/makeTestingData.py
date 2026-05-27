@@ -887,6 +887,77 @@ def get_status_over_time():
 
     return status_over_time
 
+def compare_testers_data():
+
+    cur.execute('''
+        SELECT B.full_id, B.type_id, TT.name, T.successful, T.day, P.person_name
+        FROM Test T
+        JOIN Board B ON B.board_id=T.board_id
+        JOIN Test_Type TT ON TT.test_type=T.test_type_id
+        JOIN People P on P.person_id=T.person_id
+        ORDER BY T.day
+    ''')
+    test_rows = cur.fetchall()
+
+    test_history = defaultdict(lambda: defaultdict(list))
+    for board_id, test_type_id, successful, timestamp in test_rows:
+        test_history[board_id][test_type_id].append((timestamp, successful))
+        all_dates.add(timestamp.date())
+
+    all_dates = sorted(all_dates)
+    status_over_time = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(int))))
+
+    for date in all_dates:
+        for board_id, info in board_info.items():
+            if info['checkin_date'].date() >= date:
+                continue  # not yet checked in
+
+            full_id = info['full_id']
+            type_sn = info['type_sn']
+            major_type = type_sn[:2]
+            subtype = type_sn
+            bt_type_id = info['bt_type_id']
+            stitch_types = stitch_type_map.get(bt_type_id, [])
+
+            # Get most recent test outcomes before or on this date
+            outcomes = {}
+            failed = {}
+            for test_type_id, test_name in stitch_types:
+                tests = test_history[board_id][test_type_id]
+                latest = None
+                for ts, success in tests:
+                    if ts.date() <= date:
+                        latest = success
+                    else:
+                        break
+                if latest is not None:
+                    outcomes[test_name] = latest == 1
+                    failed[test_name] = latest == 0
+                else:
+                    outcomes[test_name] = None
+                    failed[test_name] = None
+
+            num_tests_passed = sum(1 for v in outcomes.values() if v is True)
+            num_tests_req = len(stitch_types)
+            num_tests_failed = sum(1 for v in failed.values() if v is True)
+
+            # Determine status
+            if checkout_dates.get(board_id, None) and checkout_dates[board_id].date() <= date:
+                status = 'Shipped'
+            elif num_tests_failed:
+                status = 'Failed QC'
+            elif num_tests_passed == num_tests_req:
+                status = 'Ready for Shipping'
+            elif (num_tests_passed == num_tests_req - 1 and not outcomes.get('Registered', False)):
+                status = 'Passed QC, Awaiting Registration'
+            else:
+                status = 'Awaiting Testing'
+
+            status_over_time[date][major_type][subtype][status] += 1
+            status_over_time[date][major_type][subtype]['Total'] += 1
+
+    return status_over_time
+
 def write_board_statuses_file():
 
     status = {}

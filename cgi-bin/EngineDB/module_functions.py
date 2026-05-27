@@ -287,7 +287,10 @@ def board_info(sn):
 
     # attempts to get the Chip IDs for this Board
     try:
-        cur.execute('select test_id,day from Test where test_type_id=22 and board_id=%s order by day desc, test_id desc' % board_id) 
+        if sn[3:5] == 'ZP':
+            cur.execute('select test_id,day from Test where test_type_id=29 and board_id=%s order by day desc, test_id desc' % board_id) 
+        else:
+            cur.execute('select test_id,day from Test where test_type_id=22 and board_id=%s order by day desc, test_id desc' % board_id) 
         test_id = cur.fetchall()[0][0]
         cur.execute('select Attach from Attachments where test_id=%s' % test_id)
         attach = cur.fetchall()[0][0]
@@ -308,7 +311,7 @@ def board_info(sn):
                 trig3_chip_id = hex(int(attach['TRG3']["id"]))
                 trig4_chip_id = hex(int(attach['TRG4']["id"]))
         elif sn[3:5] == 'ZP':
-            daq_chip_id = hex(int(attach['lpgbt']["id"]))
+            daq_chip_id = hex(int(attach['LPGBT']["id"]))
 
     except Exception as e:
         test_id = 'No tests run'

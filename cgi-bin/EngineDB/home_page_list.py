@@ -30,7 +30,7 @@ def fetch_list_tests():
         finalrows=finalrows+(arow,)
     return finalrows
 
-def render_list_tests():
+def render_list_tests(suppressed=[]):
 
     cur.execute('''
         select B.full_id, B.type_id, B.board_id, BT.name as nickname, BT.type_id as bt_type_id 
@@ -88,6 +88,9 @@ def render_list_tests():
         bt_type_id = board_info[boards[0]]['bt_type_id']
         stitch_types = stitch_types_by_subtype.get(bt_type_id, [])
 
+        if type_sn in suppressed:
+            continue
+        
         status_map = {}
         print('<tr>')
         print('<td>%s</td>' % type_sn)
@@ -123,6 +126,8 @@ def render_list_tests():
                     else:
                         status = 'Failed'
                 except KeyError as e:
+                    status = 'Failed'
+                except TypeError as e:
                     status = 'Failed'
             elif num_tests_passed == num_tests_req:
                 status = 'Passed'
