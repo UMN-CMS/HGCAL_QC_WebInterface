@@ -314,7 +314,7 @@ def get_description(barcode,batch):
     """Check if the batch character is a number or a letter to assign a comment field."""
     return "Pre-series" if barcode[3+3+2]=='0' else "Pre-production" if batch=="1" else "Production"
 
-def run(xml_file):
+def run(xml_file, bconly):
     """Main execution function."""
     try:
         db = connect(1)
@@ -347,6 +347,9 @@ def run(xml_file):
         success = 0
         
         for barcode in all_hd_wagons:
+
+            if bconly is not None and bconly!=barcode:
+                continue
 
             # for now, ignore preseries
             if barcode[3+2+3]=='0':
@@ -411,9 +414,10 @@ def run(xml_file):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Register LD wagons by exporting data to an XML file.")
     parser.add_argument("-o", "--output", type=str, default=None, help="Output XML file name (e.g., output.xml)")
+    parser.add_argument("-b","--barcode",type=str, default=None, help="Only process the given barcode")
     args = parser.parse_args()
 
     if args.output is None:        
         print("Content-type: text/xml")
         print('Content-disposition: attachment; filename="hd_wagons_register.xml"\n')
-    run(args.output)
+    run(args.output,args.barcode)
