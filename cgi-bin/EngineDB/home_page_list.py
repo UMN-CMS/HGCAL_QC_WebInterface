@@ -125,9 +125,7 @@ def render_list_tests(suppressed=[]):
                         status = 'Thermal'
                     else:
                         status = 'Failed'
-                except KeyError as e:
-                    status = 'Failed'
-                except TypeError as e:
+                except (KeyError, TypeError) as e:
                     status = 'Failed'
             elif num_tests_passed == num_tests_req:
                 status = 'Passed'
