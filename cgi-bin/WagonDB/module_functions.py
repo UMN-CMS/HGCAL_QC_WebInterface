@@ -314,12 +314,14 @@ def board_info(sn):
     num = outcomes.count(True)
     total = len(names)
 
-    cur.execute('select grade from Grades where board_id=%s' % board_id)
-    grade = cur.fetchall()
-    if grade:
-        grade = grade[0][0]
+    cur.execute('select grade, comments from Grades where board_id=%s' % board_id)
+    grade_info = cur.fetchall()
+    if grade_info:
+        grade = grade_info[0][0]
+        grade_com = grade_info[0][1]
     else:
         grade = "No grade info"
+        grade_com = None
  
     # adds info
     print('<div class="col-md-11 pt-2 px-4 mx-2 my-2">')
@@ -356,7 +358,12 @@ def board_info(sn):
     print('<th colspan=2>Date Shipped</th>')
     print('</tr>')
     print('<tr>')
-    print('<td colspan=2>%s</td>' % info_com)
+    if grade_com and info_com:
+        print('<td>%s</td><td>%s</td>' % (info_com, grade_com))
+    elif info_com:
+        print('<td colspan=2>%s</td>' % info_com)
+    else:
+        print('<td colspan=2>%s</td>' % grade_com)
     # gets check in date
     cur.execute('select checkin_date from Check_In where board_id=%s' % board_id)
     try:
