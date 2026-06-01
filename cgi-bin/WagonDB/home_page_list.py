@@ -46,7 +46,7 @@ def fetch_list_tests():
         finalrows=finalrows+(arow,)
     return finalrows
 
-def render_list_tests():
+def render_list_tests(suppressed=[]):
 
     cur.execute('''
         select B.full_id, B.type_id, B.board_id, BT.name as nickname, BT.type_id as bt_type_id 
@@ -104,24 +104,21 @@ def render_list_tests():
     for name, group_boards in groups.items():
         print('<div class="col-md-11 mx-4 my-4" style="overflow-y: auto"><table class="table table-bordered table-hover table-active">')
         print(f"<h2>{name}</h2>")
-        print('<thead><tr><th>Subtype<th>Nickname<th>Total Checked In<th>Awaiting Testing<th>QC Passed, Awaiting Registration<th>Ready for Shipping<th>Shipped<th>Failed QC<th>Dead</tr></thead>')
+        print('<thead><tr><th>Subtype<th>Nickname<th>Total Checked In<th class="table-info">Awaiting Testing<th class="table-warning">QC Passed, Awaiting Registration<th class="table-primary">Ready for Shipping<th class="table-success">Shipped<th class="table-danger">Failed QC<th class="table-dark">Dead</tr></thead>')
         for type_sn, boards in group_boards:
+
+            if type_sn in suppressed:
+                continue
+
             nickname = board_info[boards[0]]['nickname']
+
+            if "Prototype" in nickname:
+                continue
+
             bt_type_id = board_info[boards[0]]['bt_type_id']
             stitch_types = stitch_types_by_subtype.get(bt_type_id, [])
 
             status_map = {}
-            print('<tr>')
-            print('<td>%s</td>' % type_sn)
-            print('<td>%s</td>' % nickname)
-
-            print('<td>')
-            print('<div class="list-group list-group-flush">')
-            print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#boardstable%s">%s</a>' % (type_sn, len(boards)))
-            print('</div>')
-
-            print('<div class="collapse" id="boardstable%s">' % type_sn)
-            print('<div class="list-group list-group-flush">')
             for full_id in boards:
                 board_id = board_info[full_id]['board_id']
                 failed = {}
@@ -139,8 +136,11 @@ def render_list_tests():
                     status = 'Shipped'
                 elif board_id in graded_board_ids:
                     cur.execute('select grade from Grades where board_id=%s' % board_id)
-                    if cur.fetchall()[0][0] == "F":
+                    grade = cur.fetchall()[0][0]
+                    if grade == "F":
                         status = 'Dead'
+                    elif grade == "E":
+                        status = 'hidden'
                 elif num_tests_failed != 0:
                     status = 'Failed'
                 elif num_tests_passed == num_tests_req:
@@ -152,22 +152,36 @@ def render_list_tests():
 
                 status_map[full_id] = status
 
-                print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': full_id})
-
-            print('</div></div>')
-            print('</td>')
-
             awaiting = [k for k,v in status_map.items() if v == 'Awaiting']
             not_registered = [k for k,v in status_map.items() if v == 'Not Registered']
             passed = [k for k,v in status_map.items() if v == 'Passed']
             shipped = [k for k,v in status_map.items() if v == 'Shipped']
             failed = [k for k,v in status_map.items() if v == 'Failed']
             dead = [k for k,v in status_map.items() if v == 'Dead']
+            hidden = [k for k,v in status_map.items() if v == 'hidden']
 
-            def print_status_column(status_id, items):
-                print('<td>')
+            print('<tr>')
+            print('<td>%s</td>' % type_sn)
+            print('<td>%s</td>' % nickname)
+
+            print('<td>')
+            print('<div class="list-group list-group-flush">')
+            print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#boardstable%s">%s</a>' % (type_sn, len(boards)-len(hidden)))
+            print('</div>')
+
+            print('<div class="collapse" id="boardstable%s">' % type_sn)
+            print('<div class="list-group list-group-flush">')
+            for full_id in boards:
+                if full_id not in hidden:
+                    print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': full_id})
+
+            print('</div></div>')
+            print('</td>')
+
+            def print_status_column(status_id, items, color):
+                print('<td class="table-%s">' % color)
                 print('<div class="list-group list-group-flush">')
-                print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#%s%s">%s</a>' % (status_id, type_sn, len(items)))
+                print('<a class="list-group-item list-group-item-action list-group-item-%s text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#%s%s">%s</a>' % (color, status_id, type_sn, len(items)))
                 print('</div>')
                 print('<div class="collapse" id="%s%s">' % (status_id, type_sn))
                 print('<div class="list-group list-group-flush">')
@@ -176,12 +190,12 @@ def render_list_tests():
                 print('</div></div>')
                 print('</td>')
 
-            print_status_column('awaiting', awaiting)
-            print_status_column('not_reg', not_registered)
-            print_status_column('passed', passed)
-            print_status_column('shipped', shipped)
-            print_status_column('failed', failed)
-            print_status_column('dead', dead)
+            print_status_column('awaiting', awaiting, 'info')
+            print_status_column('not_reg', not_registered, 'warning')
+            print_status_column('passed', passed, 'primary')
+            print_status_column('shipped', shipped, 'success')
+            print_status_column('failed', failed, 'danger')
+            print_status_column('dead', dead, 'dark')
 
             print('</tr>')
 

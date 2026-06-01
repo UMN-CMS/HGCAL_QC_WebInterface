@@ -115,6 +115,7 @@ def top(admin=False):
             <li><a class="dropdown-item" href="add_tester.py">Add New Tester</a></li>
             <li><a class="dropdown-item" href="add_new_test_template.py">Add New Test Template</a></li>
             <li><a class="dropdown-item" href="board_grade.py">Grade Board</a></li>
+            <li><a class="dropdown-item" href="override_board.py">Override Board</a></li>
             <li><a class="dropdown-item" href="register_csv_file.py?mt=WW,WE">Get list of unregistered LD wagons</a></li>
             <li><a class="dropdown-item" href="register_csv_file.py?mt=ZP">Get list of unregistered zippers</a></li>
             <li><a class="dropdown-item" href="register_csv_file.py?mt=SC">Get list of unregistered scint flex</a></li>

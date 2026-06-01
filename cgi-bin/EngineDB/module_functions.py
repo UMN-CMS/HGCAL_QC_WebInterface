@@ -375,6 +375,15 @@ def board_info(sn):
 
     num = outcomes.count(True)
     total = len(names)
+
+    cur.execute('select grade, comments from Grades where board_id=%s' % board_id)
+    grade_info = cur.fetchall()
+    if grade_info:
+        grade = grade_info[0][0]
+        grade_com = grade_info[0][1]
+    else:
+        grade = "No grade info"
+        grade_com = None
  
     # adds info
     print('<div class="col-md-11 pt-2 px-4 mx-2 my-2">')
@@ -385,6 +394,9 @@ def board_info(sn):
         print('<th colspan=1>Location</th>')
     elif sn[3] == 'Z':
         print('<th colspan=2>Location</th>')
+
+    print('<th>Grade</th>')
+
     if sn[3:5] == 'EL':
         print('<th colspan=1>DAQ Chip ID</th>')
         print('<th colspan=1>East Chip ID</th>')
@@ -408,6 +420,9 @@ def board_info(sn):
         print('<td colspan=1>%s</td>' % location)
     elif sn[3] == 'Z':
         print('<td colspan=2>%s</td>' % location)
+
+    print('<td>%s</td>' % grade)
+
     if sn[3:5] == 'EL':
         print('<td colspan=1>%s</td>' % daq_chip_id)
         print('<td colspan=1>%s</td>' % east_chip_id)
@@ -437,16 +452,16 @@ def board_info(sn):
     print('</tr>')
     print('<tr>') 
     if sn[3:5] == 'EL':
-        print('<th colspan=2>Comments</th>')
+        print('<th colspan=3>Comments</th>')
     elif sn[3:5] == 'EH':
         if sn[7] == 'F':
-            print('<th colspan=1>Comments</th>')
+            print('<th colspan=2>Comments</th>')
             print('<th colspan=1>Trigger 3 Chip ID</th>')
             print('<th colspan=1>Trigger 4 Chip ID</th>')
         else:
-            print('<th colspan=2>Comments</th>')
+            print('<th colspan=3>Comments</th>')
     elif sn[3:5] == 'ZP':
-        print('<th colspan=1>Comments</th>')
+        print('<th colspan=2>Comments</th>')
 
     print('<th colspan=1>Date Received</th>')
     print('<th colspan=1>Manufacturer</th>')
@@ -455,16 +470,36 @@ def board_info(sn):
     print('</tr>')
     print('<tr>')
     if sn[3:5] == 'EL':
-        print('<td colspan=2>%s</td>' % info_com)
+        if grade_com and info_com:
+            print('<td colspan=2>%s</td><td>%s</td>' % (info_com, grade_com))
+        elif info_com:
+            print('<td colspan=3>%s</td>' % info_com)
+        else:
+            print('<td colspan=3>%s</td>' % grade_com)
     elif sn[3:5] == 'EH':
         if sn[7] == 'F':
-            print('<td colspan=1>%s</td>' % info_com)
+            if grade_com and info_com:
+                print('<td>%s</td><td>%s</td>' % (info_com, grade_com))
+            elif info_com:
+                print('<td colspan=2>%s</td>' % info_com)
+            else:
+                print('<td colspan=2>%s</td>' % grade_com)
             print('<td colspan=1>%s</td>' % trig3_chip_id)
             print('<td colspan=1>%s</td>' % trig4_chip_id)
         else:
-            print('<td colspan=2>%s</td>' % info_com)
+            if grade_com and info_com:
+                print('<td colspan=2>%s</td><td>%s</td>' % (info_com, grade_com))
+            elif info_com:
+                print('<td colspan=3>%s</td>' % info_com)
+            else:
+                print('<td colspan=3>%s</td>' % grade_com)
     elif sn[3:5] == 'ZP':
-        print('<td colspan=1>%s</td>' % info_com)
+        if grade_com and info_com:
+            print('<td>%s</td><td>%s</td>' % (info_com, grade_com))
+        elif info_com:
+            print('<td colspan=2>%s</td>' % info_com)
+        else:
+            print('<td colspan=2>%s</td>' % grade_com)
     # gets check in date
     cur.execute('select checkin_date from Check_In where board_id=%s' % board_id)
     try:

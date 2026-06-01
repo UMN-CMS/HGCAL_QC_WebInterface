@@ -80,29 +80,22 @@ def render_list_tests(suppressed=[]):
     cur.execute('select board_id from Check_Out')
     shipped_board_ids = set(row[0] for row in cur.fetchall())
 
+    cur.execute('select board_id from Grades')
+    graded_board_ids = set(row[0] for row in cur.fetchall())
+
     print('<div class="col-md-11 mx-4 my-4"><table class="table table-bordered table-hover table-active">')
-    print('<tr><th>Subtype<th>Total Checked In<th>Awaiting Testing<th>QC Passed Minus Thermal Cycle<th>QC Passed, Awaiting Registration<th>Ready for Shipping<th>Shipped<th>Failed QC</tr>')
+    print('<tr><th>Subtype<th>Total Checked In<th>Awaiting Testing<th>QC Passed Minus Thermal Cycle<th>QC Passed, Awaiting Registration<th>Ready for Shipping<th>Shipped<th>Failed QC<th>Dead</tr>')
 
     for type_sn, boards in boards_by_type_sn.items():
-        nickname = board_info[boards[0]]['nickname']
-        bt_type_id = board_info[boards[0]]['bt_type_id']
-        stitch_types = stitch_types_by_subtype.get(bt_type_id, [])
 
         if type_sn in suppressed:
             continue
         
+        nickname = board_info[boards[0]]['nickname']
+        bt_type_id = board_info[boards[0]]['bt_type_id']
+        stitch_types = stitch_types_by_subtype.get(bt_type_id, [])
+        
         status_map = {}
-        print('<tr>')
-        print('<td>%s</td>' % type_sn)
-        #print('<td>%s</td>' % nickname)
-
-        print('<td>')
-        print('<div class="list-group list-group-flush">')
-        print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#boardstable%s">%s</a>' % (type_sn, len(boards)))
-        print('</div>')
-
-        print('<div class="collapse" id="boardstable%s">' % type_sn)
-        print('<div class="list-group list-group-flush">')
         for full_id in boards:
             board_id = board_info[full_id]['board_id']
             failed = {}
@@ -118,6 +111,13 @@ def render_list_tests(suppressed=[]):
 
             if board_id in shipped_board_ids:
                 status = 'Shipped'
+            elif board_id in graded_board_ids:
+                cur.execute('select grade from Grades where board_id=%s' % board_id)
+                grade = cur.fetchall()[0][0]
+                if grade == "F":
+                    status = 'Dead'
+                elif grade == "E":
+                    status = 'hidden'
             elif num_tests_failed != 0:
                 try:
                     if (failed.get('Thermal Cycle') is True and num_tests_failed==1 and
@@ -141,17 +141,31 @@ def render_list_tests(suppressed=[]):
 
             status_map[full_id] = status
 
-            print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': full_id})
-                
-        print('</div></div>')
-        print('</td>')
-
         awaiting = [k for k,v in status_map.items() if v == 'Awaiting']
         thermal = [k for k,v in status_map.items() if v == 'Thermal']
         not_registered = [k for k,v in status_map.items() if v == 'Not Registered']
         passed = [k for k,v in status_map.items() if v == 'Passed']
         shipped = [k for k,v in status_map.items() if v == 'Shipped']
         failed = [k for k,v in status_map.items() if v == 'Failed']
+        dead = [k for k,v in status_map.items() if v == 'Dead']
+        hidden = [k for k,v in status_map.items() if v == 'hidden']
+
+        print('<tr>')
+        print('<td>%s</td>' % type_sn)
+        #print('<td>%s</td>' % nickname)
+
+        print('<td>')
+        print('<div class="list-group list-group-flush">')
+        print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#boardstable%s">%s</a>' % (type_sn, len(boards)-len(hidden)))
+        print('</div>')
+
+        print('<div class="collapse" id="boardstable%s">' % type_sn)
+        print('<div class="list-group list-group-flush">')
+        for full_id in boards:
+            if full_id not in hidden:
+                print('<a class="list-group-item list-group-item-action text-decorate-none justify-content-between" href="module.py?full_id=%(id)s"> %(id)s </a>' % {'id': full_id})
+        print('</div></div>')
+        print('</td>')
 
         def print_status_column(status_id, items):
             print('<td>')
@@ -171,6 +185,7 @@ def render_list_tests(suppressed=[]):
         print_status_column('passed', passed)
         print_status_column('shipped', shipped)
         print_status_column('failed', failed)
+        print_status_column('dead', dead)
 
         print('</tr>')
 

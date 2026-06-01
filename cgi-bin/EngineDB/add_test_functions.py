@@ -625,6 +625,7 @@ def add_board_grade_form(sn=""):
     print('<option value="B">B</option>')
     print('<option value="C">C</option>')
     print('<option value="D">D</option>')
+    print('<option value="E">E</option>')
     print('<option value="F">F</option>')
     print('</select>')
     print('</div>')
