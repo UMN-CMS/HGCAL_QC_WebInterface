@@ -23,9 +23,9 @@ cur = db.cursor()
 if form.getvalue('action') == 'submit':
 
     full_id = form.getvalue('full_id')
-    cur.execute('select board_id from Board where full_id="%s"' % full)
+    cur.execute('select board_id from Board where full_id="%s"' % full_id)
     board_id = cur.fetchall()[0][0]
-    person_id = form.getvalue('person_id')
+    person_id = base.cleanCGInumber(form.getvalue('person_id'))
     grade = form.getvalue("grade")
     comments = html.escape(form.getvalue("comment"))
 

@@ -109,6 +109,7 @@ def render_list_tests(suppressed=[]):
             num_tests_req = len(outcomes)
             num_tests_failed = sum(failed.values())
 
+            status = False
             if board_id in shipped_board_ids:
                 status = 'Shipped'
             elif board_id in graded_board_ids:
@@ -118,26 +119,28 @@ def render_list_tests(suppressed=[]):
                     status = 'Dead'
                 elif grade == "E":
                     status = 'hidden'
-            elif num_tests_failed != 0:
-                try:
-                    if (failed.get('Thermal Cycle') is True and num_tests_failed==1 and
-                    json.loads(test_data.get(board_id, {}).get(24))['test_data']['status_num'] in (2, 3)):
-                        status = 'Thermal'
-                    else:
+
+            if status == False:
+                if num_tests_failed != 0:
+                    try:
+                        if (failed.get('Thermal Cycle') is True and num_tests_failed==1 and
+                        json.loads(test_data.get(board_id, {}).get(24))['test_data']['status_num'] in (2, 3)):
+                            status = 'Thermal'
+                        else:
+                            status = 'Failed'
+                    except (KeyError, TypeError) as e:
                         status = 'Failed'
-                except (KeyError, TypeError) as e:
-                    status = 'Failed'
-            elif num_tests_passed == num_tests_req:
-                status = 'Passed'
-            elif (
-                outcomes.get('Thermal Cycle') is False and 
-                sum(v for k,v in outcomes.items() if k != 'Thermal Cycle' and k != 'Registered') == num_tests_req - 2
-            ):
-                status = 'Thermal'
-            elif (num_tests_passed == num_tests_req - 1 and not outcomes.get('Registered', False)):
-                status = 'Not Registered'
-            else:
-                status = 'Awaiting'
+                elif num_tests_passed == num_tests_req:
+                    status = 'Passed'
+                elif (
+                    outcomes.get('Thermal Cycle') is False and 
+                    sum(v for k,v in outcomes.items() if k != 'Thermal Cycle' and k != 'Registered') == num_tests_req - 2
+                ):
+                    status = 'Thermal'
+                elif (num_tests_passed == num_tests_req - 1 and not outcomes.get('Registered', False)):
+                    status = 'Not Registered'
+                else:
+                    status = 'Awaiting'
 
             status_map[full_id] = status
 
