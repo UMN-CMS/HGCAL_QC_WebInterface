@@ -709,6 +709,15 @@ def get_status(full_id):
         cur.execute('select grade from Grades where board_id=%s' % board_id)
         if cur.fetchall()[0][0] == "F":
             status = 'Dead'
+        else:
+            if num_tests_failed != 0:
+                status = 'Failed'
+            elif num_tests_passed == num_tests_req:
+                status = 'Passed'
+            elif (num_tests_passed == num_tests_req - 1 and not outcomes.get('Registered', False)):
+                status = 'Not Registered'
+            else:
+                status = 'Awaiting'
     elif num_tests_failed != 0:
         status = 'Failed'
     elif num_tests_passed == num_tests_req:

@@ -141,6 +141,16 @@ def render_list_tests(suppressed=[]):
                         status = 'Dead'
                     elif grade == "E":
                         status = 'hidden'
+                    else:
+                        if num_tests_failed != 0:
+                            status = 'Failed'
+                        elif num_tests_passed == num_tests_req:
+                            status = 'Passed'
+                        elif (num_tests_passed == num_tests_req - 1 and not outcomes.get('Registered', False)):
+                            status = 'Not Registered'
+                        else:
+                            status = 'Awaiting'
+
                 elif num_tests_failed != 0:
                     status = 'Failed'
                 elif num_tests_passed == num_tests_req:
