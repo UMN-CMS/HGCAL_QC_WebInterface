@@ -509,13 +509,23 @@ def add_board_grade_form(sn=""):
     db = connect(0)
     cur = db.cursor()
 
-    print('<form action="board_grade2.py" method="post" enctype="multipart/form-data">')
     print('<div class="row">')
     print('<div class="col-md-12 pt-4 ps-5 mx-2 my-2">')
-    print('<h2>Grade Board</h2>')
-    print('</div>')
+    print('<form action="mass_grade_boards.py" method="get">')
     print('</div>')
 
+    print('<div class="col-md-4 ps-5 pt-2 my-2">')
+    print('<h2>Grade Board</h2>')
+    print('</div>')
+
+    print('<div class="col-md-2 ps-5 pt-2 my-2">')
+    print('<button type="submit" class="btn btn-dark">CSV Entry</button>')
+    print('</div>')
+
+    print('</form>')
+    print('</div>')
+
+    print('<form action="board_grade2.py" method="post" enctype="multipart/form-data">')
     print('<div class="row">')
     print('<div class="col-md-6 pt-4 ps-5 mx-2 my-2">')
     print('<label>Board Serial Number</label><p>')
