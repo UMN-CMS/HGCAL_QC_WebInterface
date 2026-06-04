@@ -1,5 +1,7 @@
 #!./cgi_runner.sh
 
+# I KNOW THIS FILE LOOKS SILLY BUT DO NOT DELETE IT IS IMPORTANT
+
 import cgi, html
 import cgitb
 cgitb.enable()
