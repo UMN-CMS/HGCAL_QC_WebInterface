@@ -48,6 +48,7 @@ BATCH_INFO = {
         '1': ('2024-11-22', 'Preproduction'),
         '2': ('2025-07-02', 'Production'),
         '3': ('2025-11-18', 'Production'),
+        '4': ('2026-05-14', 'Production'),
     },
 }
 
