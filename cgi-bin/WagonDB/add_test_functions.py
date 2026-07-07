@@ -359,15 +359,15 @@ def add_test_template(barcode, suggested_test):
     if suggested_test:
         for test_type in cur:
             if test_type[0] == suggested_test:
-                print('<option value="%s">%s</option>' % (test_type[0], test_type[1]))
+                print('<option value="%s">%s</option>' % (test_type[1], test_type[1]))
                 break
         for test_type in cur:
             if test_type[0] == suggested_test:
                 continue
-            print('<option value="%s">%s</option>' % (test_type[0], test_type[1]))
+            print('<option value="%s">%s</option>' % (test_type[1], test_type[1]))
     else:
         for test_type in cur:
-            print('<option value="%s">%s</option>' % (test_type[0], test_type[1]))
+            print('<option value="%s">%s</option>' % (test_type[1], test_type[1]))
     print('</select>')
     print('</label>')
     print('</div>')

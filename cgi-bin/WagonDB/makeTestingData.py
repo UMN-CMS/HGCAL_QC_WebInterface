@@ -718,6 +718,9 @@ def get_board_states():
     cur.execute('select board_id from Check_Out')
     shipped_board_ids = set(row[0] for row in cur.fetchall())
 
+    cur.execute('select board_id from Grades')
+    graded_board_ids = set(row[0] for row in cur.fetchall())
+
     csvs_to_return = []
 
     for major_type, boards in boards_by_major_type.items():
@@ -764,6 +767,20 @@ def get_board_states():
 
             if board_id in shipped_board_ids:
                 status = 'Shipped'
+            elif board_id in graded_board_ids:
+                cur.execute('select grade from Grades where board_id=%s' % board_id)
+                grade = cur.fetchall()[0][0]
+                if grade == "F":
+                    status = 'Dead'
+                else:
+                    if num_tests_failed != 0:
+                        status = 'Failed QC'
+                    elif num_tests_passed == num_tests_req:
+                        status = 'Ready for Shipping'
+                    elif (num_tests_passed == num_tests_req - 1 and not outcomes.get('Registered', False)):
+                        status = 'Passed QC, Awaiting Registration'
+                    else:
+                        status = 'Awaiting Testing'
             elif num_tests_failed != 0:
                 status = 'Failed QC'
             elif num_tests_passed == num_tests_req:
@@ -801,6 +818,9 @@ def get_status_over_time():
     cur.execute('SELECT board_id, checkout_date FROM Check_Out')
     checkout_rows = cur.fetchall()
 
+    cur.execute('SELECT board_id, grading_time, grade FROM Grades')
+    grade_rows = cur.fetchall()
+
     cur.execute('''
         SELECT TTS.type_id, TT.test_type, TT.name
         FROM Type_test_stitch TTS
@@ -827,6 +847,11 @@ def get_status_over_time():
     for board_id, checkout_date in checkout_rows:
         checkout_dates[board_id] = checkout_date
         all_dates.add(checkout_date.date())
+
+    grades = {}
+    for board_id, grade_date, grade in grade_rows:
+        grades[board_id] = {'time': grade_date, 'grade': grade}
+        all_dates.add(grade_date.date())
 
     test_history = defaultdict(lambda: defaultdict(list))
     for board_id, test_type_id, successful, timestamp in test_rows:
@@ -873,6 +898,19 @@ def get_status_over_time():
             # Determine status
             if checkout_dates.get(board_id, None) and checkout_dates[board_id].date() <= date:
                 status = 'Shipped'
+            elif grades.get(board_id, None) and grades[board_id]['time'].date() <= date:
+                if grades[board_id]['grade'] == 'F':
+                    status = 'Dead'
+                else:
+                    if num_tests_failed:
+                        status = 'Failed QC'
+                    elif num_tests_passed == num_tests_req:
+                        status = 'Ready for Shipping'
+                    elif (num_tests_passed == num_tests_req - 1 and not outcomes.get('Registered', False)):
+                        status = 'Passed QC, Awaiting Registration'
+                    else:
+                        status = 'Awaiting Testing'
+
             elif num_tests_failed:
                 status = 'Failed QC'
             elif num_tests_passed == num_tests_req:

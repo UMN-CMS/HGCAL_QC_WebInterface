@@ -300,6 +300,8 @@ def Filter(major_type):
             return('#d62728')}
         else if (value == 'Passed QC, Awaiting Registration'){
             return('#17becf')}
+        else if (value == 'Dead'){
+            return('#000000')}
         }())%>;">
 <%= value %>
 </div> 

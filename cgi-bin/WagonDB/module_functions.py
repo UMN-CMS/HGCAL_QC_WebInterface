@@ -377,9 +377,12 @@ def board_info(sn):
 
     cur.execute('select manufacturer_id from Board where board_id=%s' % board_id)
     manuf_id = cur.fetchall()[0][0]
-    cur.execute('select name from Manufacturers where manufacturer_id=%s' % manuf_id)
-    manufacturer = cur.fetchall()[0][0]
-    print('<td colspan=1>%s</td>' % manufacturer)
+    if manuf_id:
+        cur.execute('select name from Manufacturers where manufacturer_id=%s' % manuf_id)
+        manufacturer = cur.fetchall()[0][0]
+        print('<td colspan=1>%s</td>' % manufacturer)
+    else:
+        print('<td colspan=1>FIX THIS</td>')
         
     # if the board has been checked out, get the check out data
     if board_id in ids:

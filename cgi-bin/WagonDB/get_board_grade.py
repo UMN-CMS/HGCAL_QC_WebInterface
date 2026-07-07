@@ -19,6 +19,9 @@ cur.execute('select board_id from Board where full_id="%s"' % full_id)
 board_id = cur.fetchone()
 
 cur.execute('select grade from Grades where board_id=%s' % board_id)
-grade = cur.fetchone()[0]
+try:
+    grade = cur.fetchone()[0]
 
-print(grade)
+    print(grade)
+except TypeError:
+    print(None)

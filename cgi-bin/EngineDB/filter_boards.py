@@ -296,6 +296,8 @@ def Filter(major_type):
             return('#17becf')}
         else if (value == 'Passed QC Minus Thermal Cycle'){
             return('#9467bd')}
+        else if (value == 'Dead'){
+            return('#000000')}
         }())%>;">
 <%= value %>
 </div> 
