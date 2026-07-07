@@ -24,7 +24,7 @@ from bokeh.models import (
     Text,
 )
 from bokeh.embed import json_item
-from bokeh.palettes import d3, brewer
+from bokeh.palettes import d3, mpl
 from bokeh.layouts import column, row
 import json
 import makeTestingData as mTD
@@ -39,6 +39,7 @@ colors = [
         d3['Category10'][10][8],
         d3['Category10'][10][2],
         d3['Category10'][10][3],
+        mpl['Inferno'][10][0],
         ]
 
 def convert_keys_to_strings(obj):
@@ -58,8 +59,9 @@ def TotalPlot(data, mc_widgets, widgets):
     data_passed = ColumnDataSource(data={'dates':[], 'counts':[]})
     data_shipped = ColumnDataSource(data={'dates':[], 'counts':[]})
     data_inprog = ColumnDataSource(data={'dates':[], 'counts':[]})
+    data_dead = ColumnDataSource(data={'dates':[], 'counts':[]})
 
-    x = CustomJS(args=dict(data_failed=data_failed, data_total=data_total, data_notreg=data_notreg, data_passed=data_passed, data_shipped=data_shipped, data_inprog=data_inprog, data=data, mc_widgets=mc_widgets),code='''
+    x = CustomJS(args=dict(data_failed=data_failed, data_total=data_total, data_notreg=data_notreg, data_passed=data_passed, data_shipped=data_shipped, data_inprog=data_inprog, data_dead=data_dead, data=data, mc_widgets=mc_widgets),code='''
 const dates = []
 const tsd_failed = []
 const tsd_passed = []
@@ -67,6 +69,7 @@ const tsd_shipped = []
 const tsd_inprog = []
 const tsd_notreg = []
 const tsd_total = []
+const tsd_dead = []
 
 const is_selected_map = new Map([
     ["multi_choice", (wi, pos, el, idx) => wi.value.includes(el)],
@@ -105,6 +108,7 @@ for (let d = 0; d < days.length; d++) {
     let passed = 0;
     let shipped = 0;
     let failed = 0;
+    let dead = 0;
     const majors = Array.from(Object.keys(data[days[d]]));
     for (let m = 0; m < majors.length; m++) {
         if (passed_vals.get('Major Type').get(majors[m]) == true) {
@@ -129,6 +133,9 @@ for (let d = 0; d < days.length; d++) {
                     if (data[days[d]][majors[m]][subs[s]]['Failed QC']) {
                         failed = failed + data[days[d]][majors[m]][subs[s]]['Failed QC']
                     }
+                    if (data[days[d]][majors[m]][subs[s]]['Dead']) {
+                        dead = dead + data[days[d]][majors[m]][subs[s]]['Dead']
+                    }
                 }
             }
         }
@@ -140,6 +147,7 @@ for (let d = 0; d < days.length; d++) {
     tsd_inprog.push(awaiting)
     tsd_notreg.push(notreg)
     tsd_total.push(total)
+    tsd_dead.push(dead)
 }
 data_total.data['dates'] = dates;
 data_total.data['counts'] = tsd_total;
@@ -164,10 +172,14 @@ data_shipped.change.emit()
 data_inprog.data['dates'] = dates;
 data_inprog.data['counts'] = tsd_inprog;
 data_inprog.change.emit()
+
+data_dead.data['dates'] = dates;
+data_dead.data['counts'] = tsd_dead;
+data_dead.change.emit()
 ''')
     for widget in widgets.values():
         widget.js_on_change('value', x)
-    return data_total, data_inprog, data_notreg, data_passed, data_shipped, data_failed
+    return data_total, data_inprog, data_notreg, data_passed, data_shipped, data_failed, data_dead
 
 def Filter():
     mc_widgets = {}
@@ -206,7 +218,7 @@ def Filter():
                 'widget': widget,}
 
     widgets = {k:w['widget'] for k,w in mc_widgets.items()}
-    data_total, data_awaiting, data_notreg, data_passed, data_shipped, data_failed = TotalPlot(ds, mc_widgets, widgets)
+    data_total, data_awaiting, data_notreg, data_passed, data_shipped, data_failed, data_dead = TotalPlot(ds, mc_widgets, widgets)
 
     p.line('dates', 'counts', source=data_total, legend_label='Total Received', color=colors[0], line_width=2, muted_alpha=0.2)
     p.line('dates', 'counts', source=data_awaiting, legend_label='Awaiting Testing', color=colors[1], line_width=2, muted_alpha=0.2)
@@ -214,6 +226,7 @@ def Filter():
     p.line('dates', 'counts', source=data_passed, legend_label='Passed QC', color=colors[3], line_width=2, muted_alpha=0.2)
     p.line('dates', 'counts', source=data_shipped, legend_label='Shipped', color=colors[4], line_width=2, muted_alpha=0.2)
     p.line('dates', 'counts', source=data_failed, legend_label='Failed QC', color=colors[5], line_width=2, muted_alpha=0.2)
+    p.line('dates', 'counts', source=data_dead, legend_label='Dead', color=colors[6], line_width=2, muted_alpha=0.2)
 
     p.legend.click_policy='hide'
     p.legend.label_text_font_size = '8pt'

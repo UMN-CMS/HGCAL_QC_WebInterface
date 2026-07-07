@@ -112,8 +112,8 @@ def render_list_tests(suppressed=[]):
 
             nickname = board_info[boards[0]]['nickname']
 
-            if "Prototype" in nickname:
-                continue
+            #if "Prototype" in nickname:
+            #    continue
 
             bt_type_id = board_info[boards[0]]['bt_type_id']
             stitch_types = stitch_types_by_subtype.get(bt_type_id, [])

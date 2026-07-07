@@ -19,8 +19,6 @@ full_id = form.getvalue('full_id')
 
 status = get_status(full_id)
 
-print('Begin')
 print(status)
-print('End')
 
 base.bottom()

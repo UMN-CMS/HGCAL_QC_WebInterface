@@ -84,7 +84,7 @@ def render_list_tests(suppressed=[]):
     graded_board_ids = set(row[0] for row in cur.fetchall())
 
     print('<div class="col-md-11 mx-4 my-4"><table class="table table-bordered table-hover table-active">')
-    print('<tr><th>Subtype<th>Total Checked In<th>Awaiting Testing<th>QC Passed Minus Thermal Cycle<th>QC Passed, Awaiting Registration<th>Ready for Shipping<th>Shipped<th>Failed QC<th>Dead</tr>')
+    print('<thead><tr><th>Subtype<th>Total Checked In<th class="table-info">Awaiting Testing<th class="table-secondary">QC Passed Minus Thermal Cycle<th class="table-warning">QC Passed, Awaiting Registration<th class="table-primary">Ready for Shipping<th class="table-success">Shipped<th class="table-danger">Failed QC<th class="table-dark">Dead</tr></thead>')
 
     for type_sn, boards in boards_by_type_sn.items():
 
@@ -170,10 +170,10 @@ def render_list_tests(suppressed=[]):
         print('</div></div>')
         print('</td>')
 
-        def print_status_column(status_id, items):
-            print('<td>')
+        def print_status_column(status_id, items, color):
+            print('<td class="table-%s">' % color)
             print('<div class="list-group list-group-flush">')
-            print('<a class="list-group-item list-group-item-action list-group-item-dark text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#%s%s">%s</a>' % (status_id, type_sn, len(items)))
+            print('<a class="list-group-item list-group-item-action list-group-item-%s text-decorate-none justify-content-between" data-bs-toggle="collapse" href="#%s%s">%s</a>' % (color, status_id, type_sn, len(items)))
             print('</div>')
             print('<div class="collapse" id="%s%s">' % (status_id, type_sn))
             print('<div class="list-group list-group-flush">')
@@ -182,13 +182,13 @@ def render_list_tests(suppressed=[]):
             print('</div></div>')
             print('</td>')
 
-        print_status_column('awaiting', awaiting)
-        print_status_column('thermal', thermal)
-        print_status_column('not_reg', not_registered)
-        print_status_column('passed', passed)
-        print_status_column('shipped', shipped)
-        print_status_column('failed', failed)
-        print_status_column('dead', dead)
+        print_status_column('awaiting', awaiting, 'info')
+        print_status_column('thermal', thermal, 'secondary')
+        print_status_column('not_reg', not_registered, 'warning')
+        print_status_column('passed', passed, 'primary')
+        print_status_column('shipped', shipped, 'success')
+        print_status_column('failed', failed, 'danger')
+        print_status_column('dead', dead, 'dark')
 
         print('</tr>')
 

@@ -698,6 +698,9 @@ def get_board_states():
     cur.execute('select board_id from Check_Out')
     shipped_board_ids = set(row[0] for row in cur.fetchall())
 
+    cur.execute('select board_id from Grades')
+    graded_board_ids = set(row[0] for row in cur.fetchall())
+
     csvs_to_return = []
 
     for major_type, boards in boards_by_major_type.items():
@@ -742,28 +745,36 @@ def get_board_states():
             num_tests_req = len(outcomes)
             num_tests_failed = sum(failed.values())
 
+            status = False
             if board_id in shipped_board_ids:
                 status = 'Shipped'
-            elif num_tests_failed != 0:
-                try:
-                    if (failed.get('Thermal Cycle') is True and num_tests_failed == 1 and 
-                    json.loads(test_data.get(board_id, {}).get(24))['test_data']['status_num'] in (2, 3)):
-                        status = 'Passed QC Minus Thermal Cycle'
-                    else:
+            elif board_id in graded_board_ids:
+                cur.execute('select grade from Grades where board_id=%s' % board_id)
+                grade = cur.fetchall()[0][0]
+                if grade == "F":
+                    status = 'Dead'
+
+            if status == False:
+                if num_tests_failed != 0:
+                    try:
+                        if (failed.get('Thermal Cycle') is True and num_tests_failed == 1 and 
+                        json.loads(test_data.get(board_id, {}).get(24))['test_data']['status_num'] in (2, 3)):
+                            status = 'Passed QC Minus Thermal Cycle'
+                        else:
+                            status = 'Failed QC'
+                    except (KeyError, TypeError) as e:
                         status = 'Failed QC'
-                except (KeyError, TypeError) as e:
-                    status = 'Failed QC'
-            elif num_tests_passed == num_tests_req:
-                status = 'Ready for Shipping'
-            elif (
-                outcomes.get('Thermal Cycle') is False and  
-                sum(v for k,v in outcomes.items() if k != 'Thermal Cycle' and k != 'Registered') == num_tests_req - 2
-            ):
-                status = 'Passed QC Minus Thermal Cycle'
-            elif (num_tests_passed == num_tests_req - 1 and not outcomes.get('Registered', False)):
-                status = 'Passed QC, Awaiting Registration'
-            else:
-                status = 'Awaiting Testing'
+                elif num_tests_passed == num_tests_req:
+                    status = 'Ready for Shipping'
+                elif (
+                    outcomes.get('Thermal Cycle') is False and  
+                    sum(v for k,v in outcomes.items() if k != 'Thermal Cycle' and k != 'Registered') == num_tests_req - 2
+                ):
+                    status = 'Passed QC Minus Thermal Cycle'
+                elif (num_tests_passed == num_tests_req - 1 and not outcomes.get('Registered', False)):
+                    status = 'Passed QC, Awaiting Registration'
+                else:
+                    status = 'Awaiting Testing'
 
             row.append(status)
             writer.writerow(row)
@@ -795,6 +806,9 @@ def get_status_over_time():
     cur.execute('SELECT board_id, checkout_date FROM Check_Out')
     checkout_rows = cur.fetchall()
 
+    cur.execute('SELECT board_id, grading_time, grade FROM Grades')
+    grade_rows = cur.fetchall()
+
     cur.execute('''
         SELECT TTS.type_id, TT.test_type, TT.name
         FROM Type_test_stitch TTS
@@ -821,6 +835,11 @@ def get_status_over_time():
     for board_id, checkout_date in checkout_rows:
         checkout_dates[board_id] = checkout_date
         all_dates.add(checkout_date.date())
+
+    grades = {}
+    for board_id, grade_date, grade in grade_rows:
+        grades[board_id] = {'time': grade_date, 'grade': grade}
+        all_dates.add(grade_date.date())
 
     test_history = defaultdict(lambda: defaultdict(list))
     test_data = {}
@@ -867,28 +886,34 @@ def get_status_over_time():
             num_tests_failed = sum(1 for v in failed.values() if v is True)
 
             # Determine status
+            status = False
             if checkout_dates.get(board_id, None) and checkout_dates[board_id].date() <= date:
                 status = 'Shipped'
-            elif num_tests_failed != 0:
-                try:
-                    if (failed.get('Thermal Cycle') is True and 
-                    json.loads(test_data.get(board_id, {}).get(24))['test_data']['status_num'] in (2, 3)):
-                        status = 'Passed QC Minus Thermal Cycle'
-                    else:
+            elif grades.get(board_id, None) and grades[board_id]['time'].date() <= date:
+                if grades[board_id]['grade'] == 'F':
+                    status = 'Dead'
+
+            if status == False:
+                if num_tests_failed != 0:
+                    try:
+                        if (failed.get('Thermal Cycle') is True and 
+                        json.loads(test_data.get(board_id, {}).get(24))['test_data']['status_num'] in (2, 3)):
+                            status = 'Passed QC Minus Thermal Cycle'
+                        else:
+                            status = 'Failed QC'
+                    except KeyError as e:
                         status = 'Failed QC'
-                except KeyError as e:
-                    status = 'Failed QC'
-            elif num_tests_passed == num_tests_req:
-                status = 'Ready for Shipping'
-            elif (
-                outcomes.get('Thermal Cycle') is False and 
-                sum(v for k,v in outcomes.items() if k != 'Thermal Cycle' and k != 'Registered') == num_tests_req - 2
-            ):
-                status = 'Passed QC Minus Thermal Cycle'
-            elif (num_tests_passed == num_tests_req - 1 and not outcomes.get('Registered', False)):
-                status = 'Passed QC, Awaiting Registration'
-            else:
-                status = 'Awaiting Testing'
+                elif num_tests_passed == num_tests_req:
+                    status = 'Ready for Shipping'
+                elif (
+                    outcomes.get('Thermal Cycle') is False and 
+                    sum(v for k,v in outcomes.items() if k != 'Thermal Cycle' and k != 'Registered') == num_tests_req - 2
+                ):
+                    status = 'Passed QC Minus Thermal Cycle'
+                elif (num_tests_passed == num_tests_req - 1 and not outcomes.get('Registered', False)):
+                    status = 'Passed QC, Awaiting Registration'
+                else:
+                    status = 'Awaiting Testing'
 
             status_over_time[date][major_type][subtype][status] += 1
             status_over_time[date][major_type][subtype]['Total'] += 1
