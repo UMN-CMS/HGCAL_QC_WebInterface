@@ -32,11 +32,13 @@ if action == 'submit':
     boards = list(reader)
 
     for b in boards:
-        cur.execute('select board_id from Board where full_id="%s"' % b[0])
+        cur.execute('select board_id from Board where full_id="%s"' % b[0].replace('\xa0', '').strip())
         x = cur.fetchall()[0][0]
         cur.execute('insert into Grades (board_id, person_id, grading_time, grade, comments) values (%s, %s, NOW(), "%s", "%s")' % (x, person_id, b[1], b[2]))
 
     db.commit()
+
+    print("Grades entered successfully")
 
 else:
     print('<form action="mass_grade_boards.py" method="post" enctype="multipart/form-data">')
