@@ -417,7 +417,7 @@ def add_test_template(serial_number, suggested_test):
     cur = db.cursor()
 
     print('<form action="add_test2.py" method="post" enctype="multipart/form-data">')
-    print('<INPUT TYPE="hidden" name="serial_number" value="%s">' % (serial_number))
+    print('<INPUT TYPE="hidden" name="full_id" value="%s">' % (serial_number))
     print('<div class="row">')
     print('<div class="col-md-12 pt-4 ps-5 mx-2 my-2">')
     print('<h2>Add Test for Board %s</h2>' %serial_number)
@@ -637,6 +637,7 @@ def add_board_grade_form(sn=""):
     print('<option value="D">D</option>')
     print('<option value="E">E</option>')
     print('<option value="F">F</option>')
+    print('<option value="I">I</option>')
     print('</select>')
     print('</div>')
 

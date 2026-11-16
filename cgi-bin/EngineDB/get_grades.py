@@ -25,8 +25,14 @@ def run(csv_file):
 
     cur.execute('''
     SELECT B.full_id, G.grade, G.comments
-    FROM Board B JOIN Grades G
-    ON B.board_id=G.board_id
+    FROM Board B 
+    JOIN Grades G ON B.board_id=G.board_id
+    JOIN (
+        SELECT board_id, MAX(grading_time) as max_time
+        FROM Grades
+        GROUP BY board_id
+    ) latest_G on G.board_id = latest_G.board_id
+    AND G.grading_time = latest_G.max_time
             ''')
 
     writer.writerows(cur.fetchall())

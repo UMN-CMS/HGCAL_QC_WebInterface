@@ -113,7 +113,7 @@ def render_list_tests(suppressed=[]):
             if board_id in shipped_board_ids:
                 status = 'Shipped'
             elif board_id in graded_board_ids:
-                cur.execute('select grade from Grades where board_id=%s' % board_id)
+                cur.execute('select grade from Grades where board_id=%s order by grading_time desc' % board_id)
                 grade = cur.fetchall()[0][0]
                 if grade == "F":
                     status = 'Dead'

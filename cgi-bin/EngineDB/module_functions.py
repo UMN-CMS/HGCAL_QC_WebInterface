@@ -376,7 +376,7 @@ def board_info(sn):
     num = outcomes.count(True)
     total = len(names)
 
-    cur.execute('select grade, comments from Grades where board_id=%s' % board_id)
+    cur.execute('select grade, comments from Grades where board_id=%s order by grading_time desc' % board_id)
     grade_info = cur.fetchall()
     if grade_info:
         grade = grade_info[0][0]
@@ -556,7 +556,7 @@ def add_board_info(board_id, sn, comments, password):
         print("Administrative access denied.")
         return
 
-    cur.execute('update Board set comments="%s" where board_id=%s' % (info, board_id))
+    cur.execute('update Board set comments="%s" where board_id=%s' % (comments, board_id))
     db.commit()
 
 def add_revoke(test_id):
