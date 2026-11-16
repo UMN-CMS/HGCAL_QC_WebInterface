@@ -4,12 +4,14 @@ import numpy as np
 from connect import connect
 import re
 from collections import OrderedDict
+from collections import defaultdict
 import sys
 import cgitb
 import mysql
 import pandas as pd
 import os
 import enum
+from mapping import hd_wagon_map
 
 cgitb.enable()
 db = connect(0)
@@ -51,7 +53,7 @@ def render_list_tests(suppressed=[]):
     cur.execute('''
         select B.full_id, B.type_id, B.board_id, BT.name as nickname, BT.type_id as bt_type_id 
         from Board B
-        join Board_type BT on B.type_id=BT.type_sn
+        join Board_type BT on BT.type_sn=B.type_id
         order by B.type_id, B.full_id
     ''')
     all_boards = cur.fetchall()
@@ -105,6 +107,8 @@ def render_list_tests(suppressed=[]):
         print('<div class="col-md-11 mx-4 my-4" style="overflow-y: auto"><table class="table table-bordered table-hover table-active">')
         print(f"<h2>{name}</h2>")
         print('<thead><tr><th>Subtype<th>Nickname<th>Total Checked In<th class="table-info">Awaiting Testing<th class="table-warning">QC Passed, Awaiting Registration<th class="table-primary">Ready for Shipping<th class="table-success">Shipped<th class="table-danger">Failed QC<th class="table-dark">Dead</tr></thead>')
+
+
         for type_sn, boards in group_boards:
 
             if type_sn in suppressed:
@@ -112,8 +116,8 @@ def render_list_tests(suppressed=[]):
 
             nickname = board_info[boards[0]]['nickname']
 
-            #if "Prototype" in nickname:
-            #    continue
+            if "Prototype" in nickname:
+                continue
 
             bt_type_id = board_info[boards[0]]['bt_type_id']
             stitch_types = stitch_types_by_subtype.get(bt_type_id, [])
@@ -132,17 +136,17 @@ def render_list_tests(suppressed=[]):
                 num_tests_req = len(outcomes)
                 num_tests_failed = sum(failed.values())
 
-                if board_id in shipped_board_ids:
-                    status = 'Shipped'
-                elif board_id in graded_board_ids:
-                    cur.execute('select grade from Grades where board_id=%s' % board_id)
+                if board_id in graded_board_ids:
+                    cur.execute('select grade from Grades where board_id=%s order by grading_time desc' % board_id)
                     grade = cur.fetchall()[0][0]
                     if grade == "F":
                         status = 'Dead'
                     elif grade == "E":
                         status = 'hidden'
                     else:
-                        if num_tests_failed != 0:
+                        if board_id in shipped_board_ids:
+                            status = 'Shipped'
+                        elif num_tests_failed != 0:
                             status = 'Failed'
                         elif num_tests_passed == num_tests_req:
                             status = 'Passed'
@@ -150,6 +154,9 @@ def render_list_tests(suppressed=[]):
                             status = 'Not Registered'
                         else:
                             status = 'Awaiting'
+
+                elif board_id in shipped_board_ids:
+                    status = 'Shipped'
 
                 elif num_tests_failed != 0:
                     status = 'Failed'
@@ -309,7 +316,11 @@ def add_module(serial_number, manu, location):
         # grabs correct sections of the full id to add it to the database
         if len(serial_number) == 15:
             sn = serial_number[9:15]
-            type_id = serial_number[3:9]
+            if serial_number[3:5] == "WH":
+                code = serial_number[3:11]
+                type_id = hd_wagon_map(code)
+            else:
+                type_id = serial_number[3:9]
 
             # makes sure serial number doesn't already exist
             cur.execute("SELECT board_id FROM Board WHERE Board.full_id = '%s'" % (serial_number))

@@ -32,11 +32,12 @@ from datetime import datetime as dt
 import datetime
 import makeTestingData as mTD
 
-csv_CI, csv_SC, csv_WE, csv_WH, csv_WW, csv_ZP = mTD.get_board_states()
+csv_CI, csv_SC, csv_WE, csv_WH, csv_WM, csv_WW, csv_ZP = mTD.get_board_states()
 stitch_types = mTD.get_stitch_types()
 WE = pd.read_csv(csv_WE, parse_dates=['Check In Time'])
 WW = pd.read_csv(csv_WW, parse_dates=['Check In Time'])
 WH = pd.read_csv(csv_WH, parse_dates=['Check In Time'])
+WM = pd.read_csv(csv_WM, parse_dates=['Check In Time'])
 ZP = pd.read_csv(csv_ZP, parse_dates=['Check In Time'])
 SC = pd.read_csv(csv_SC, parse_dates=['Check In Time'])
 LD = pd.concat([WE, WW])

@@ -17,7 +17,8 @@ try:
     print('</div>')
     print('</div>')
 
-    suppressed=["EH03F0","EH0QF0","EH0QH0","EL0300","EL0QE1","EL0QW1"]
+    #suppressed=["EH03F0","EH0QF0","EH0QH0","EL0300","EL0QE1","EL0QW1"]
+    suppressed=["EH03F0","EH0QF0","EH0QH0","EL0300"]
     
     home_page_list.render_list_tests(suppressed)
 

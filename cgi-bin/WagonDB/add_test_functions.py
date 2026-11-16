@@ -659,6 +659,13 @@ def get_status(full_id):
     board_id = cur.fetchall()[0][0]
 
     cur.execute('''
+        select type_id
+        from Board
+        where full_id="%s"
+    ''' % full_id)
+    type_id = cur.fetchall()[0][0]
+
+    cur.execute('''
         select T.board_id, T.test_type_id, T.successful
         from Test T
         join (
@@ -689,7 +696,7 @@ def get_status(full_id):
     cur.execute('select board_id from Grades')
     graded_board_ids = set(row[0] for row in cur.fetchall())
 
-    stitch_types = stitch_types_by_subtype.get(full_id[3:9], [])
+    stitch_types = stitch_types_by_subtype.get(type_id, [])
 
     failed = {}
     outcomes = {}
